@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪球自动评论系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        .scrollbar-thin {
+            scrollbar-width: thin;
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.1);
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background-color: rgba(59, 130, 246, 0.5);
+            border-radius: 3px;
+        }
+        /* 左侧菜单栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 220px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        /* 主内容区域 */
+        .main-content {
+            margin-left: 220px;
+            min-height: 100vh;
+        }
+        /* 菜单项 */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: #60a5fa;
+        }
+        /* 弹窗遮罩 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        /* 弹窗内容 */
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- 左侧菜单栏 -->
+    <aside class="sidebar">
+        <!-- Logo区域 -->
+        <div class="p-6 border-b border-white border-opacity-20">
+            <div class="flex items-center space-x-3">
+                <i class="fa fa-comment-o text-3xl text-white"></i>
+                <div>
+                    <h1 class="text-white font-bold text-lg">雪球自动评论</h1>
+                    <p class="text-white text-opacity-60 text-xs">智能评论系统</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 菜单列表 -->
+        <nav class="py-4">
+            <div class="menu-item active" data-page="dashboard">
+                <i class="fa fa-dashboard w-6"></i>
+                <span>运行状态</span>
+            </div>
+            <div class="menu-item" id="menuConfig">
+                <i class="fa fa-cog w-6"></i>
+                <span>系统配置</span>
+            </div>
+            <div class="menu-item" id="menuFollowing">
+                <i class="fa fa-users w-6"></i>
+                <span>获取关注列表</span>
+            </div>
+        </nav>
+        
+        <!-- 操作按钮区域 -->
+        <div class="px-4 py-4 border-t border-white border-opacity-20">
+            <p class="text-white text-opacity-50 text-xs mb-3">自动任务</p>
+            <button id="startHotBtn" class="w-full mb-3 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+                <i class="fa fa-fire mr-2"></i>
+                <span>启动热门帖回复</span>
+            </button>
+            <button id="startRecommendBtn" class="w-full mb-3 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+                <i class="fa fa-star mr-2"></i>
+                <span>启动推荐帖回复</span>
+            </button>
+            <button id="startFollowingBtn" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+                <i class="fa fa-users mr-2"></i>
+                <span>启动关注者评论</span>
+            </button>
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-20">
+            <p class="text-white text-opacity-50 text-xs text-center">© 2026 雪球自动评论系统</p>
+        </div>
+    </aside>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        <!-- 顶部标题栏 -->
+        <header class="bg-white shadow-sm px-8 py-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">运行状态</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">状态:</span>
+                    <span id="runStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">未运行</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 内容区域 -->
+        <div class="p-8">
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">已处理用户数</p>
+                            <p class="text-3xl font-bold text-blue-600" id="processedArticles">0</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fa fa-users text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1" id="successLabel">成功发布评论</p>
+                            <p class="text-3xl font-bold text-green-600" id="successComments">0</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <i class="fa fa-check-circle text-green-600 text-xl" id="successIcon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">失败次数</p>
+                            <p class="text-3xl font-bold text-yellow-600" id="failedAttempts">0</p>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                            <i class="fa fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 运行日志 -->
+            <div class="bg-white rounded-xl shadow-lg">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fa fa-terminal mr-2 text-blue-600"></i>
+                        运行日志
+                    </h3>
+                    <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="fa fa-trash mr-1"></i>
+                        清空日志
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto scrollbar-thin" id="runLog">
+                        <div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 配置弹窗 -->
+    <div id="configModal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 弹窗头部 -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-cog mr-2"></i>
+                    系统配置
+                </h3>
+                <button id="closeModalBtn" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
+                <!-- 火山引擎API Key -->
+                <div class="mb-5">
+                    <label for="arkApiKey" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-key mr-1 text-blue-600"></i>
+                        火山引擎API Key
+                    </label>
+                    <input type="text" id="arkApiKey" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="输入火山引擎API Key">
+                </div>
+                
+                <!-- 雪球Cookie -->
+                <div class="mb-5">
+                    <label for="xueQiuCookie" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-cookie mr-1 text-blue-600"></i>
+                        雪球Cookie
+                    </label>
+                    <textarea id="xueQiuCookie" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="4" placeholder="输入雪球Cookie"></textarea>
+                </div>
+                
+                <!-- 评论设置 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        <i class="fa fa-sliders mr-1 text-blue-600"></i>
+                        评论设置
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="dailyLimit" class="block text-xs text-gray-500 mb-1">每日评论限制</label>
+                            <input type="number" id="dailyLimit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="60" min="1" max="100">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">评论间隔时间（秒）</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="delayMin" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="30" min="10" max="300">
+                                <span class="flex items-center text-gray-500">-</span>
+                                <input type="number" id="delayMax" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="120" min="20" max="600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 测试模式 -->
+                <div class="flex items-center mb-4">
+                    <input id="testMode" type="checkbox" class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="testMode" class="ml-3 block text-sm text-gray-700">测试模式（不实际发布评论）</label>
+                </div>
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button id="cancelConfigBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button id="saveConfigModalBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <i class="fa fa-save mr-2"></i>
+                    保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认更新关注列表弹窗 -->
+    <div id="confirmUpdateModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <!-- 弹窗头部 -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-question-circle mr-2"></i>
+                    确认更新
+                </h3>
+                <button id="closeConfirmModalBtn" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
+                <div class="flex items-start space-x-4 mb-4">
+                    <div class="bg-blue-100 p-3 rounded-full flex-shrink-0">
+                        <i class="fa fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-800 font-medium mb-2">发现本地已保存的关注列表</p>
+                        <p id="cacheInfoText" class="text-gray-600 text-sm">
+                            共 <span class="font-semibold text-blue-600" id="cachedCount">0</span> 个关注用户<br>
+                            更新时间：<span id="cachedTime">--</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 已关注用户列表 -->
+                <div class="mb-4">
+                    <p class="text-sm text-gray-700 mb-2">已关注的用户：</p>
+                    <div id="cachedFollowingList" class="border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto bg-gray-50">
+                        <div class="text-center text-gray-500 py-4">
+                            <i class="fa fa-spinner fa-spin mr-2"></i>
+                            正在加载...
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 font-medium">是否重新获取并更新？</p>
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button id="cancelUpdateBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button id="confirmUpdateBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <i class="fa fa-refresh mr-2"></i>
+                    是，更新
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关注者评论配置弹窗 -->
+    <div id="followingCommentsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <!-- 弹窗头部 -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-600 to-purple-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-users mr-2"></i>
+                    启动关注者评论
+                </h3>
+                <button id="closeFollowingModalBtn" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
+                <div class="flex items-start space-x-4 mb-6">
+                    <div class="bg-purple-100 p-3 rounded-full flex-shrink-0">
+                        <i class="fa fa-comments text-purple-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-800 font-medium mb-2">配置关注者评论任务</p>
+                        <p class="text-gray-600 text-sm">设置要处理的用户数量和每个用户的帖子数量</p>
+                    </div>
+                </div>
+                
+                <!-- 选择关注者 -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fa fa-users mr-1 text-purple-600"></i>
+                            选择要评论的关注者
+                        </label>
+                        <button id="refreshFollowingListBtn" class="text-sm text-purple-600 hover:text-purple-800 flex items-center">
+                            <i class="fa fa-refresh mr-1"></i>
+                            刷新列表
+                        </button>
+                    </div>
+                    <div id="followingListContainer" class="border border-gray-300 rounded-lg p-3 max-h-60 overflow-y-auto bg-gray-50">
+                        <div class="text-center text-gray-500 py-4">
+                            <i class="fa fa-spinner fa-spin mr-2"></i>
+                            正在加载关注者列表...
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <button id="selectAllFollowingBtn" class="text-sm text-purple-600 hover:text-purple-800">
+                            <i class="fa fa-check-square mr-1"></i>
+                            全选
+                        </button>
+                        <button id="deselectAllFollowingBtn" class="text-sm text-gray-600 hover:text-gray-800">
+                            <i class="fa fa-square-o mr-1"></i>
+                            取消全选
+                        </button>
+                        <span id="selectedFollowingCount" class="text-sm text-gray-600">
+                            已选择 0 个用户
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">建议一次选择不要超过10个用户，以免触发反爬虫机制</p>
+                </div>
+                
+                <!-- 每个用户处理帖子数 -->
+                <div class="mb-4">
+                    <label for="postsPerUser" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-file-text mr-1 text-purple-600"></i>
+                        每个用户处理帖子数
+                    </label>
+                    <input type="number" id="postsPerUser" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" value="10" min="1" max="20">
+                    <p class="text-xs text-gray-500 mt-1">建议设置为10个帖子</p>
+                </div>
+                
+                <!-- 操作类型选择 -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-hand-pointer mr-1 text-purple-600"></i>
+                        操作类型
+                    </label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="actionType" value="comment" checked class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">
+                                <i class="fa fa-comment mr-1"></i>评论
+                            </span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="actionType" value="like" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">
+                                <i class="fa fa-thumbs-up mr-1"></i>点赞
+                            </span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">选择"评论"会生成AI评论并发布，选择"点赞"只会对帖子点赞</p>
+                </div>
+                
+                <!-- 测试模式 -->
+                <div class="flex items-center mb-4">
+                    <input id="followingTestMode" type="checkbox" class="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                    <label for="followingTestMode" class="ml-3 block text-sm text-gray-700">测试模式（不实际执行操作）</label>
+                </div>
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button id="cancelFollowingBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button id="startFollowingCommentsBtn" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+                    <i class="fa fa-play mr-2"></i>
+                    启动评论
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API基础URL
+        const API_BASE_URL = 'http://localhost:5001/api';
+        
+        // 运行状态
+        let isRunning = false;
+        let currentTask = null;
+        let runInterval = null;
+        let displayedLogs = new Set();
+        
+        // 配置数据
+        let config = {
+            arkApiKey: '',
+            xueQiuCookie: '',
+            dailyLimit: 60,
+            delayMin: 30,
+            delayMax: 120,
+            testMode: false
+        };
+        
+        // DOM 元素
+        const arkApiKeyInput = document.getElementById('arkApiKey');
+        const xueQiuCookieInput = document.getElementById('xueQiuCookie');
+        const dailyLimitInput = document.getElementById('dailyLimit');
+        const delayMinInput = document.getElementById('delayMin');
+        const delayMaxInput = document.getElementById('delayMax');
+        const testModeCheckbox = document.getElementById('testMode');
+        const configModal = document.getElementById('configModal');
+        const menuConfig = document.getElementById('menuConfig');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelConfigBtn = document.getElementById('cancelConfigBtn');
+        const saveConfigModalBtn = document.getElementById('saveConfigModalBtn');
+        const menuFollowing = document.getElementById('menuFollowing');
+        const menuHot = document.getElementById('menuHot');
+        const menuRecommend = document.getElementById('menuRecommend');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const runStatusElement = document.getElementById('runStatus');
+        const processedArticlesElement = document.getElementById('processedArticles');
+        const successCommentsElement = document.getElementById('successComments');
+        const failedAttemptsElement = document.getElementById('failedAttempts');
+        const runLogElement = document.getElementById('runLog');
+        const startHotBtn = document.getElementById('startHotBtn');
+        const startRecommendBtn = document.getElementById('startRecommendBtn');
+        
+        // 确认更新弹窗元素
+        const confirmUpdateModal = document.getElementById('confirmUpdateModal');
+        const closeConfirmModalBtn = document.getElementById('closeConfirmModalBtn');
+        const cancelUpdateBtn = document.getElementById('cancelUpdateBtn');
+        const confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
+        const cachedCountElement = document.getElementById('cachedCount');
+        const cachedTimeElement = document.getElementById('cachedTime');
+        const cachedFollowingListElement = document.getElementById('cachedFollowingList');
+        
+        // 关注者评论弹窗元素
+        const followingCommentsModal = document.getElementById('followingCommentsModal');
+        const startFollowingBtn = document.getElementById('startFollowingBtn');
+        const closeFollowingModalBtn = document.getElementById('closeFollowingModalBtn');
+        const cancelFollowingBtn = document.getElementById('cancelFollowingBtn');
+        const startFollowingCommentsBtn = document.getElementById('startFollowingCommentsBtn');
+        const postsPerUserInput = document.getElementById('postsPerUser');
+        const followingTestModeCheckbox = document.getElementById('followingTestMode');
+        const followingListContainer = document.getElementById('followingListContainer');
+        const refreshFollowingListBtn = document.getElementById('refreshFollowingListBtn');
+        const selectAllFollowingBtn = document.getElementById('selectAllFollowingBtn');
+        const deselectAllFollowingBtn = document.getElementById('deselectAllFollowingBtn');
+        const selectedFollowingCount = document.getElementById('selectedFollowingCount');
+        let followingListData = [];
+        let selectedFollowingUsers = new Set();
+        
+        // 初始化
+        async function init() {
+            setupEventListeners();
+            await loadConfigFromServer();
+            // 初始化关注者评论按钮
+            resetFollowingButton();
+        }
+        
+        // 设置事件监听
+        function setupEventListeners() {
+            // 菜单点击
+            menuConfig.addEventListener('click', openConfigModal);
+            menuFollowing.addEventListener('click', checkAndShowFollowingList);
+            
+            // 启动按钮
+            startHotBtn.addEventListener('click', toggleHotCommenting);
+            startRecommendBtn.addEventListener('click', toggleRecommendCommenting);
+            
+            // 配置弹窗按钮
+            closeModalBtn.addEventListener('click', closeConfigModal);
+            cancelConfigBtn.addEventListener('click', closeConfigModal);
+            saveConfigModalBtn.addEventListener('click', saveConfig);
+            
+            // 确认更新弹窗按钮
+            closeConfirmModalBtn.addEventListener('click', closeConfirmModal);
+            cancelUpdateBtn.addEventListener('click', closeConfirmModal);
+            confirmUpdateBtn.addEventListener('click', () => {
+                closeConfirmModal();
+                doGetFollowingList();
+            });
+            
+            // 其他按钮
+            clearLogBtn.addEventListener('click', clearLog);
+            // 关注者评论按钮的点击事件在resetFollowingButton函数中设置
+            
+            // 关注者评论弹窗按钮
+            closeFollowingModalBtn.addEventListener('click', closeFollowingCommentsModal);
+            cancelFollowingBtn.addEventListener('click', closeFollowingCommentsModal);
+            startFollowingCommentsBtn.addEventListener('click', startFollowingComments);
+            refreshFollowingListBtn.addEventListener('click', loadFollowingListForSelection);
+            selectAllFollowingBtn.addEventListener('click', selectAllFollowing);
+            deselectAllFollowingBtn.addEventListener('click', deselectAllFollowing);
+            
+            // 点击弹窗外部关闭
+            configModal.addEventListener('click', (e) => {
+                if (e.target === configModal) {
+                    closeConfigModal();
+                }
+            });
+            confirmUpdateModal.addEventListener('click', (e) => {
+                if (e.target === confirmUpdateModal) {
+                    closeConfirmModal();
+                }
+            });
+            followingCommentsModal.addEventListener('click', (e) => {
+                if (e.target === followingCommentsModal) {
+                    closeFollowingCommentsModal();
+                }
+            });
+        }
+        
+        // 打开配置弹窗
+        function openConfigModal() {
+            updateConfigUI();
+            configModal.classList.add('show');
+        }
+        
+        // 关闭配置弹窗
+        function closeConfigModal() {
+            configModal.classList.remove('show');
+        }
+        
+        // 从服务器加载配置
+        async function loadConfigFromServer() {
+            try {
+                const response = await fetch('/api/config');
+                const result = await response.json();
+                
+                if (result.success && result.exists) {
+                    const serverConfig = result.data;
+                    if (serverConfig.arkApiKey) config.arkApiKey = serverConfig.arkApiKey;
+                    if (serverConfig.xueQiuCookie) config.xueQiuCookie = serverConfig.xueQiuCookie;
+                    if (serverConfig.dailyLimit) config.dailyLimit = serverConfig.dailyLimit;
+                    if (serverConfig.delayMin) config.delayMin = serverConfig.delayMin;
+                    if (serverConfig.delayMax) config.delayMax = serverConfig.delayMax;
+                    if (serverConfig.testMode !== undefined) config.testMode = serverConfig.testMode;
+                    
+                    addLog('已从服务器加载配置', 'success');
+                } else {
+                    addLog('服务器上没有保存的配置', 'info');
+                }
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                addLog('加载配置失败', 'error');
+            }
+        }
+        
+        // 保存配置
+        async function saveConfig() {
+            config.arkApiKey = arkApiKeyInput.value;
+            config.xueQiuCookie = xueQiuCookieInput.value;
+            config.dailyLimit = parseInt(dailyLimitInput.value) || 60;
+            config.delayMin = parseInt(delayMinInput.value) || 30;
+            config.delayMax = parseInt(delayMaxInput.value) || 120;
+            config.testMode = testModeCheckbox.checked;
+            
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    addLog('配置保存成功', 'success');
+                    closeConfigModal();
+                } else {
+                    addLog(`保存失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`保存失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 更新配置界面
+        function updateConfigUI() {
+            arkApiKeyInput.value = config.arkApiKey;
+            xueQiuCookieInput.value = config.xueQiuCookie;
+            dailyLimitInput.value = config.dailyLimit;
+            delayMinInput.value = config.delayMin;
+            delayMaxInput.value = config.delayMax;
+            testModeCheckbox.checked = config.testMode;
+        }
+        
+        // 检查并显示关注列表（带确认弹窗）
+        async function checkAndShowFollowingList() {
+            if (!config.xueQiuCookie) {
+                addLog('错误: 请先配置雪球Cookie', 'error');
+                openConfigModal();
+                return;
+            }
+            
+            try {
+                // 先检查本地缓存
+                const response = await fetch('/api/check-following-cache');
+                const result = await response.json();
+                
+                if (result.success && result.exists) {
+                    // 有缓存，显示确认弹窗
+                    cachedCountElement.textContent = result.data.totalCount;
+                    cachedTimeElement.textContent = result.data.updateTime;
+                    
+                    // 渲染缓存的关注者列表
+                    renderCachedFollowingList(result.data.followingList || []);
+                    
+                    openConfirmModal();
+                } else {
+                    // 无缓存，直接获取
+                    doGetFollowingList();
+                }
+            } catch (error) {
+                addLog(`检查缓存失败: ${error.message}`, 'error');
+                // 出错时直接获取
+                doGetFollowingList();
+            }
+        }
+        
+        // 渲染缓存的关注者列表
+        function renderCachedFollowingList(followingList) {
+            if (!followingList || followingList.length === 0) {
+                cachedFollowingListElement.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        <i class="fa fa-info-circle mr-2"></i>
+                        暂无关注者数据
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = followingList.map(user => `
+                <div class="flex items-center p-2 hover:bg-white rounded border-b border-gray-200 last:border-0">
+                    <img src="${user.profile_image || 'https://assets.imedao.com/ugc/images/avatar-default.png'}" 
+                         alt="${user.screen_name}" 
+                         class="w-10 h-10 rounded-full mr-3 flex-shrink-0"
+                         onerror="this.src='https://assets.imedao.com/ugc/images/avatar-default.png'">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-gray-800 truncate">${user.screen_name}</div>
+                        <div class="text-xs text-gray-500 truncate">${user.description || '暂无简介'}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            cachedFollowingListElement.innerHTML = html;
+        }
+        
+        // 打开确认更新弹窗
+        function openConfirmModal() {
+            confirmUpdateModal.classList.add('show');
+        }
+        
+        // 关闭确认更新弹窗
+        function closeConfirmModal() {
+            confirmUpdateModal.classList.remove('show');
+        }
+        
+        // 实际获取关注列表
+        async function doGetFollowingList() {
+            addLog('正在获取关注列表...', 'info');
+            
+            try {
+                const response = await fetch('/api/get-following-list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ xueQiuCookie: config.xueQiuCookie })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLog(`成功获取关注列表！共 ${result.data.totalCount} 个关注`, 'success');
+                    result.data.followingList.forEach((user, index) => {
+                        addLog(`${index + 1}. UID: ${user.uid}  昵称: ${user.screen_name}`, 'info');
+                    });
+                } else {
+                    addLog(`获取失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`获取失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 切换热门帖评论状态
+        async function toggleHotCommenting() {
+            if (isRunning && currentTask === 'hot') {
+                // 停止任务
+                await stopCommenting();
+            } else if (isRunning) {
+                addLog('错误: 已有其他任务在运行，请先停止', 'error');
+            } else {
+                // 启动任务
+                await startHotCommenting();
+            }
+        }
+        
+        // 切换推荐帖评论状态
+        async function toggleRecommendCommenting() {
+            if (isRunning && currentTask === 'recommend') {
+                // 停止任务
+                await stopCommenting();
+            } else if (isRunning) {
+                addLog('错误: 已有其他任务在运行，请先停止', 'error');
+            } else {
+                // 启动任务
+                await startRecommendCommenting();
+            }
+        }
+        
+        // 开始热门帖评论
+        async function startHotCommenting() {
+            if (!config.arkApiKey || !config.xueQiuCookie) {
+                addLog('错误: 请先完成系统配置', 'error');
+                openConfigModal();
+                return;
+            }
+            
+            try {
+                // 重置已显示日志集合
+                displayedLogs.clear();
+                
+                const response = await fetch(`${API_BASE_URL}/start-commenting`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        arkApiKey: config.arkApiKey,
+                        xueQiuCookie: config.xueQiuCookie,
+                        dailyLimit: config.dailyLimit,
+                        delayMin: config.delayMin,
+                        delayMax: config.delayMax,
+                        testMode: config.testMode,
+                        taskType: 'hot'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    isRunning = true;
+                    currentTask = 'hot';
+                    updateRunStatus('运行中 (热门帖)');
+                    
+                    // 切换按钮状态
+                    startHotBtn.innerHTML = '<i class="fa fa-stop mr-2"></i><span>停止热门帖回复</span>';
+                    startHotBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    startHotBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    
+                    // 禁用推荐帖按钮
+                    startRecommendBtn.disabled = true;
+                    startRecommendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    
+                    addLog('热门帖评论任务启动成功', 'success');
+                    
+                    // 定期获取运行状态和日志
+                    runInterval = setInterval(updateRunStats, 3000);
+                    
+                    // 延迟检查任务是否真的在运行
+                    setTimeout(async () => {
+                        const statusResponse = await fetch(`${API_BASE_URL}/run-status`);
+                        const statusResult = await statusResponse.json();
+                        
+                        if (statusResult.success && !statusResult.isRunning && isRunning) {
+                            // 任务已停止，显示日志
+                            if (statusResult.logs && statusResult.logs.length > 0) {
+                                statusResult.logs.forEach(log => {
+                                    addLog(log.message, log.type);
+                                });
+                            }
+                            resetButtonStates();
+                            addLog('任务已停止，请检查配置', 'error');
+                        }
+                    }, 5000); // 5秒后检查
+                } else {
+                    addLog(`错误: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 开始推荐帖评论
+        async function startRecommendCommenting() {
+            if (!config.arkApiKey || !config.xueQiuCookie) {
+                addLog('错误: 请先完成系统配置', 'error');
+                openConfigModal();
+                return;
+            }
+            
+            try {
+                // 重置已显示日志集合
+                displayedLogs.clear();
+                
+                const response = await fetch(`${API_BASE_URL}/start-commenting`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        arkApiKey: config.arkApiKey,
+                        xueQiuCookie: config.xueQiuCookie,
+                        dailyLimit: config.dailyLimit,
+                        delayMin: config.delayMin,
+                        delayMax: config.delayMax,
+                        testMode: config.testMode,
+                        taskType: 'recommend'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    isRunning = true;
+                    currentTask = 'recommend';
+                    updateRunStatus('运行中 (推荐帖)');
+                    
+                    // 切换按钮状态
+                    startRecommendBtn.innerHTML = '<i class="fa fa-stop mr-2"></i><span>停止推荐帖回复</span>';
+                    startRecommendBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    startRecommendBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    
+                    // 禁用热门帖按钮
+                    startHotBtn.disabled = true;
+                    startHotBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    
+                    addLog('推荐帖评论任务启动成功', 'success');
+                    
+                    // 定期获取运行状态和日志
+                    runInterval = setInterval(updateRunStats, 3000);
+                    
+                    // 延迟检查任务是否真的在运行
+                    setTimeout(async () => {
+                        const statusResponse = await fetch(`${API_BASE_URL}/run-status`);
+                        const statusResult = await statusResponse.json();
+                        
+                        if (statusResult.success && !statusResult.isRunning && isRunning) {
+                            // 任务已停止，显示日志
+                            if (statusResult.logs && statusResult.logs.length > 0) {
+                                statusResult.logs.forEach(log => {
+                                    addLog(log.message, log.type);
+                                });
+                            }
+                            resetButtonStates();
+                            addLog('任务已停止，请检查配置', 'error');
+                        }
+                    }, 5000); // 5秒后检查
+                } else {
+                    addLog(`错误: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 停止评论
+        async function stopCommenting() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/stop-commenting`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    addLog('评论任务已停止', 'info');
+                    // 等待后端完全停止任务
+                    await waitForTaskStop();
+                    resetButtonStates();
+                }
+            } catch (error) {
+                addLog(`停止任务时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        // 等待任务完全停止
+        async function waitForTaskStop() {
+            let retries = 0;
+            const maxRetries = 10;
+            
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/run-status`);
+                    const result = await response.json();
+                    
+                    if (!result.isRunning) {
+                        return; // 任务已完全停止
+                    }
+                } catch (error) {
+                    console.error('检查任务状态失败:', error);
+                }
+                
+                retries++;
+                await new Promise(resolve => setTimeout(resolve, 500)); // 等待500ms
+            }
+            
+            addLog('警告: 等待任务停止超时', 'warning');
+        }
+        
+        // 重置按钮状态
+        function resetButtonStates() {
+            isRunning = false;
+            currentTask = null;
+            updateRunStatus('未运行');
+            
+            // 恢复热门帖按钮
+            startHotBtn.innerHTML = '<i class="fa fa-fire mr-2"></i><span>启动热门帖回复</span>';
+            startHotBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+            startHotBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            startHotBtn.disabled = false;
+            startHotBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // 恢复推荐帖按钮
+            startRecommendBtn.innerHTML = '<i class="fa fa-star mr-2"></i><span>启动推荐帖回复</span>';
+            startRecommendBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+            startRecommendBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            startRecommendBtn.disabled = false;
+            startRecommendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // 恢复关注者评论按钮
+            resetFollowingButton();
+            
+            // 清除定时器
+            if (runInterval) {
+                clearInterval(runInterval);
+                runInterval = null;
+            }
+        }
+        
+        // 更新运行状态
+        function updateRunStatus(status) {
+            runStatusElement.textContent = status;
+            if (status.includes('运行中')) {
+                runStatusElement.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-600';
+            } else {
+                runStatusElement.className = 'px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600';
+            }
+        }
+        
+        // 更新运行统计
+        async function updateRunStats() {
+            try {
+                console.log('正在获取运行状态...');
+                const response = await fetch(`${API_BASE_URL}/run-status`);
+                const result = await response.json();
+                console.log('获取运行状态结果:', result);
+                
+                if (result.success) {
+                    console.log('获取运行状态成功，日志数量:', result.logs ? result.logs.length : 0);
+                    // 获取操作类型
+                    const actionType = result.data.actionType || 'comment';
+                    
+                    // 根据任务类型更新统计数据
+                    if (result.taskType === 'following') {
+                        // 关注者任务
+                        processedArticlesElement.textContent = result.data.processedUsers || 0;
+                        successCommentsElement.textContent = result.data.successComments || 0;
+                        failedAttemptsElement.textContent = result.data.failedAttempts || 0;
+                    } else {
+                        // 热门帖/推荐帖评论任务
+                        processedArticlesElement.textContent = result.data.processedArticles || 0;
+                        successCommentsElement.textContent = result.data.successComments || 0;
+                        failedAttemptsElement.textContent = result.data.failedAttempts || 0;
+                    }
+                    
+                    // 更新成功标签和图标
+                    const successLabelElement = document.getElementById('successLabel');
+                    const successIconElement = document.getElementById('successIcon');
+                    if (successLabelElement && successIconElement) {
+                        if (actionType === 'like') {
+                            successLabelElement.textContent = '成功点赞数';
+                            successIconElement.className = 'fa fa-thumbs-up text-green-600 text-xl';
+                        } else {
+                            successLabelElement.textContent = '成功发布评论';
+                            successIconElement.className = 'fa fa-check-circle text-green-600 text-xl';
+                        }
+                    }
+                    
+                    // 显示后端日志
+                    if (result.logs && result.logs.length > 0) {
+                        console.log('显示后端日志，数量:', result.logs.length);
+                        // 显示所有新日志
+                        result.logs.forEach((log, index) => {
+                            console.log(`添加日志 [${index}]:`, log.message, log.type);
+                            addLog(log.message, log.type);
+                        });
+                    } else {
+                        console.log('没有后端日志需要显示');
+                    }
+                    
+                    // 检查是否任务已完成
+                    if (!result.isRunning && isRunning) {
+                        resetButtonStates();
+                        if (result.taskType === 'following') {
+                            const actionTypeText = actionType === 'like' ? '点赞' : '评论';
+                            addLog(`关注者${actionTypeText}任务已完成`, 'success');
+                            addLog(`处理用户数: ${result.data.processedUsers || 0}`, 'info');
+                            addLog(`成功${actionTypeText}: ${result.data.successComments || 0}`, 'info');
+                            addLog(`失败次数: ${result.data.failedAttempts || 0}`, 'info');
+                        } else {
+                            addLog('任务已完成', 'success');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取运行状态失败:', error);
+            }
+        }
+        
+        // 添加日志
+        function addLog(message, type = 'info') {
+            // 注意：重复检查现在在 updateRunStats 函数中处理
+            
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'mb-2 p-2 rounded border-l-4 text-sm';
+            
+            let typeColor = 'border-gray-400 bg-gray-50';
+            let typeIcon = 'fa-info-circle';
+            if (type === 'success') {
+                typeColor = 'border-green-500 bg-green-50';
+                typeIcon = 'fa-check-circle';
+            } else if (type === 'error') {
+                typeColor = 'border-red-500 bg-red-50';
+                typeIcon = 'fa-times-circle';
+            } else if (type === 'warning') {
+                typeColor = 'border-yellow-500 bg-yellow-50';
+                typeIcon = 'fa-exclamation-triangle';
+            }
+            
+            logEntry.classList.add(...typeColor.split(' '));
+            logEntry.innerHTML = `
+                <i class="fa ${typeIcon} mr-2 ${type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : 'text-gray-400'}"></i>
+                <span class="text-gray-400 font-mono">[${timeStr}]</span>
+                <span class="ml-2">${message}</span>
+            `;
+            
+            // 清除默认提示
+            if (runLogElement.children.length === 1 && runLogElement.children[0].textContent === '系统准备就绪，等待开始...') {
+                runLogElement.innerHTML = '';
+            }
+            
+            runLogElement.appendChild(logEntry);
+            runLogElement.scrollTop = runLogElement.scrollHeight;
+        }
+        
+        // 清空日志
+        function clearLog() {
+            runLogElement.innerHTML = '<div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>';
+            displayedLogs.clear();
+        }
+        
+        // 加载关注者列表
+        async function loadFollowingListForSelection() {
+            followingListContainer.innerHTML = `
+                <div class="text-center text-gray-500 py-4">
+                    <i class="fa fa-spinner fa-spin mr-2"></i>
+                    正在加载关注者列表...
+                </div>
+            `;
+            
+            try {
+                // 先检查本地缓存
+                const cacheResponse = await fetch(`${API_BASE_URL}/check-following-cache`);
+                const cacheResult = await cacheResponse.json();
+                
+                if (cacheResult.success && cacheResult.exists) {
+                    // 使用本地缓存数据
+                    followingListData = cacheResult.data.followingList || [];
+                    renderFollowingList();
+                    addLog(`已加载 ${followingListData.length} 个关注者`, 'info');
+                } else {
+                    // 需要从服务器获取
+                    addLog('正在从服务器获取关注者列表...', 'info');
+                    
+                    const response = await fetch(`${API_BASE_URL}/get-following-list`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            xueQiuCookie: config.xueQiuCookie
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        followingListData = result.data.followingList || [];
+                        renderFollowingList();
+                        addLog(`成功获取 ${followingListData.length} 个关注者`, 'success');
+                    } else {
+                        throw new Error(result.message);
+                    }
+                }
+            } catch (error) {
+                followingListContainer.innerHTML = `
+                    <div class="text-center text-red-500 py-4">
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        加载失败: ${error.message}
+                    </div>
+                `;
+                addLog(`加载关注者列表失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 渲染关注者列表
+        function renderFollowingList() {
+            if (followingListData.length === 0) {
+                followingListContainer.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        <i class="fa fa-info-circle mr-2"></i>
+                        暂无关注者数据
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = followingListData.map((user, index) => `
+                <div class="flex items-center p-2 hover:bg-white rounded cursor-pointer border-b border-gray-200 last:border-0" 
+                     onclick="toggleFollowingSelection('${user.uid}', '${user.screen_name}')">
+                    <input type="checkbox" 
+                           id="following-${user.uid}" 
+                           class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded mr-3"
+                           ${selectedFollowingUsers.has(String(user.uid)) ? 'checked' : ''}
+                           onclick="event.stopPropagation(); toggleFollowingSelection('${user.uid}', '${user.screen_name}')">
+                    <img src="${user.profile_image || 'https://assets.imedao.com/ugc/images/avatar-default.png'}" 
+                         alt="${user.screen_name}" 
+                         class="w-8 h-8 rounded-full mr-3">
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-800">${user.screen_name}</div>
+                        <div class="text-xs text-gray-500">${user.description || '暂无简介'}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            followingListContainer.innerHTML = html;
+            updateSelectedCount();
+        }
+        
+        // 切换关注者选择状态
+        function toggleFollowingSelection(uid, screenName) {
+            // 确保uid是字符串类型，保持一致性
+            const uidStr = String(uid);
+            const checkbox = document.getElementById(`following-${uidStr}`);
+            if (selectedFollowingUsers.has(uidStr)) {
+                selectedFollowingUsers.delete(uidStr);
+                if (checkbox) checkbox.checked = false;
+            } else {
+                selectedFollowingUsers.add(uidStr);
+                if (checkbox) checkbox.checked = true;
+            }
+            updateSelectedCount();
+        }
+        
+        // 更新已选择数量显示
+        function updateSelectedCount() {
+            selectedFollowingCount.textContent = `已选择 ${selectedFollowingUsers.size} 个用户`;
+        }
+        
+        // 全选关注者
+        function selectAllFollowing() {
+            followingListData.forEach(user => {
+                selectedFollowingUsers.add(String(user.uid));
+            });
+            renderFollowingList();
+        }
+        
+        // 取消全选关注者
+        function deselectAllFollowing() {
+            selectedFollowingUsers.clear();
+            renderFollowingList();
+        }
+        
+        // 打开关注者评论弹窗
+        function openFollowingCommentsModal() {
+            if (!config.arkApiKey || !config.xueQiuCookie) {
+                addLog('错误: 请先完成系统配置', 'error');
+                openConfigModal();
+                return;
+            }
+            followingCommentsModal.classList.add('show');
+            // 加载关注者列表
+            loadFollowingListForSelection();
+        }
+        
+        // 关闭关注者评论弹窗
+        function closeFollowingCommentsModal() {
+            followingCommentsModal.classList.remove('show');
+        }
+        
+        // 启动关注者评论
+        async function startFollowingComments() {
+            const postsPerUser = parseInt(postsPerUserInput.value) || 10;
+            const testMode = followingTestModeCheckbox.checked;
+            
+            // 获取操作类型
+            const actionType = document.querySelector('input[name="actionType"]:checked')?.value || 'comment';
+            
+            // 检查是否选择了用户
+            if (selectedFollowingUsers.size === 0) {
+                addLog('错误: 请至少选择一个关注者', 'error');
+                return;
+            }
+            
+            // 获取选择的用户列表
+            const selectedUsers = followingListData.filter(user => selectedFollowingUsers.has(String(user.uid)));
+            
+            // 关闭弹窗
+            closeFollowingCommentsModal();
+            
+            // 检查是否有其他任务在运行
+            if (isRunning) {
+                addLog('错误: 已有其他任务在运行，请先停止', 'error');
+                return;
+            }
+            
+            const actionTypeText = actionType === 'like' ? '点赞' : '评论';
+            addLog(`正在启动关注者${actionTypeText}任务...`, 'info');
+            addLog(`配置: ${selectedUsers.length}个用户, 每个用户${postsPerUser}个帖子, 操作类型: ${actionTypeText}, 测试模式: ${testMode}`, 'info');
+            addLog(`选择的用户: ${selectedUsers.map(u => u.screen_name).join(', ')}`, 'info');
+            
+            addLog('发送请求到后端API...', 'info');
+            
+            try {
+                // 发送POST请求启动任务
+                const response = await fetch('/api/start-following-comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        selectedUsers: selectedUsers,
+                        postsPerUser: postsPerUser,
+                        testMode: testMode,
+                        actionType: actionType
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    // 请求成功后才切换按钮状态
+                    // 切换按钮状态
+                    startFollowingBtn.innerHTML = '<i class="fa fa-stop mr-2"></i><span>停止关注者评论</span>';
+                    startFollowingBtn.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+                    startFollowingBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    startFollowingBtn.onclick = stopFollowingComments;
+                    
+                    // 禁用其他按钮
+                    startHotBtn.disabled = true;
+                    startHotBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    startRecommendBtn.disabled = true;
+                    startRecommendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    
+                    isRunning = true;
+                    currentTask = 'following';
+                    updateRunStatus('运行中 (关注者评论)');
+                    
+                    addLog('关注者评论任务启动成功', 'success');
+                    
+                    // 定期获取运行状态和日志
+                    runInterval = setInterval(updateRunStats, 3000);
+                    
+                    // 延迟检查任务是否真的在运行
+                    setTimeout(async () => {
+                        const statusResponse = await fetch(`${API_BASE_URL}/run-status`);
+                        const statusResult = await statusResponse.json();
+                        
+                        if (statusResult.success && !statusResult.isRunning && isRunning) {
+                            // 任务已停止，显示日志
+                            if (statusResult.logs && statusResult.logs.length > 0) {
+                                statusResult.logs.forEach(log => {
+                                    addLog(log.message, log.type);
+                                });
+                            }
+                            resetButtonStates();
+                            addLog('任务已停止，请检查配置', 'error');
+                        }
+                    }, 5000); // 5秒后检查
+                } else {
+                    addLog(`错误: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`错误: ${error.message}`, 'error');
+                addLog('请检查网络连接或后端服务是否正常', 'error');
+            }
+        }
+        
+        // 停止关注者评论
+        async function stopFollowingComments() {
+            addLog('正在停止关注者评论任务...', 'info');
+            
+            try {
+                // 发送停止请求到后端
+                const response = await fetch(`${API_BASE_URL}/stop-commenting`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    addLog(result.message, 'success');
+                } else {
+                    addLog(`停止任务失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`停止任务请求失败: ${error.message}`, 'error');
+            }
+            
+            // 恢复按钮状态
+            resetButtonStates();
+        }
+        
+        // 重置关注者评论按钮
+        function resetFollowingButton() {
+            startFollowingBtn.innerHTML = '<i class="fa fa-users mr-2"></i><span>启动关注者评论</span>';
+            startFollowingBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+            startFollowingBtn.classList.add('bg-purple-500', 'hover:bg-purple-600');
+            startFollowingBtn.onclick = openFollowingCommentsModal;
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
