@@ -5,7 +5,7 @@ import json
 
 # 1. 你的配置
 #XUEQIU_COOKIE = "xq_a_token=XXX; xq_r_token=XXX"  # 浏览器F12复制
-XUEQIU_COOKIE = "xq_a_token=646296e3dc9581be9ca594e0177e818eef6e6977; xq_r_token=d0bcc78d11b5fdc4f3c6b2e6dd180ed793502600"  # 浏览器F12复制
+XUEQIU_COOKIE = "xq_a_token=d60873c46cdcf7dfa29911900810768e779318a4; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjU2Nzg1OTczMjYsImlzcyI6InVjIiwiZXhwIjoxNzc3NzcxODAwLCJjdG0iOjE3NzUxNzk4MDAwMjMsImNpZCI6ImQ5ZDBuNEFadXAifQ.O7yHgZo1kPBoHyiRabvJEJeJbpnqtzcszqg9BjPzRTRyvTmtGK-1q8r1W-B8i8mrktJdg8NIUeGZHpJLthgtriGsw6DP61kGTE566TkzSIU8vPESw0fgQArDOs-ospFMtykSrR9EWfkJ5CevE9sfeSEya2Z0dZjnF5TzFIBaxPBGlOjWNxfZRfG4IVDobK2jIRroyf6jUA1ehM91n87E0lNPCz4vM7ppSrJTML5PDO8V8oDb1VJHrU0dM1VBjoB0_rc44Fr5NtVpCD2Q3SXmlL2rLyA_-V9wqWFqGUUAyCa2r2324nBNdePJofb4XJCHfeMOFombC2Gs43ba-xGhOw; xq_r_token=1c75559aedff3a301c44a9d3881b136637f01197"  # 浏览器F12复制
 ARK_API_KEY = "39e67fe4-bbd5-4c0f-bf63-8629f873038b"
 COMMENT_DELAY = (30, 120)  # 秒
 DAILY_LIMIT = 60
@@ -67,18 +67,37 @@ def check_cookie_validity():
         print(f"✗ 检查失败: {str(e)}")
         return False
 
-# 4. 抓取热门文章 - 支持多个API端点
+# 4. 抓取热门文章 - 改进版
 def fetch_hot_articles():
-    """抓取雪球热门文章，使用多个API端点"""
+    """抓取雪球热门文章，改进版"""
     global current_max_id, current_page, processed_articles
     
+    # 创建会话
+    session = requests.Session()
+    
+    # 完整的请求头
     headers = {
         "Cookie": XUEQIU_COOKIE,
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
-        "Accept": "application/json",
-        "Referer": "https://xueqiu.com",
-        "X-Requested-With": "XMLHttpRequest"
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://xueqiu.com/",
+        "Origin": "https://xueqiu.com",
+        "X-Requested-With": "XMLHttpRequest",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin"
     }
+    
+    # 先访问首页建立会话
+    print("访问雪球首页建立会话...")
+    try:
+        home_response = session.get("https://xueqiu.com/", headers=headers)
+        print(f"首页访问状态码: {home_response.status_code}")
+    except Exception as e:
+        print(f"访问首页失败: {str(e)}")
+        return []
     
     # 使用多个API端点来获取更多文章
     apis = [
@@ -96,6 +115,17 @@ def fetch_hot_articles():
             "url": "https://xueqiu.com/v4/statuses/public_timeline_by_category.json",
             "params": {"since_id": -1, "max_id": -1, "count": 20, "category": -1},
             "name": "全部文章"
+        },
+        # 尝试新的API端点
+        {
+            "url": "https://xueqiu.com/stocks/statuses/hot.json",
+            "params": {"count": 20},
+            "name": "股票热门"
+        },
+        {
+            "url": "https://xueqiu.com/statuses/stock.json",
+            "params": {"count": 20},
+            "name": "股票动态"
         }
     ]
     
@@ -111,82 +141,109 @@ def fetch_hot_articles():
             params["max_id"] = current_max_id
         
         try:
-            resp = requests.get(url, headers=headers, params=params, timeout=10.0)
-            resp.raise_for_status()
-            
-            # 打印响应内容以便调试
+            resp = session.get(url, headers=headers, params=params, timeout=10.0)
             print(f"API响应状态码: {resp.status_code}")
             
-            data = resp.json()
-            
-            # 保存响应到文件
-            with open(f"{api['name'].replace(' ', '_')}_articles.json", "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            
-            # 检查响应结构
-            if "items" in data:
-                # 热门列表API格式
-                items = data.get("items", [])
-                print(f"获取到 {len(items)} 个项目")
-                
-                # 更新分页信息
-                if "next_max_id" in data:
-                    current_max_id = data["next_max_id"]
-                    print(f"下一页max_id: {current_max_id}")
-                else:
-                    # 如果没有next_max_id，增加页码
-                    current_page += 1
-                    print(f"没有next_max_id，页码增加到: {current_page}")
-                
-                # 转换items格式为我们需要的结构，并去重
-                for item in items:
-                    if "original_status" in item:
-                        article = item["original_status"]
-                        article_id = article.get("id")
+            if resp.status_code == 200:
+                try:
+                    data = resp.json()
+                    
+                    # 保存响应到文件
+                    with open(f"{api['name'].replace(' ', '_')}_articles.json", "w", encoding="utf-8") as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+                    
+                    # 检查响应结构
+                    if "items" in data:
+                        # 热门列表API格式
+                        items = data.get("items", [])
+                        print(f"获取到 {len(items)} 个项目")
                         
-                        # 跳过已处理的文章
-                        if article_id in processed_articles:
-                            continue
+                        # 更新分页信息
+                        if "next_max_id" in data:
+                            current_max_id = data["next_max_id"]
+                            print(f"下一页max_id: {current_max_id}")
+                        else:
+                            # 如果没有next_max_id，增加页码
+                            current_page += 1
+                            print(f"没有next_max_id，页码增加到: {current_page}")
                         
-                        # 提取作者UID
-                        user = article.get("user", {})
-                        user_id = user.get("id", "")
-                        
-                        all_articles.append({
-                            "id": article_id,
-                            "title": article.get("title"),
-                            "text": article.get("description", ""),
-                            "user_id": user_id
-                        })
-            elif "list" in data:
-                # 公共时间线API格式
-                items = data.get("list", [])
-                print(f"获取到 {len(items)} 个项目")
-                
-                for item in items:
-                        if "data" in item:
-                            try:
-                                data_str = item["data"]
-                                article_data = json.loads(data_str)
-                                article_id = article_data.get("id")
+                        # 转换items格式为我们需要的结构，并去重
+                        for item in items:
+                            if "original_status" in item:
+                                article = item["original_status"]
+                                article_id = article.get("id")
                                 
                                 # 跳过已处理的文章
                                 if article_id in processed_articles:
                                     continue
                                 
                                 # 提取作者UID
-                                user_id = article_data.get("user_id", "")
+                                user = article.get("user", {})
+                                user_id = user.get("id", "")
                                 
                                 all_articles.append({
                                     "id": article_id,
-                                    "title": article_data.get("title", article_data.get("text", "无标题")),
-                                    "text": article_data.get("description", article_data.get("text", "")),
+                                    "title": article.get("title"),
+                                    "text": article.get("description", ""),
                                     "user_id": user_id
                                 })
-                            except Exception as e:
-                                pass
+                    elif "list" in data:
+                        # 公共时间线API格式
+                        items = data.get("list", [])
+                        print(f"获取到 {len(items)} 个项目")
+                        
+                        for item in items:
+                            if "data" in item:
+                                try:
+                                    data_str = item["data"]
+                                    article_data = json.loads(data_str)
+                                    article_id = article_data.get("id")
+                                    
+                                    # 跳过已处理的文章
+                                    if article_id in processed_articles:
+                                        continue
+                                        
+                                    # 提取作者UID
+                                    user_id = article_data.get("user_id", "")
+                                    
+                                    all_articles.append({
+                                        "id": article_id,
+                                        "title": article_data.get("title", article_data.get("text", "无标题")),
+                                        "text": article_data.get("description", article_data.get("text", "")),
+                                        "user_id": user_id
+                                    })
+                                except Exception as e:
+                                    pass
+                    elif "statuses" in data:
+                        # 可能的新格式
+                        items = data.get("statuses", [])
+                        print(f"获取到 {len(items)} 个项目")
+                        
+                        for item in items:
+                            article_id = item.get("id")
+                            
+                            # 跳过已处理的文章
+                            if article_id in processed_articles:
+                                continue
+                            
+                            # 提取作者UID
+                            user = item.get("user", {})
+                            user_id = user.get("id", "")
+                            
+                            all_articles.append({
+                                "id": article_id,
+                                "title": item.get("title", item.get("text", "无标题")),
+                                "text": item.get("description", item.get("text", "")),
+                                "user_id": user_id
+                            })
+                    else:
+                        print(f"未知的响应结构: {list(data.keys())}")
+                except Exception as e:
+                    print(f"解析响应失败: {str(e)}")
+                    print(f"响应内容: {resp.text[:500]}")
             else:
-                print(f"未知的响应结构: {list(data.keys())}")
+                print(f"API请求失败，状态码: {resp.status_code}")
+                print(f"响应内容: {resp.text[:500]}")
         except Exception as e:
             print(f"抓取文章失败: {str(e)}")
     
@@ -207,6 +264,9 @@ def post_comment(article_id, content):
     """使用雪球API发布评论"""
     print("开始使用API发布评论...")
     
+    # 创建会话
+    session = requests.Session()
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
         "Referer": "https://xueqiu.com/",
@@ -224,9 +284,10 @@ def post_comment(article_id, content):
     }
     
     try:
-        text_check_response = requests.post(text_check_url, headers=headers, data=text_check_data)
+        text_check_response = session.post(text_check_url, headers=headers, data=text_check_data)
         if text_check_response.status_code != 200:
             print("❌ 文本审核失败")
+            print(f"响应内容: {text_check_response.text}")
             return {"success": False, "message": "文本审核失败"}
     except Exception as e:
         print(f"❌ 文本审核请求失败: {str(e)}")
@@ -243,9 +304,10 @@ def post_comment(article_id, content):
     }
     
     try:
-        token_response = requests.get(token_url, headers=headers, params=token_params)
+        token_response = session.get(token_url, headers=headers, params=token_params)
         if token_response.status_code != 200:
             print("❌ 获取token失败")
+            print(f"响应内容: {token_response.text}")
             return {"success": False, "message": "获取token失败"}
         
         token_data = token_response.json()
@@ -273,7 +335,7 @@ def post_comment(article_id, content):
     }
     
     try:
-        reply_response = requests.post(reply_url, headers=headers, data=reply_data)
+        reply_response = session.post(reply_url, headers=headers, data=reply_data)
         if reply_response.status_code == 200:
             reply_data = reply_response.json()
             # 检查响应是否包含评论ID
@@ -288,6 +350,7 @@ def post_comment(article_id, content):
                 return {"success": False, "message": "评论发布失败: 响应格式异常"}
         else:
             print("❌ 评论发布请求失败")
+            print(f"响应内容: {reply_response.text}")
             return {"success": False, "message": f"评论发布请求失败，状态码: {reply_response.status_code}"}
     except Exception as e:
         print(f"❌ 发布评论请求失败: {str(e)}")
@@ -297,6 +360,9 @@ def post_comment(article_id, content):
 def follow_user(user_id):
     """关注雪球作者"""
     print(f"开始关注作者，UID: {user_id}")
+    
+    # 创建会话
+    session = requests.Session()
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
@@ -313,7 +379,7 @@ def follow_user(user_id):
     }
     
     try:
-        follow_response = requests.post(follow_url, headers=headers, data=follow_data)
+        follow_response = session.post(follow_url, headers=headers, data=follow_data)
         if follow_response.status_code == 200:
             follow_result = follow_response.json()
             # 检查是否关注成功
@@ -325,6 +391,7 @@ def follow_user(user_id):
                 return {"success": False, "message": f"关注作者失败: {follow_result}"}
         else:
             print(f"❌ 关注作者请求失败，状态码: {follow_response.status_code}")
+            print(f"响应内容: {follow_response.text}")
             return {"success": False, "message": f"关注作者请求失败，状态码: {follow_response.status_code}"}
     except Exception as e:
         print(f"❌ 关注作者请求失败: {str(e)}")

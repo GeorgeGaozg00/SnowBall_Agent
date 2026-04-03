@@ -138,8 +138,17 @@
             </button>
         </div>
         
+        <!-- 发布功能区域 -->
+        <div class="px-4 py-4 border-t border-white border-opacity-20">
+            <p class="text-white text-opacity-50 text-xs mb-3">发布功能</p>
+            <button id="publishPostBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+                <i class="fa fa-edit mr-2"></i>
+                <span>发布雪球帖</span>
+            </button>
+        </div>
+        
         <!-- 底部信息 -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-20">
+        <div class="p-4 border-t border-white border-opacity-20">
             <p class="text-white text-opacity-50 text-xs text-center">© 2026 雪球自动评论系统</p>
         </div>
     </aside>
@@ -586,6 +595,127 @@
             </div>
         </div>
     </div>
+    
+    <!-- 发布雪球帖弹窗 -->
+    <div id="publishPostModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <!-- 弹窗头部 -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-indigo-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-edit mr-2"></i>
+                    发布雪球帖
+                </h3>
+                <button id="closePublishModalBtn" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
+                <!-- 发布类型选择 -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-file-text mr-1 text-indigo-600"></i>
+                        发布类型
+                    </label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="postType" value="discussion" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">
+                                <i class="fa fa-comment mr-1"></i>发讨论
+                            </span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="postType" value="article" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">
+                                <i class="fa fa-file-alt mr-1"></i>写长文
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 专栏选项（仅长文时显示） -->
+                <div id="columnOption" class="mb-4 hidden">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="publishAsColumn" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-700">
+                            <i class="fa fa-bookmark mr-1"></i>发表到专栏
+                        </span>
+                    </label>
+                </div>
+                
+                <!-- 提示词输入 -->
+                <div class="mb-4">
+                    <label for="aiPrompt" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-lightbulb-o mr-1 text-indigo-600"></i>
+                        AI提示词（简单描述）
+                    </label>
+                    <textarea id="aiPrompt" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" rows="3" placeholder="请输入您想要AI生成的内容描述...&#10;例如：茅台投资价值分析"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">简单描述您想要的内容，AI会先为您生成详细的雪球风格提示词</p>
+                </div>
+                
+                <!-- 详细提示词显示（可折叠） -->
+                <div id="detailedPromptSection" class="mb-4 hidden">
+                    <div class="flex items-center justify-between mb-2 cursor-pointer" onclick="toggleDetailedPrompt()">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fa fa-file-text-o mr-1 text-indigo-600"></i>
+                            AI生成的详细提示词（点击展开/折叠）
+                        </label>
+                        <i id="detailedPromptToggle" class="fa fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div id="detailedPromptContent" class="w-full px-4 py-3 border border-indigo-200 rounded-lg bg-indigo-50 max-h-40 overflow-y-auto">
+                        <p class="text-gray-500 text-sm">详细提示词将在这里显示...</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">这是AI根据您的简单描述生成的详细写作提示词</p>
+                </div>
+                
+                <!-- 生成的文章标题（仅长文时显示） -->
+                <div id="articleTitleSection" class="mb-4 hidden">
+                    <label for="articleTitle" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-heading mr-1 text-indigo-600"></i>
+                        文章标题
+                    </label>
+                    <input type="text" id="articleTitle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="AI将自动生成标题">
+                    <p class="text-xs text-gray-500 mt-1">可以手动修改AI生成的标题</p>
+                </div>
+                
+                <!-- 生成的内容预览 -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-eye mr-1 text-indigo-600"></i>
+                        内容预览
+                    </label>
+                    <div id="contentPreview" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 min-h-32 max-h-64 overflow-y-auto">
+                        <p class="text-gray-400 text-sm">AI生成的内容将显示在这里...</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">可以手动编辑AI生成的内容</p>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex space-x-3 mb-4">
+                    <button id="generateContentBtn" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
+                        <i class="fa fa-magic mr-2"></i>
+                        生成内容
+                    </button>
+                    <button id="regenerateContentBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors hidden">
+                        <i class="fa fa-refresh mr-2"></i>
+                        重新生成
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button id="cancelPublishBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button id="submitPublishBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                    <i class="fa fa-paper-plane mr-2"></i>
+                    发布
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // API基础URL
@@ -681,6 +811,25 @@
         let followingListData = [];
         let selectedFollowingUsers = new Set();
         
+        // 发布雪球帖弹窗元素
+        const publishPostModal = document.getElementById('publishPostModal');
+        const openPublishPostBtn = document.getElementById('publishPostBtn');  // 左侧的"发布雪球帖"按钮
+        const closePublishModalBtn = document.getElementById('closePublishModalBtn');
+        const cancelPublishBtn = document.getElementById('cancelPublishBtn');
+        const submitPublishBtn = document.getElementById('submitPublishBtn');  // 弹窗内的"发布"按钮
+        const generateContentBtn = document.getElementById('generateContentBtn');
+        const regenerateContentBtn = document.getElementById('regenerateContentBtn');
+        const aiPromptInput = document.getElementById('aiPrompt');
+        const articleTitleInput = document.getElementById('articleTitle');
+        const contentPreviewDiv = document.getElementById('contentPreview');
+        const columnOptionDiv = document.getElementById('columnOption');
+        const articleTitleSection = document.getElementById('articleTitleSection');
+        const publishAsColumnCheckbox = document.getElementById('publishAsColumn');
+        const postTypeRadios = document.querySelectorAll('input[name="postType"]');
+        const detailedPromptSection = document.getElementById('detailedPromptSection');
+        const detailedPromptContent = document.getElementById('detailedPromptContent');
+        const detailedPromptToggle = document.getElementById('detailedPromptToggle');
+        
         // 初始化
         async function init() {
             setupEventListeners();
@@ -696,6 +845,7 @@
             menuCommentConfig.addEventListener('click', openCommentConfigModal);
             menuCookieConfig.addEventListener('click', openCookieConfigModal);
             menuFollowing.addEventListener('click', checkAndShowFollowingList);
+            openPublishPostBtn.addEventListener('click', openPublishPostModal);
             
             // 启动按钮
             startHotBtn.addEventListener('click', toggleHotCommenting);
@@ -732,6 +882,18 @@
             selectAllFollowingBtn.addEventListener('click', selectAllFollowing);
             deselectAllFollowingBtn.addEventListener('click', deselectAllFollowing);
             
+            // 发布雪球帖弹窗按钮
+            closePublishModalBtn.addEventListener('click', closePublishPostModal);
+            cancelPublishBtn.addEventListener('click', closePublishPostModal);
+            generateContentBtn.addEventListener('click', generateContent);
+            regenerateContentBtn.addEventListener('click', generateContent);
+            submitPublishBtn.addEventListener('click', publishPost);
+            
+            // 发布类型切换
+            postTypeRadios.forEach(radio => {
+                radio.addEventListener('change', handlePostTypeChange);
+            });
+            
             // 点击弹窗外部关闭
             modelConfigModal.addEventListener('click', (e) => {
                 if (e.target === modelConfigModal) {
@@ -756,6 +918,11 @@
             followingCommentsModal.addEventListener('click', (e) => {
                 if (e.target === followingCommentsModal) {
                     closeFollowingCommentsModal();
+                }
+            });
+            publishPostModal.addEventListener('click', (e) => {
+                if (e.target === publishPostModal) {
+                    closePublishPostModal();
                 }
             });
         }
@@ -1670,6 +1837,209 @@
             startFollowingBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
             startFollowingBtn.classList.add('bg-purple-500', 'hover:bg-purple-600');
             startFollowingBtn.onclick = openFollowingCommentsModal;
+        }
+        
+        // ========== 发布雪球帖功能 ==========
+        
+        // 打开发布雪球帖弹窗
+        async function openPublishPostModal() {
+            // 确保配置已加载
+            await loadConfigFromServer();
+            
+            // 检查配置
+            let apiKey = '';
+            const selectedModel = config.selectedModel || 'ark';
+            
+            if (selectedModel === 'ark') {
+                apiKey = config.models.ark.apiKey;
+            } else if (selectedModel === 'openai') {
+                apiKey = config.models.openai.apiKey;
+            } else if (selectedModel === 'baidu') {
+                apiKey = config.models.baidu.apiKey;
+            } else if (selectedModel === 'alibaba') {
+                apiKey = config.models.alibaba.apiKey;
+            }
+            
+            if (!apiKey || !config.xueQiuCookie) {
+                addLog('错误: 请先完成系统配置', 'error');
+                openModelConfigModal();
+                return;
+            }
+            
+            // 重置表单
+            aiPromptInput.value = '';
+            articleTitleInput.value = '';
+            contentPreviewDiv.innerHTML = '<p class="text-gray-400 text-sm">AI生成的内容将显示在这里...</p>';
+            regenerateContentBtn.classList.add('hidden');
+            
+            // 默认选择发讨论
+            document.querySelector('input[name="postType"][value="discussion"]').checked = true;
+            handlePostTypeChange();
+            
+            publishPostModal.classList.add('show');
+        }
+        
+        // 关闭发布雪球帖弹窗
+        function closePublishPostModal() {
+            publishPostModal.classList.remove('show');
+        }
+        
+        // 处理发布类型切换
+        function handlePostTypeChange() {
+            const postType = document.querySelector('input[name="postType"]:checked').value;
+            
+            if (postType === 'article') {
+                columnOptionDiv.classList.remove('hidden');
+                articleTitleSection.classList.remove('hidden');
+            } else {
+                columnOptionDiv.classList.add('hidden');
+                articleTitleSection.classList.add('hidden');
+            }
+        }
+        
+        // 生成内容
+        async function generateContent() {
+            const prompt = aiPromptInput.value.trim();
+            
+            if (!prompt) {
+                addLog('错误: 请输入AI提示词', 'error');
+                return;
+            }
+            
+            const postType = document.querySelector('input[name="postType"]:checked').value;
+            
+            addLog('【第1轮】正在生成雪球风格的详细提示词...', 'info');
+            addLog('根据您的简单描述，AI正在分析并生成详细的写作提示词...', 'info');
+            generateContentBtn.disabled = true;
+            generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第1轮生成中...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/generate-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        postType: postType,
+                        selectedModel: config.selectedModel,
+                        models: config.models
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLog('【第1轮】详细提示词生成成功', 'success');
+                    
+                    // 显示详细提示词
+                    if (result.detailedPrompt) {
+                        detailedPromptSection.classList.remove('hidden');
+                        detailedPromptContent.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${result.detailedPrompt}</div>`;
+                        addLog('详细提示词已生成，可在下方查看', 'info');
+                    }
+                    
+                    addLog('【第2轮】正在根据详细提示词生成正式文章...', 'info');
+                    
+                    // 显示生成的内容
+                    contentPreviewDiv.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${result.content}</div>`;
+                    
+                    // 如果是长文，设置标题
+                    if (postType === 'article' && result.title) {
+                        articleTitleInput.value = result.title;
+                    }
+                    
+                    addLog('【第2轮】正式文章生成成功', 'success');
+                    addLog('两轮交互完成，内容已生成', 'success');
+                    
+                    // 显示重新生成按钮
+                    regenerateContentBtn.classList.remove('hidden');
+                    
+                    // 保存生成的内容到全局变量
+                    window.generatedContent = result.content;
+                    window.generatedTitle = result.title;
+                } else {
+                    addLog(`内容生成失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`内容生成请求失败: ${error.message}`, 'error');
+            } finally {
+                generateContentBtn.disabled = false;
+                generateContentBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>生成内容';
+            }
+        }
+        
+        // 切换详细提示词显示
+        function toggleDetailedPrompt() {
+            const content = document.getElementById('detailedPromptContent');
+            const toggle = document.getElementById('detailedPromptToggle');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                toggle.classList.remove('fa-chevron-right');
+                toggle.classList.add('fa-chevron-down');
+            } else {
+                content.classList.add('hidden');
+                toggle.classList.remove('fa-chevron-down');
+                toggle.classList.add('fa-chevron-right');
+            }
+        }
+        
+        // 发布帖子
+        async function publishPost() {
+            const postType = document.querySelector('input[name="postType"]:checked').value;
+            const content = contentPreviewDiv.innerText.trim();
+            
+            if (!content || content === 'AI生成的内容将显示在这里...') {
+                addLog('错误: 请先生成内容', 'error');
+                return;
+            }
+            
+            let title = '';
+            let isColumn = false;
+            
+            if (postType === 'article') {
+                title = articleTitleInput.value.trim();
+                if (!title) {
+                    addLog('错误: 请输入文章标题', 'error');
+                    return;
+                }
+                isColumn = publishAsColumnCheckbox.checked;
+            }
+            
+            addLog(`正在发布${postType === 'article' ? '长文' : '讨论'}...`, 'info');
+            submitPublishBtn.disabled = true;
+            submitPublishBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>发布中...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/publish-post`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        postType: postType,
+                        content: content,
+                        title: title,
+                        isColumn: isColumn,
+                        xueQiuCookie: config.xueQiuCookie
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLog(`发布成功！帖子ID: ${result.postId}`, 'success');
+                    closePublishPostModal();
+                } else {
+                    addLog(`发布失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`发布请求失败: ${error.message}`, 'error');
+            } finally {
+                submitPublishBtn.disabled = false;
+                submitPublishBtn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>发布';
+            }
         }
         
         // 页面加载完成后初始化
