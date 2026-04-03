@@ -7,54 +7,122 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
+        /* 全局样式 */
+        :root {
+            --primary-color: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --secondary-color: #4f46e5;
+            --accent-color: #f59e0b;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #f8fafc;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+        
+        /* 滚动条样式 */
         .scrollbar-thin {
             scrollbar-width: thin;
         }
+        
         .scrollbar-thin::-webkit-scrollbar {
             width: 6px;
         }
+        
         .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.1);
+            background: rgba(15, 23, 42, 0.05);
+            border-radius: 3px;
         }
+        
         .scrollbar-thin::-webkit-scrollbar-thumb {
             background-color: rgba(59, 130, 246, 0.5);
             border-radius: 3px;
         }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(59, 130, 246, 0.7);
+        }
+        
         /* 左侧菜单栏 */
         .sidebar {
             position: fixed;
             left: 0;
             top: 0;
             bottom: 0;
-            width: 220px;
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            width: 240px;
+            background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary-color) 100%);
             z-index: 1000;
             overflow-y: auto;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
         }
+        
         /* 主内容区域 */
         .main-content {
-            margin-left: 220px;
+            margin-left: 240px;
             min-height: 100vh;
+            background-color: var(--bg-primary);
         }
+        
         /* 菜单项 */
         .menu-item {
             display: flex;
             align-items: center;
-            padding: 14px 20px;
+            padding: 14px 24px;
             color: rgba(255, 255, 255, 0.8);
-            transition: all 0.3s;
+            transition: var(--transition);
             cursor: pointer;
             border-left: 3px solid transparent;
+            position: relative;
         }
+        
         .menu-item:hover {
             background: rgba(255, 255, 255, 0.1);
             color: white;
+            transform: translateX(4px);
         }
+        
         .menu-item.active {
             background: rgba(255, 255, 255, 0.15);
             color: white;
-            border-left-color: #60a5fa;
+            border-left-color: var(--primary-light);
         }
+        
+        .menu-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background-color: var(--primary-light);
+            border-radius: 0 3px 3px 0;
+        }
+        
         /* 弹窗遮罩 */
         .modal-overlay {
             display: none;
@@ -67,19 +135,238 @@
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(2px);
         }
+        
         .modal-overlay.show {
             display: flex;
+            animation: fadeIn 0.3s ease;
         }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
         /* 弹窗内容 */
         .modal-content {
-            background: white;
-            border-radius: 12px;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
             width: 90%;
             max-width: 600px;
-            max-height: 90vh;
+            max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .modal-header {
+            cursor: move;
+        }
+        
+        .modal-content {
+            cursor: default;
+        }
+        
+        .modal-content > *:not(.modal-header) {
+            cursor: default;
+        }
+        
+        .modal-content > * {
+            flex-shrink: 0;
+        }
+        
+        .modal-content > .p-6 {
+            flex-shrink: 1;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+        
+        /* 输入框样式 */
+        .input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            font-size: 14px;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* 标题样式 */
+        .h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* 文本颜色 */
+        .text-primary {
+            color: var(--text-primary);
+        }
+        
+        .text-secondary {
+            color: var(--text-secondary);
+        }
+        
+        .text-light {
+            color: var(--text-light);
+        }
+        
+        /* 背景颜色 */
+        .bg-primary {
+            background-color: var(--bg-primary);
+        }
+        
+        .bg-secondary {
+            background-color: var(--bg-secondary);
+        }
+        
+        .bg-tertiary {
+            background-color: var(--bg-tertiary);
+        }
+        
+        /* 边框 */
+        .border {
+            border: 1px solid var(--border-color);
+        }
+        
+        .border-radius {
+            border-radius: var(--border-radius);
+        }
+        
+        /* 间距 */
+        .m-1 { margin: 0.25rem; }
+        .m-2 { margin: 0.5rem; }
+        .m-3 { margin: 0.75rem; }
+        .m-4 { margin: 1rem; }
+        .m-5 { margin: 1.25rem; }
+        
+        .p-1 { padding: 0.25rem; }
+        .p-2 { padding: 0.5rem; }
+        .p-3 { padding: 0.75rem; }
+        .p-4 { padding: 1rem; }
+        .p-5 { padding: 1.25rem; }
+        
+        /* 工具类 */
+        .flex {
+            display: flex;
+        }
+        
+        .flex-col {
+            flex-direction: column;
+        }
+        
+        .items-center {
+            align-items: center;
+        }
+        
+        .justify-between {
+            justify-content: space-between;
+        }
+        
+        .w-full {
+            width: 100%;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .shadow {
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .shadow-md {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .transition {
+            transition: var(--transition);
         }
     </style>
 </head>
@@ -87,12 +374,14 @@
     <!-- 左侧菜单栏 -->
     <aside class="sidebar">
         <!-- Logo区域 -->
-        <div class="p-6 border-b border-white border-opacity-20">
+        <div class="p-6 border-b border-white border-opacity-20 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <i class="fa fa-comment-o text-3xl text-white"></i>
+                <div class="w-10 h-10 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+                    <i class="fa fa-comment-o text-2xl text-white"></i>
+                </div>
                 <div>
-                    <h1 class="text-white font-bold text-lg">雪球自动评论</h1>
-                    <p class="text-white text-opacity-60 text-xs">智能评论系统</p>
+                    <h1 class="text-white font-bold text-lg">雪球智能评论</h1>
+                    <p class="text-white text-opacity-60 text-xs">企业级智能系统</p>
                 </div>
             </div>
         </div>
@@ -104,12 +393,16 @@
                 <span>运行状态</span>
             </div>
             <div class="menu-item" id="menuModelConfig">
-                <i class="fa fa-microchip w-6"></i>
+                <i class="fa fa-cogs w-6"></i>
                 <span>大模型配置</span>
             </div>
             <div class="menu-item" id="menuCommentConfig">
                 <i class="fa fa-sliders w-6"></i>
                 <span>评论设置</span>
+            </div>
+            <div class="menu-item" id="menuPersonaConfig">
+                <i class="fa fa-user-circle w-6"></i>
+                <span>配置人设</span>
             </div>
             <div class="menu-item" id="menuCookieConfig">
                 <i class="fa fa-key w-6"></i>
@@ -123,16 +416,16 @@
         
         <!-- 操作按钮区域 -->
         <div class="px-4 py-4 border-t border-white border-opacity-20">
-            <p class="text-white text-opacity-50 text-xs mb-3">自动任务</p>
-            <button id="startHotBtn" class="w-full mb-3 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+            <p class="text-white text-opacity-50 text-xs mb-3 font-medium uppercase tracking-wider">自动任务</p>
+            <button id="startHotBtn" class="w-full mb-3 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
                 <i class="fa fa-fire mr-2"></i>
                 <span>启动热门帖回复</span>
             </button>
-            <button id="startRecommendBtn" class="w-full mb-3 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+            <button id="startRecommendBtn" class="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
                 <i class="fa fa-star mr-2"></i>
                 <span>启动推荐帖回复</span>
             </button>
-            <button id="startFollowingBtn" class="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+            <button id="startFollowingBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
                 <i class="fa fa-users mr-2"></i>
                 <span>启动关注者评论</span>
             </button>
@@ -140,28 +433,41 @@
         
         <!-- 发布功能区域 -->
         <div class="px-4 py-4 border-t border-white border-opacity-20">
-            <p class="text-white text-opacity-50 text-xs mb-3">发布功能</p>
-            <button id="publishPostBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300">
+            <p class="text-white text-opacity-50 text-xs mb-3 font-medium uppercase tracking-wider">发布功能</p>
+            <button id="publishPostBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
                 <i class="fa fa-edit mr-2"></i>
                 <span>发布雪球帖</span>
             </button>
         </div>
         
         <!-- 底部信息 -->
-        <div class="p-4 border-t border-white border-opacity-20">
-            <p class="text-white text-opacity-50 text-xs text-center">© 2026 雪球自动评论系统</p>
+        <div class="px-4 py-4 border-t border-white border-opacity-20 mt-auto">
+            <div class="flex items-center justify-between">
+                <div class="text-white text-opacity-60 text-xs">
+                    <p>版本 1.0.0</p>
+                </div>
+                <div class="text-white text-opacity-60 text-xs">
+                    <p>© 2026 雪球智能评论</p>
+                </div>
+            </div>
         </div>
     </aside>
 
     <!-- 主内容区域 -->
     <main class="main-content">
         <!-- 顶部标题栏 -->
-        <header class="bg-white shadow-sm px-8 py-4">
+        <header class="bg-white shadow-md px-8 py-4">
             <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800">运行状态</h2>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">状态:</span>
-                    <span id="runStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">未运行</span>
+                <h2 class="text-xl font-semibold text-gray-800" id="pageTitle">运行状态</h2>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">系统状态:</span>
+                        <span id="runStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">未运行</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">上次运行:</span>
+                        <span id="lastRunTime" class="text-sm text-gray-600">未运行</span>
+                    </div>
                 </div>
             </div>
         </header>
@@ -170,7 +476,7 @@
         <div class="p-8">
             <!-- 统计卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-600">
+                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-600 hover:shadow-lg transition-all duration-300">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 mb-1">已处理用户数</p>
@@ -181,7 +487,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-600 hover:shadow-lg transition-all duration-300">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 mb-1" id="successLabel">成功发布评论</p>
@@ -192,7 +498,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-600 hover:shadow-lg transition-all duration-300">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 mb-1">失败次数</p>
@@ -206,13 +512,13 @@
             </div>
 
             <!-- 运行日志 -->
-            <div class="bg-white rounded-xl shadow-lg">
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-800 flex items-center">
                         <i class="fa fa-terminal mr-2 text-blue-600"></i>
                         运行日志
                     </h3>
-                    <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-200">
                         <i class="fa fa-trash mr-1"></i>
                         清空日志
                     </button>
@@ -230,7 +536,7 @@
     <div id="modelConfigModal" class="modal-overlay">
         <div class="modal-content">
             <!-- 弹窗头部 -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-brain mr-2"></i>
                     大模型配置
@@ -251,7 +557,7 @@
                     
                     <div class="space-y-4">
                         <!-- 火山引擎 -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
                             <div class="flex items-center mb-3">
                                 <input type="radio" id="model-ark" name="selectedModel" value="ark" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                                 <label for="model-ark" class="ml-2 block text-sm font-medium text-gray-700">
@@ -265,7 +571,7 @@
                         </div>
                         
                         <!-- OpenAI -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
                             <div class="flex items-center mb-3">
                                 <input type="radio" id="model-openai" name="selectedModel" value="openai" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                                 <label for="model-openai" class="ml-2 block text-sm font-medium text-gray-700">
@@ -281,7 +587,7 @@
                         </div>
                         
                         <!-- 百度文心一言 -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
                             <div class="flex items-center mb-3">
                                 <input type="radio" id="model-baidu" name="selectedModel" value="baidu" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                                 <label for="model-baidu" class="ml-2 block text-sm font-medium text-gray-700">
@@ -297,7 +603,7 @@
                         </div>
                         
                         <!-- 阿里通义千问 -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
                             <div class="flex items-center mb-3">
                                 <input type="radio" id="model-alibaba" name="selectedModel" value="alibaba" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                                 <label for="model-alibaba" class="ml-2 block text-sm font-medium text-gray-700">
@@ -311,18 +617,66 @@
                                 <input type="text" id="alibabaBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入阿里Base URL">
                             </div>
                         </div>
+                        
+                        <!-- DeepSeek -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <input type="radio" id="model-deepseek" name="selectedModel" value="deepseek" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="model-deepseek" class="ml-2 block text-sm font-medium text-gray-700">
+                                    DeepSeek
+                                </label>
+                            </div>
+                            <div>
+                                <label for="deepseekApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
+                                <input type="text" id="deepseekApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入DeepSeek API Key">
+                                <label for="deepseekBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
+                                <input type="text" id="deepseekBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入DeepSeek Base URL" value="https://api.deepseek.com/v1">
+                            </div>
+                        </div>
+                        
+                        <!-- Google Gemini -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
+                            <div class="flex items-center mb-3">
+                                <input type="radio" id="model-gemini" name="selectedModel" value="gemini" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="model-gemini" class="ml-2 block text-sm font-medium text-gray-700">
+                                    Google Gemini
+                                </label>
+                            </div>
+                            <div>
+                                <label for="geminiApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
+                                <input type="text" id="geminiApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入Google Gemini API Key">
+                                <label for="geminiBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
+                                <input type="text" id="geminiBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入Gemini Base URL" value="https://generativelanguage.googleapis.com/v1">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-
+                <!-- 通用配置 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        <i class="fa fa-cog mr-1 text-blue-600"></i>
+                        通用配置
+                    </label>
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <label for="modelTemperature" class="block text-xs text-gray-500 mb-1">温度值 (0-1，越高越随机)</label>
+                            <input type="number" id="modelTemperature" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="1" step="0.1" value="0.7">
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <label for="modelMaxTokens" class="block text-xs text-gray-500 mb-1">最大Token数</label>
+                            <input type="number" id="modelMaxTokens" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="100" max="4000" value="1000">
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- 弹窗底部按钮 -->
-            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 bg-gray-50">
+                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
                     取消
                 </button>
-                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-sm">
                     <i class="fa fa-save mr-2"></i>
                     保存配置
                 </button>
@@ -334,7 +688,7 @@
     <div id="cookieConfigModal" class="modal-overlay">
         <div class="modal-content">
             <!-- 弹窗头部 -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-cookie mr-2"></i>
                     用户Cookie配置
@@ -373,7 +727,7 @@
     <div id="commentConfigModal" class="modal-overlay">
         <div class="modal-content">
             <!-- 弹窗头部 -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-sliders mr-2"></i>
                     评论设置
@@ -431,7 +785,7 @@
     <div id="confirmUpdateModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 450px;">
             <!-- 弹窗头部 -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-question-circle mr-2"></i>
                     确认更新
@@ -487,7 +841,7 @@
     <div id="followingCommentsModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 500px;">
             <!-- 弹窗头部 -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-600 to-purple-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-600 to-purple-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-users mr-2"></i>
                     启动关注者评论
@@ -600,7 +954,7 @@
     <div id="publishPostModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 600px;">
             <!-- 弹窗头部 -->
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-indigo-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-indigo-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-edit mr-2"></i>
                     发布雪球帖
@@ -683,12 +1037,42 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fa fa-eye mr-1 text-indigo-600"></i>
-                        内容预览
+                        内容预览（可编辑）
                     </label>
-                    <div id="contentPreview" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 min-h-32 max-h-64 overflow-y-auto">
+                    <!-- 富文本编辑器工具栏 -->
+                    <div class="flex items-center space-x-2 mb-2 p-2 bg-gray-100 rounded-t-lg border border-gray-300 border-b-0">
+                        <button type="button" onclick="formatText('bold')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="加粗">
+                            <i class="fa fa-bold"></i>
+                        </button>
+                        <button type="button" onclick="formatText('italic')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="斜体">
+                            <i class="fa fa-italic"></i>
+                        </button>
+                        <button type="button" onclick="formatText('underline')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="下划线">
+                            <i class="fa fa-underline"></i>
+                        </button>
+                        <div class="w-px h-6 bg-gray-300 mx-2"></div>
+                        <button type="button" onclick="formatText('insertUnorderedList')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="无序列表">
+                            <i class="fa fa-list-ul"></i>
+                        </button>
+                        <button type="button" onclick="formatText('insertOrderedList')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="有序列表">
+                            <i class="fa fa-list-ol"></i>
+                        </button>
+                        <div class="w-px h-6 bg-gray-300 mx-2"></div>
+                        <button type="button" onclick="formatText('justifyLeft')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="左对齐">
+                            <i class="fa fa-align-left"></i>
+                        </button>
+                        <button type="button" onclick="formatText('justifyCenter')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="居中">
+                            <i class="fa fa-align-center"></i>
+                        </button>
+                        <button type="button" onclick="formatText('justifyRight')" class="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700" title="右对齐">
+                            <i class="fa fa-align-right"></i>
+                        </button>
+                    </div>
+                    <!-- 富文本编辑区域 -->
+                    <div id="contentPreview" contenteditable="true" class="w-full px-4 py-3 border border-gray-300 rounded-b-lg bg-white min-h-32 max-h-64 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-indigo-500" style="min-height: 200px;">
                         <p class="text-gray-400 text-sm">AI生成的内容将显示在这里...</p>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">可以手动编辑AI生成的内容</p>
+                    <p class="text-xs text-gray-500 mt-1">可以直接在上方编辑内容，支持富文本格式</p>
                 </div>
                 
                 <!-- 操作按钮 -->
@@ -702,6 +1086,11 @@
                         重新生成
                     </button>
                 </div>
+            </div>
+            
+            <!-- 状态显示区域 -->
+            <div id="statusDisplay" class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center">
+                <span class="text-sm text-gray-700">就绪</span>
             </div>
             
             <!-- 弹窗底部按钮 -->
@@ -846,6 +1235,42 @@
             menuCookieConfig.addEventListener('click', openCookieConfigModal);
             menuFollowing.addEventListener('click', checkAndShowFollowingList);
             openPublishPostBtn.addEventListener('click', openPublishPostModal);
+            
+            // 配置人设菜单
+            const menuPersonaConfig = document.getElementById('menuPersonaConfig');
+            if (menuPersonaConfig) {
+                menuPersonaConfig.addEventListener('click', openPersonaConfigModal);
+            }
+            
+            // 配置人设弹窗按钮
+            const closePersonaConfigModalBtn = document.getElementById('closePersonaConfigModal');
+            const addPersonaBtn = document.getElementById('addPersonaBtn');
+            const savePersonaConfigBtn = document.getElementById('savePersonaConfig');
+            
+            if (closePersonaConfigModalBtn) {
+                closePersonaConfigModalBtn.addEventListener('click', closePersonaConfigModal);
+            }
+            if (addPersonaBtn) {
+                addPersonaBtn.addEventListener('click', () => openAddPersonaModal());
+            }
+            if (savePersonaConfigBtn) {
+                savePersonaConfigBtn.addEventListener('click', savePersonaConfig);
+            }
+            
+            // 添加/编辑人设弹窗按钮
+            const closeAddPersonaModalBtn = document.getElementById('closeAddPersonaModal');
+            const cancelAddPersona = document.getElementById('cancelAddPersona');
+            const savePersonaBtn = document.getElementById('savePersona');
+            
+            if (closeAddPersonaModalBtn) {
+                closeAddPersonaModalBtn.addEventListener('click', closeAddPersonaModal);
+            }
+            if (cancelAddPersona) {
+                cancelAddPersona.addEventListener('click', closeAddPersonaModal);
+            }
+            if (savePersonaBtn) {
+                savePersonaBtn.addEventListener('click', savePersona);
+            }
             
             // 启动按钮
             startHotBtn.addEventListener('click', toggleHotCommenting);
@@ -1545,8 +1970,10 @@
                 runLogElement.innerHTML = '';
             }
             
-            runLogElement.appendChild(logEntry);
-            runLogElement.scrollTop = runLogElement.scrollHeight;
+            // 将新日志添加到开头
+            runLogElement.insertBefore(logEntry, runLogElement.firstChild);
+            // 保持滚动在顶部
+            runLogElement.scrollTop = 0;
         }
         
         // 清空日志
@@ -1839,6 +2266,13 @@
             startFollowingBtn.onclick = openFollowingCommentsModal;
         }
         
+        // 富文本编辑器格式化函数
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            // 保持焦点在编辑器上
+            document.getElementById('contentPreview').focus();
+        }
+        
         // ========== 发布雪球帖功能 ==========
         
         // 打开发布雪球帖弹窗
@@ -1908,13 +2342,17 @@
             
             const postType = document.querySelector('input[name="postType"]:checked').value;
             
+            // 第一轮：生成详细提示词
+            const statusDisplay = document.getElementById('statusDisplay');
+            statusDisplay.innerHTML = '<span class="text-sm text-gray-700">【第一轮】正在生成雪球风格的详细提示词...</span>';
             addLog('【第1轮】正在生成雪球风格的详细提示词...', 'info');
             addLog('根据您的简单描述，AI正在分析并生成详细的写作提示词...', 'info');
             generateContentBtn.disabled = true;
-            generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第1轮生成中...';
+            generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第一轮：提示词生成中...';
             
             try {
-                const response = await fetch(`${API_BASE_URL}/generate-content`, {
+                // 调用第一轮API
+                const promptResponse = await fetch(`${API_BASE_URL}/generate-prompt`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1927,26 +2365,53 @@
                     })
                 });
                 
-                const result = await response.json();
+                const promptResult = await promptResponse.json();
                 
-                if (result.success) {
-                    addLog('【第1轮】详细提示词生成成功', 'success');
-                    
-                    // 显示详细提示词
-                    if (result.detailedPrompt) {
-                        detailedPromptSection.classList.remove('hidden');
-                        detailedPromptContent.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${result.detailedPrompt}</div>`;
-                        addLog('详细提示词已生成，可在下方查看', 'info');
-                    }
-                    
-                    addLog('【第2轮】正在根据详细提示词生成正式文章...', 'info');
-                    
-                    // 显示生成的内容
-                    contentPreviewDiv.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${result.content}</div>`;
+                if (!promptResult.success) {
+                    statusDisplay.innerHTML = '<span class="text-sm text-red-600">【第一轮】提示词生成失败</span>';
+                    addLog(`提示词生成失败: ${promptResult.message}`, 'error');
+                    return;
+                }
+                
+                statusDisplay.innerHTML = '<span class="text-sm text-green-600">【第一轮】详细提示词生成成功</span>';
+                addLog('【第1轮】详细提示词生成成功', 'success');
+                
+                // 显示详细提示词
+                if (promptResult.detailedPrompt) {
+                    detailedPromptSection.classList.remove('hidden');
+                    detailedPromptContent.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${promptResult.detailedPrompt}</div>`;
+                    addLog('详细提示词已生成，可在下方查看', 'info');
+                }
+                
+                // 第二轮：根据详细提示词生成正式文章
+                statusDisplay.innerHTML = '<span class="text-sm text-gray-700">【第二轮】正在根据详细提示词生成正式文章...</span>';
+                addLog('【第2轮】正在根据详细提示词生成正式文章...', 'info');
+                generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第二轮：文章生成中...';
+                
+                // 调用第二轮API
+                const contentResponse = await fetch(`${API_BASE_URL}/generate-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        detailedPrompt: promptResult.detailedPrompt,
+                        postType: postType,
+                        selectedModel: config.selectedModel,
+                        models: config.models
+                    })
+                });
+                
+                const contentResult = await contentResponse.json();
+                
+                if (contentResult.success) {
+                    statusDisplay.innerHTML = '<span class="text-sm text-green-600">【第二轮】正式文章生成成功</span>';
+                    // 显示生成的内容（直接设置HTML，保留格式）
+                    contentPreviewDiv.innerHTML = contentResult.content;
                     
                     // 如果是长文，设置标题
-                    if (postType === 'article' && result.title) {
-                        articleTitleInput.value = result.title;
+                    if (postType === 'article' && contentResult.title) {
+                        articleTitleInput.value = contentResult.title;
                     }
                     
                     addLog('【第2轮】正式文章生成成功', 'success');
@@ -1956,12 +2421,14 @@
                     regenerateContentBtn.classList.remove('hidden');
                     
                     // 保存生成的内容到全局变量
-                    window.generatedContent = result.content;
-                    window.generatedTitle = result.title;
+                    window.generatedContent = contentResult.content;
+                    window.generatedTitle = contentResult.title;
                 } else {
-                    addLog(`内容生成失败: ${result.message}`, 'error');
+                    statusDisplay.innerHTML = '<span class="text-sm text-red-600">【第二轮】文章生成失败</span>';
+                    addLog(`文章生成失败: ${contentResult.message}`, 'error');
                 }
             } catch (error) {
+                statusDisplay.innerHTML = '<span class="text-sm text-red-600">生成过程出错</span>';
                 addLog(`内容生成请求失败: ${error.message}`, 'error');
             } finally {
                 generateContentBtn.disabled = false;
@@ -1988,7 +2455,7 @@
         // 发布帖子
         async function publishPost() {
             const postType = document.querySelector('input[name="postType"]:checked').value;
-            const content = contentPreviewDiv.innerText.trim();
+            const content = contentPreviewDiv.innerHTML.trim();
             
             if (!content || content === 'AI生成的内容将显示在这里...') {
                 addLog('错误: 请先生成内容', 'error');
@@ -2007,6 +2474,8 @@
                 isColumn = publishAsColumnCheckbox.checked;
             }
             
+            const statusDisplay = document.getElementById('statusDisplay');
+            statusDisplay.innerHTML = '<span class="text-sm text-gray-700">正在发布' + (postType === 'article' ? '长文' : '讨论') + '...</span>';
             addLog(`正在发布${postType === 'article' ? '长文' : '讨论'}...`, 'info');
             submitPublishBtn.disabled = true;
             submitPublishBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>发布中...';
@@ -2029,12 +2498,15 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    statusDisplay.innerHTML = '<span class="text-sm text-green-600">发布成功！</span>';
                     addLog(`发布成功！帖子ID: ${result.postId}`, 'success');
                     closePublishPostModal();
                 } else {
+                    statusDisplay.innerHTML = '<span class="text-sm text-red-600">发布失败</span>';
                     addLog(`发布失败: ${result.message}`, 'error');
                 }
             } catch (error) {
+                statusDisplay.innerHTML = '<span class="text-sm text-red-600">发布请求失败</span>';
                 addLog(`发布请求失败: ${error.message}`, 'error');
             } finally {
                 submitPublishBtn.disabled = false;
@@ -2042,8 +2514,486 @@
             }
         }
         
+        // 人设配置
+        let personas = [];
+        
+        // 获取图标类名
+        function getIconClass(icon) {
+            // 确保图标名称有效
+            if (!icon) return 'fa-user';
+            
+            // 映射到Font Awesome 4.7.0兼容的图标名称
+            const iconMap = {
+                'shield': 'fa-shield',
+                'line-chart': 'fa-line-chart',
+                'user': 'fa-user',
+                'user-circle': 'fa-user-circle',
+                'user-secret': 'fa-user-secret',
+                'briefcase': 'fa-briefcase',
+                'graduation-cap': 'fa-graduation-cap',
+                'lightbulb-o': 'fa-lightbulb-o',
+                'book': 'fa-book',
+                'globe': 'fa-globe'
+            };
+            
+            return iconMap[icon] || 'fa-user';
+        }
+        
+        // 打开配置人设弹窗
+        function openPersonaConfigModal() {
+            document.getElementById('personaConfigModal').classList.remove('hidden');
+            loadPersonas();
+        }
+        
+        // 关闭配置人设弹窗
+        function closePersonaConfigModal() {
+            document.getElementById('personaConfigModal').classList.add('hidden');
+        }
+        
+        // 图标选择相关函数
+        function toggleIconDropdown() {
+            const dropdown = document.getElementById('iconDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        function selectIcon(value, text, iconClass) {
+            document.getElementById('personaIcon').value = value;
+            document.getElementById('selectedIconText').textContent = text;
+            document.getElementById('selectedIconPreview').className = `fa ${iconClass} mr-3 text-blue-400`;
+            document.getElementById('iconDropdown').classList.add('hidden');
+        }
+        
+        // 点击外部关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            const iconSelect = document.getElementById('iconSelectDisplay');
+            const iconDropdown = document.getElementById('iconDropdown');
+            if (iconSelect && iconDropdown && !iconSelect.contains(e.target) && !iconDropdown.contains(e.target)) {
+                iconDropdown.classList.add('hidden');
+            }
+        });
+        
+        // 打开添加人设弹窗
+        function openAddPersonaModal(persona = null) {
+            const modal = document.getElementById('addPersonaModal');
+            const title = document.getElementById('addPersonaModalTitle');
+            const form = document.getElementById('personaForm');
+            
+            if (persona) {
+                title.textContent = '编辑人设';
+                document.getElementById('personaId').value = persona.id;
+                document.getElementById('personaName').value = persona.name;
+                document.getElementById('personaTags').value = persona.tags.join(', ');
+                document.getElementById('personaCoreClaims').value = persona.coreClaims;
+                document.getElementById('personaContentFeatures').value = persona.contentFeatures;
+                document.getElementById('personaTargetAudience').value = persona.targetAudience;
+                document.getElementById('personaPromptPoints').value = persona.promptPoints;
+                // 设置图标选择器
+                const iconValue = persona.icon || 'user';
+                const iconMap = {
+                    'user': { text: '用户', iconClass: 'fa-user' },
+                    'user-circle': { text: '用户圈', iconClass: 'fa-user-circle' },
+                    'user-secret': { text: '神秘用户', iconClass: 'fa-user-secret' },
+                    'briefcase': { text: '公文包', iconClass: 'fa-briefcase' },
+                    'graduation-cap': { text: '毕业帽', iconClass: 'fa-graduation-cap' },
+                    'line-chart': { text: '折线图', iconClass: 'fa-line-chart' },
+                    'lightbulb-o': { text: '灯泡', iconClass: 'fa-lightbulb-o' },
+                    'book': { text: '书籍', iconClass: 'fa-book' },
+                    'globe': { text: '地球', iconClass: 'fa-globe' },
+                    'shield': { text: '盾牌', iconClass: 'fa-shield' }
+                };
+                const iconInfo = iconMap[iconValue] || iconMap['user'];
+                document.getElementById('personaIcon').value = iconValue;
+                document.getElementById('selectedIconText').textContent = iconInfo.text;
+                document.getElementById('selectedIconPreview').className = `fa ${iconInfo.iconClass} mr-3 text-blue-400`;
+            } else {
+                title.textContent = '添加人设';
+                form.reset();
+                document.getElementById('personaId').value = '';
+                // 重置图标选择器
+                document.getElementById('personaIcon').value = 'user';
+                document.getElementById('selectedIconText').textContent = '用户';
+                document.getElementById('selectedIconPreview').className = 'fa fa-user mr-3 text-blue-400';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // 关闭添加人设弹窗
+        function closeAddPersonaModal() {
+            document.getElementById('addPersonaModal').classList.add('hidden');
+        }
+        
+        // 加载人设配置
+        function loadPersonas() {
+            fetch(`${API_BASE_URL}/get-personas`)    
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        personas = result.data || [];
+                        renderPersonaList();
+                    } else {
+                        addLog(`加载人设失败: ${result.message}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog(`加载人设请求失败: ${error.message}`, 'error');
+                });
+        }
+        
+        // 渲染人设列表
+        function renderPersonaList() {
+            const personaList = document.getElementById('personaList');
+            
+            if (personas.length === 0) {
+                personaList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        <i class="fa fa-info-circle mr-2"></i>
+                        暂无人设数据
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = personas.map(persona => `
+                <div class="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                            <i class="fa fa-${persona.icon || 'user'} text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-semibold">${persona.name}</h5>
+                            <p class="text-gray-400 text-sm">${persona.tags.join(', ')}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="openAddPersonaModal(${JSON.stringify(persona).replace(/"/g, '&quot;')})" class="text-blue-400 hover:text-blue-300">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button onclick="deletePersona('${persona.id}')" class="text-red-400 hover:text-red-300">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            personaList.innerHTML = html;
+        }
+        
+        // 保存人设
+        function savePersona() {
+            const id = document.getElementById('personaId').value;
+            const name = document.getElementById('personaName').value;
+            const tags = document.getElementById('personaTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            const coreClaims = document.getElementById('personaCoreClaims').value;
+            const contentFeatures = document.getElementById('personaContentFeatures').value;
+            const targetAudience = document.getElementById('personaTargetAudience').value;
+            const promptPoints = document.getElementById('personaPromptPoints').value;
+            const icon = document.getElementById('personaIcon').value;
+            
+            if (!name) {
+                addLog('错误: 请输入人设名称', 'error');
+                return;
+            }
+            
+            const personaData = {
+                id: id || Date.now().toString(),
+                name: name,
+                tags: tags,
+                coreClaims: coreClaims,
+                contentFeatures: contentFeatures,
+                targetAudience: targetAudience,
+                promptPoints: promptPoints,
+                icon: icon
+            };
+            
+            fetch(`${API_BASE_URL}/save-persona`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(personaData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    addLog('人设保存成功', 'success');
+                    closeAddPersonaModal();
+                    loadPersonas();
+                } else {
+                    addLog(`保存人设失败: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`保存人设请求失败: ${error.message}`, 'error');
+            });
+        }
+        
+        // 删除人设
+        function deletePersona(id) {
+            if (confirm('确定要删除这个人设吗？')) {
+                fetch(`${API_BASE_URL}/delete-persona`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        addLog('人设删除成功', 'success');
+                        loadPersonas();
+                    } else {
+                        addLog(`删除人设失败: ${result.message}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog(`删除人设请求失败: ${error.message}`, 'error');
+                });
+            }
+        }
+        
+        // 保存人设配置
+        function savePersonaConfig() {
+            fetch(`${API_BASE_URL}/save-personas`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ personas: personas })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    addLog('人设配置保存成功', 'success');
+                    closePersonaConfigModal();
+                } else {
+                    addLog(`保存人设配置失败: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`保存人设配置请求失败: ${error.message}`, 'error');
+            });
+        }
+        
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', init);
+    </script>
+    
+    <!-- 配置人设弹窗 -->
+    <div id="personaConfigModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-white">配置人设</h3>
+                <button id="closePersonaConfigModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="text-lg font-semibold text-white">现有人设</h4>
+                    <button id="addPersonaBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fa fa-plus mr-2"></i>添加人设
+                    </button>
+                </div>
+                <div id="personaList" class="space-y-4">
+                    <!-- 人设列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-700 flex justify-end space-x-4">
+                <button id="savePersonaConfig" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center">
+                    <i class="fa fa-save mr-2"></i>保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑人设弹窗 -->
+    <div id="addPersonaModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h3 id="addPersonaModalTitle" class="text-2xl font-bold text-white">添加人设</h3>
+                <button id="closeAddPersonaModal" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <form id="personaForm">
+                    <input type="hidden" id="personaId">
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">人设名称</label>
+                        <input type="text" id="personaName" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">人设标签</label>
+                        <input type="text" id="personaTags" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="用逗号分隔多个标签">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">核心主张</label>
+                        <textarea id="personaCoreClaims" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">内容特征</label>
+                        <textarea id="personaContentFeatures" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">适用人群</label>
+                        <input type="text" id="personaTargetAudience" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">提示词要点</label>
+                        <textarea id="personaPromptPoints" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" rows="5"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-300 mb-2">图标</label>
+                        <div class="relative">
+                            <div id="iconSelectDisplay" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white cursor-pointer flex items-center justify-between hover:bg-gray-700 transition-colors" onclick="toggleIconDropdown()">
+                                <div class="flex items-center">
+                                    <i id="selectedIconPreview" class="fa fa-user mr-3 text-blue-400"></i>
+                                    <span id="selectedIconText">用户</span>
+                                </div>
+                                <i class="fa fa-chevron-down text-gray-400"></i>
+                            </div>
+                            <div id="iconDropdown" class="hidden absolute z-50 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="user" onclick="selectIcon('user', '用户', 'fa-user')">
+                                    <i class="fa fa-user mr-3 text-blue-400 w-5"></i>
+                                    <span>用户</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="user-circle" onclick="selectIcon('user-circle', '用户圈', 'fa-user-circle')">
+                                    <i class="fa fa-user-circle mr-3 text-blue-400 w-5"></i>
+                                    <span>用户圈</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="user-secret" onclick="selectIcon('user-secret', '神秘用户', 'fa-user-secret')">
+                                    <i class="fa fa-user-secret mr-3 text-blue-400 w-5"></i>
+                                    <span>神秘用户</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="briefcase" onclick="selectIcon('briefcase', '公文包', 'fa-briefcase')">
+                                    <i class="fa fa-briefcase mr-3 text-blue-400 w-5"></i>
+                                    <span>公文包</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="graduation-cap" onclick="selectIcon('graduation-cap', '毕业帽', 'fa-graduation-cap')">
+                                    <i class="fa fa-graduation-cap mr-3 text-blue-400 w-5"></i>
+                                    <span>毕业帽</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="line-chart" onclick="selectIcon('line-chart', '折线图', 'fa-line-chart')">
+                                    <i class="fa fa-line-chart mr-3 text-blue-400 w-5"></i>
+                                    <span>折线图</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="lightbulb-o" onclick="selectIcon('lightbulb-o', '灯泡', 'fa-lightbulb-o')">
+                                    <i class="fa fa-lightbulb-o mr-3 text-blue-400 w-5"></i>
+                                    <span>灯泡</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="book" onclick="selectIcon('book', '书籍', 'fa-book')">
+                                    <i class="fa fa-book mr-3 text-blue-400 w-5"></i>
+                                    <span>书籍</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="globe" onclick="selectIcon('globe', '地球', 'fa-globe')">
+                                    <i class="fa fa-globe mr-3 text-blue-400 w-5"></i>
+                                    <span>地球</span>
+                                </div>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="shield" onclick="selectIcon('shield', '盾牌', 'fa-shield')">
+                                    <i class="fa fa-shield mr-3 text-blue-400 w-5"></i>
+                                    <span>盾牌</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="personaIcon" value="user">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="p-6 border-t border-gray-700 flex justify-end space-x-4">
+                <button id="cancelAddPersona" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    取消
+                </button>
+                <button id="savePersona" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center">
+                    <i class="fa fa-save mr-2"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 拖拽功能
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = element.querySelector('.modal-header');
+            
+            if (header) {
+                header.onmousedown = dragMouseDown;
+            } else {
+                element.onmousedown = dragMouseDown;
+            }
+            
+            function dragMouseDown(e) {
+                e = e || window.event;
+                // 检查点击的是否是头部区域
+                const target = e.target;
+                if (!target.closest('.modal-header')) {
+                    return;
+                }
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e = e || window.event;
+                // 只在拖拽头部时才执行
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                const rect = element.getBoundingClientRect();
+                const newTop = rect.top - pos2;
+                const newLeft = rect.left - pos1;
+                
+                // 限制在视口内
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const elementWidth = rect.width;
+                const elementHeight = rect.height;
+                
+                const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - elementHeight - 20));
+                const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - elementWidth - 20));
+                
+                element.style.top = constrainedTop + 'px';
+                element.style.left = constrainedLeft + 'px';
+                element.style.transform = 'none';
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+        
+        // 为所有弹窗添加拖拽功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const modals = document.querySelectorAll('.modal-content');
+            modals.forEach(modal => {
+                makeDraggable(modal);
+            });
+            
+            // 监听弹窗显示事件，为新显示的弹窗添加拖拽功能
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('open-modal') || 
+                    e.target && e.target.closest('.open-modal')) {
+                    setTimeout(() => {
+                        const modals = document.querySelectorAll('.modal-content');
+                        modals.forEach(modal => {
+                            if (!modal._draggable) {
+                                makeDraggable(modal);
+                                modal._draggable = true;
+                            }
+                        });
+                    }, 100);
+                }
+            });
+        });
     </script>
 </body>
 </html>

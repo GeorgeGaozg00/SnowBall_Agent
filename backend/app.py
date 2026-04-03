@@ -592,9 +592,9 @@ def start_following_comments():
             "message": f"启动关注者评论任务失败: {str(e)}"
         }), 500
 
-@app.route('/api/generate-content', methods=['POST'])
-def generate_content():
-    """生成AI内容 - 两轮交互"""
+@app.route('/api/generate-prompt', methods=['POST'])
+def generate_prompt():
+    """生成详细提示词（第一轮）"""
     try:
         data = request.json
         prompt = data.get('prompt', '')
@@ -618,6 +618,10 @@ def generate_content():
             api_key = models['baidu'].get('apiKey')
         elif selected_model == 'alibaba' and models.get('alibaba'):
             api_key = models['alibaba'].get('apiKey')
+        elif selected_model == 'deepseek' and models.get('deepseek'):
+            api_key = models['deepseek'].get('apiKey')
+        elif selected_model == 'gemini' and models.get('gemini'):
+            api_key = models['gemini'].get('apiKey')
         
         if not api_key:
             return jsonify({
@@ -625,9 +629,6 @@ def generate_content():
                 "message": "缺少AI API Key"
             }), 400
         
-        print(f"[{time.strftime('%H:%M:%S')}] ========== 开始两轮交互生成内容 ==========")
-        
-        # ========== 第一轮：生成雪球风格的详细提示词 ==========
         print(f"[{time.strftime('%H:%M:%S')}] 【第一轮】正在生成雪球风格的详细提示词...")
         
         first_round_prompt = f"""你是一位资深的雪球网内容创作者，擅长撰写投资类文章。
@@ -658,6 +659,10 @@ def generate_content():
             detailed_prompt, _ = call_baidu_api(api_key, models.get('baidu', {}).get('secretKey'), first_round_prompt, 'discussion')
         elif selected_model == 'alibaba':
             detailed_prompt, _ = call_alibaba_api(api_key, first_round_prompt, 'discussion', models.get('alibaba', {}).get('baseUrl'))
+        elif selected_model == 'deepseek':
+            detailed_prompt, _ = call_openai_api(api_key, first_round_prompt, 'discussion', models.get('deepseek', {}).get('baseUrl'))
+        elif selected_model == 'gemini':
+            detailed_prompt, _ = call_gemini_api(api_key, first_round_prompt, 'discussion', models.get('gemini', {}).get('baseUrl'))
         else:
             return jsonify({
                 "success": False,
@@ -667,7 +672,55 @@ def generate_content():
         print(f"[{time.strftime('%H:%M:%S')}] 【第一轮】详细提示词生成成功")
         print(f"[{time.strftime('%H:%M:%S')}] 生成的提示词预览: {detailed_prompt[:100]}...")
         
-        # ========== 第二轮：根据详细提示词生成正式文章 ==========
+        return jsonify({
+            "success": True,
+            "detailedPrompt": detailed_prompt
+        })
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 生成提示词失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"生成提示词失败: {str(e)}"
+        }), 500
+
+@app.route('/api/generate-content', methods=['POST'])
+def generate_content():
+    """根据提示词生成内容（第二轮）"""
+    try:
+        data = request.json
+        detailed_prompt = data.get('detailedPrompt', '')
+        post_type = data.get('postType', 'discussion')
+        selected_model = data.get('selectedModel', 'ark')
+        models = data.get('models', {})
+        
+        if not detailed_prompt:
+            return jsonify({
+                "success": False,
+                "message": "详细提示词不能为空"
+            }), 400
+        
+        # 获取API Key
+        api_key = None
+        if selected_model == 'ark' and models.get('ark'):
+            api_key = models['ark'].get('apiKey')
+        elif selected_model == 'openai' and models.get('openai'):
+            api_key = models['openai'].get('apiKey')
+        elif selected_model == 'baidu' and models.get('baidu'):
+            api_key = models['baidu'].get('apiKey')
+        elif selected_model == 'alibaba' and models.get('alibaba'):
+            api_key = models['alibaba'].get('apiKey')
+        elif selected_model == 'deepseek' and models.get('deepseek'):
+            api_key = models['deepseek'].get('apiKey')
+        elif selected_model == 'gemini' and models.get('gemini'):
+            api_key = models['gemini'].get('apiKey')
+        
+        if not api_key:
+            return jsonify({
+                "success": False,
+                "message": "缺少AI API Key"
+            }), 400
+        
         print(f"[{time.strftime('%H:%M:%S')}] 【第二轮】正在根据详细提示词生成正式文章...")
         
         if post_type == 'article':
@@ -713,15 +766,17 @@ def generate_content():
             content, title = call_baidu_api(api_key, models.get('baidu', {}).get('secretKey'), second_round_prompt, post_type)
         elif selected_model == 'alibaba':
             content, title = call_alibaba_api(api_key, second_round_prompt, post_type, models.get('alibaba', {}).get('baseUrl'))
+        elif selected_model == 'deepseek':
+            content, title = call_openai_api(api_key, second_round_prompt, post_type, models.get('deepseek', {}).get('baseUrl'))
+        elif selected_model == 'gemini':
+            content, title = call_gemini_api(api_key, second_round_prompt, post_type, models.get('gemini', {}).get('baseUrl'))
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第二轮】正式文章生成成功")
-        print(f"[{time.strftime('%H:%M:%S')}] ========== 两轮交互完成 ==========")
         
         return jsonify({
             "success": True,
             "content": content,
-            "title": title,
-            "detailedPrompt": detailed_prompt  # 返回详细提示词供用户查看
+            "title": title
         })
         
     except Exception as e:
@@ -954,10 +1009,169 @@ def call_alibaba_api(api_key, prompt, post_type, base_url=''):
     
     return content, title
 
+def call_gemini_api(api_key, prompt, post_type, base_url='https://generativelanguage.googleapis.com/v1'):
+    """调用Google Gemini API"""
+    import requests
+    
+    # Gemini API使用不同的格式
+    url = f"{base_url}/models/gemini-pro:generateContent?key={api_key}"
+    
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.8,
+            "maxOutputTokens": 2000 if post_type == 'article' else 500
+        }
+    }
+    
+    response = requests.post(url, headers=headers, json=data, timeout=120)
+    result = response.json()
+    
+    if 'candidates' not in result:
+        error_msg = result.get('error', {}).get('message', '未知错误')
+        raise Exception(f"API调用失败: {error_msg}")
+    
+    content = result['candidates'][0]['content']['parts'][0]['text']
+    
+    # 提取标题（如果是长文）
+    title = None
+    if post_type == 'article' and '标题：' in content:
+        parts = content.split('\n\n', 1)
+        if len(parts) > 1:
+            title_line = parts[0]
+            if '标题：' in title_line:
+                title = title_line.replace('标题：', '').strip()
+                content = parts[1].strip()
+    
+    return content, title
+
+# HTML转Markdown函数
+def html_to_markdown(html_content):
+    """将HTML内容转换为Markdown格式"""
+    from html.parser import HTMLParser
+    import re
+    
+    class HTMLToMarkdown(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.result = []
+            self.in_list = False
+            self.list_type = None
+            self.list_counter = 0
+            
+        def handle_starttag(self, tag, attrs):
+            if tag in ['b', 'strong']:
+                self.result.append('**')
+            elif tag in ['i', 'em']:
+                self.result.append('*')
+            elif tag == 'u':
+                self.result.append('__')
+            elif tag == 'br':
+                self.result.append('\n')
+            elif tag == 'p':
+                if self.result and not self.result[-1].endswith('\n'):
+                    self.result.append('\n\n')
+            elif tag == 'div':
+                if self.result and not self.result[-1].endswith('\n'):
+                    self.result.append('\n')
+            elif tag == 'ul':
+                self.in_list = True
+                self.list_type = 'ul'
+                self.list_counter = 0
+                if self.result and not self.result[-1].endswith('\n'):
+                    self.result.append('\n')
+            elif tag == 'ol':
+                self.in_list = True
+                self.list_type = 'ol'
+                self.list_counter = 0
+                if self.result and not self.result[-1].endswith('\n'):
+                    self.result.append('\n')
+            elif tag == 'li':
+                self.list_counter += 1
+                if self.list_type == 'ul':
+                    self.result.append('- ')
+                else:
+                    self.result.append(f'{self.list_counter}. ')
+            elif tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                level = int(tag[1])
+                self.result.append('\n' + '#' * level + ' ')
+            elif tag == 'blockquote':
+                self.result.append('\n> ')
+            elif tag == 'a':
+                attrs_dict = dict(attrs)
+                self.result.append('[')
+                self.current_link = attrs_dict.get('href', '')
+                
+        def handle_endtag(self, tag):
+            if tag in ['b', 'strong']:
+                self.result.append('**')
+            elif tag in ['i', 'em']:
+                self.result.append('*')
+            elif tag == 'u':
+                self.result.append('__')
+            elif tag in ['p', 'div']:
+                if self.result and not self.result[-1].endswith('\n'):
+                    self.result.append('\n')
+            elif tag in ['ul', 'ol']:
+                self.in_list = False
+                self.list_type = None
+                self.result.append('\n')
+            elif tag == 'li':
+                if self.result and not self.result[-1].endswith('\n'):
+                    self.result.append('\n')
+            elif tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                self.result.append('\n')
+            elif tag == 'blockquote':
+                self.result.append('\n')
+            elif tag == 'a':
+                self.result.append(f']({self.current_link})')
+                
+        def handle_data(self, data):
+            # 清理多余的空白字符，但保留换行
+            cleaned_data = data.strip()
+            if cleaned_data:
+                self.result.append(cleaned_data)
+                
+        def get_markdown(self):
+            return ''.join(self.result).strip()
+    
+    try:
+        parser = HTMLToMarkdown()
+        parser.feed(html_content)
+        markdown = parser.get_markdown()
+        
+        # 清理多余的空行
+        markdown = re.sub(r'\n{3,}', '\n\n', markdown)
+        
+        return markdown
+    except Exception as e:
+        print(f"HTML转Markdown失败: {str(e)}")
+        # 如果转换失败，返回清理后的纯文本
+        # 移除HTML标签
+        text = re.sub(r'<[^>]+>', '', html_content)
+        # 清理多余的空白
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
+
 # 雪球发帖函数
 def publish_discussion_to_xueqiu(content, cookie):
     """发布讨论到雪球"""
     import requests
+    
+    # 将HTML内容转换为Markdown
+    print("正在将HTML内容转换为Markdown格式...")
+    markdown_content = html_to_markdown(content)
+    print(f"转换后的内容前200字符: {markdown_content[:200]}")
     
     # 创建会话
     session = requests.Session()
@@ -995,7 +1209,7 @@ def publish_discussion_to_xueqiu(content, cookie):
     print("发布讨论...")
     post_url = "https://xueqiu.com/statuses/update.json"
     data = {
-        "status": content,
+        "status": markdown_content,
         "device": "Web",
         "right": "0",
         "session_token": session_token
@@ -1007,6 +1221,15 @@ def publish_discussion_to_xueqiu(content, cookie):
     print(f"响应内容: {response.text[:500]}")  # 显示前500个字符
     
     try:
+        # 检查响应内容是否为空
+        if not response.text:
+            print("响应内容为空")
+            raise Exception("发布失败: 响应内容为空")
+        
+        # 检查响应的Content-Type
+        content_type = response.headers.get('Content-Type', '')
+        print(f"响应Content-Type: {content_type}")
+        
         result = response.json()
         print(f"发布讨论响应: {result}")
         
@@ -1017,6 +1240,10 @@ def publish_discussion_to_xueqiu(content, cookie):
     except json.JSONDecodeError as e:
         print(f"JSON解析错误: {str(e)}")
         print(f"完整响应内容: {response.text}")
+        # 检查是否返回HTML页面
+        if '<html' in response.text.lower():
+            print("API返回了HTML页面，可能是Cookie过期或无效")
+            raise Exception("发布失败: API返回了HTML页面，可能是Cookie过期或无效")
         raise Exception(f"发布失败: {str(e)}")
     
     return result['id']
@@ -1024,6 +1251,11 @@ def publish_discussion_to_xueqiu(content, cookie):
 def publish_article_to_xueqiu(title, content, is_column, cookie):
     """发布长文到雪球"""
     import requests
+    
+    # 将HTML内容转换为Markdown
+    print("正在将HTML内容转换为Markdown格式...")
+    markdown_content = html_to_markdown(content)
+    print(f"转换后的内容前200字符: {markdown_content[:200]}")
     
     # 创建会话
     session = requests.Session()
@@ -1071,29 +1303,54 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
     
     # 4. 发布长文
     print("发布长文...")
-    post_url = "https://mp.xueqiu.com/xq/statuses/update.json"
-    data = {
-        "title": title,
-        "status": content,
-        "cover_pic": "",
-        "show_cover_pic": "true",
-        "original": "false",
-        "comment_disabled": "false",
-        "session_token": session_token,
-        "device": "Web",
-        "right": "0",
-        "draft_id": "0"
-    }
     
     if is_column:
-        data['column'] = 1
+        # 专栏发表使用不同的API端点
+        post_url = "https://mp.xueqiu.com/notes/create.json"
+        data = {
+            "title": title,
+            "status": markdown_content,
+            "cover_pic": "",
+            "show_cover_pic": "true",
+            "original": "false",
+            "comment_disabled": "false",
+            "session_token": session_token,
+            "device": "Web",
+            "right": "0",
+            "draft_id": "0"
+        }
+    else:
+        # 普通长文发表
+        post_url = "https://mp.xueqiu.com/xq/statuses/update.json"
+        data = {
+            "title": title,
+            "status": markdown_content,
+            "cover_pic": "",
+            "show_cover_pic": "true",
+            "original": "false",
+            "comment_disabled": "false",
+            "session_token": session_token,
+            "device": "Web",
+            "right": "0",
+            "draft_id": "0"
+        }
     
     print(f"发布长文请求数据: {data}")
+    print(f"发布URL: {post_url}")
     response = session.post(post_url, data=data, headers=headers)
     print(f"响应状态码: {response.status_code}")
     print(f"响应内容: {response.text[:500]}")  # 显示前500个字符
     
     try:
+        # 检查响应内容是否为空
+        if not response.text:
+            print("响应内容为空")
+            raise Exception("发布失败: 响应内容为空")
+        
+        # 检查响应的Content-Type
+        content_type = response.headers.get('Content-Type', '')
+        print(f"响应Content-Type: {content_type}")
+        
         result = response.json()
         print(f"发布长文响应: {result}")
         
@@ -1104,11 +1361,272 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
     except json.JSONDecodeError as e:
         print(f"JSON解析错误: {str(e)}")
         print(f"完整响应内容: {response.text}")
+        # 检查是否返回HTML页面
+        if '<html' in response.text.lower():
+            print("API返回了HTML页面，可能是Cookie过期或无效")
+            raise Exception("发布失败: API返回了HTML页面，可能是Cookie过期或无效")
         raise Exception(f"发布失败: {str(e)}")
     
     return result['id']
 
+# 人设配置管理
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PERSONAS_FILE = os.path.join(BASE_DIR, 'personas.json')
+
+# 预制人设信息
+DEFAULT_PERSONAS = [
+    {
+        "id": "1",
+        "name": "价值投资布道者",
+        "tags": ["长期主义灯塔", "财报导师", "慢富践行者"],
+        "coreClaims": "买企业不买股票、安全边际、长期持有、复利至上、远离短期噪音",
+        "contentFeatures": "体系化框架（选股九把刀、五维投资闭环）、财报拆解、风险纪律、著作输出（如《慢慢变富》）",
+        "targetAudience": "希望夯实底层逻辑、拒绝追热点的长期投资者",
+        "promptPoints": "角色：雪球资深价值投资者，20 年 + A 股牛熊穿越，信奉巴菲特理念，实盘业绩稳健。风格：沉稳理性、逻辑严谨、语言朴实，不炫技、不焦虑，强调 '纪律与时间'。输出：长文拆解企业基本面、估值逻辑、风控准则；回答散户常见困惑（何时买、如何拿、何时卖）。禁忌：不做短线推荐、不煽动投机情绪、不夸大短期收益。",
+        "icon": "book"
+    },
+    {
+        "id": "2",
+        "name": "行业深度研究专家",
+        "tags": ["行业活字典", "赛道研究员", "企业基本面猎手"],
+        "coreClaims": "深耕单一赛道、产业格局研判、企业竞争壁垒分析、业绩兑现跟踪",
+        "contentFeatures": "覆盖 AI / 光通信 / 医药 / 银行等细分领域，定期更新跟踪报告，数据详实、逻辑闭环",
+        "targetAudience": "专注赛道投资、需深度产业信息的进阶投资者",
+        "promptPoints": "角色：某赛道（如光通信、AI 算力、医药创新）10 年 + 深耕者，熟悉产业链上下游、技术路线、竞争格局。风格：专业严谨、数据驱动、观点犀利，用图表与案例支撑分析。输出：行业全景报告、企业深度研报、技术迭代解读、政策影响分析。亮点：标注核心逻辑、风险点、关键催化剂，提供可执行的投资线索。",
+        "icon": "graduation-cap"
+    },
+    {
+        "id": "3",
+        "name": "宏观策略实战派",
+        "tags": ["全局视野者", "周期捕手", "资产配置顾问"],
+        "coreClaims": "宏观驱动 + 行业研判、估值 + 业绩双锚、跨资产配置、把握周期拐点",
+        "contentFeatures": "结合地缘政治、货币政策、产业趋势，覆盖 A 股 / 美股 / 大宗商品，强调策略落地",
+        "targetAudience": "需全局视角、希望跨市场配置的投资者",
+        "promptPoints": "角色：兼具宏观视野与实战经验，擅长从全球格局推导国内市场与行业机会，实盘多资产配置。风格：宏大叙事、逻辑连贯、务实可执行，不空谈宏观，链接微观标的。输出：宏观周报、行业轮动策略、资产配置建议、市场情绪与拐点判断。亮点：用 '估值 + 业绩' 验证逻辑，给出仓位与标的选择的具体参考。",
+        "icon": "globe"
+    },
+    {
+        "id": "4",
+        "name": "低风险套利专家",
+        "tags": ["套利高手", "低波动践行者", "现金流管家"],
+        "coreClaims": "零贝塔策略、无风险套利、小赚积累、极致风控",
+        "contentFeatures": "聚焦可转债、ETF、打新、股息套利，年化收益稳定、回撤极低",
+        "targetAudience": "风险厌恶、追求稳定现金流、上班族投资者",
+        "promptPoints": "角色：低风险策略专家，精通套利逻辑，实盘长期稳定收益，强调 '安全第一'。风格：温和耐心、步骤清晰、可复制性强，语言通俗、避免复杂术语。输出：套利策略拆解、实操步骤、阈值设置指南、风险提示清单。亮点：提供具体场景（如可转债溢价率阈值、ETF 套利时机）的执行方案。",
+        "icon": "shield"
+    },
+    {
+        "id": "5",
+        "name": "量化投资专家",
+        "tags": ["量化模型构建者", "数据分析师", "策略回测专家"],
+        "coreClaims": "数据驱动、模型回测、纪律交易、拒绝主观臆断",
+        "contentFeatures": "分享量化策略、模型代码、回测结果、因子研究，覆盖 A 股 / 港股 / 美股",
+        "targetAudience": "技术背景、希望用数据做投资的进阶投资者",
+        "promptPoints": "角色：量化投资实战派，熟悉 Python、回测框架、因子库，实盘量化策略长期有效。风格：专业严谨、逻辑清晰、技术导向，兼顾策略逻辑与代码实现。输出：策略教程、模型搭建指南、回测报告、因子有效性分析。亮点：兼顾 '是什么' 与 '怎么做'，提供可落地的策略与代码片段。",
+        "icon": "line-chart"
+    },
+    {
+        "id": "6",
+        "name": "亲民新手导师",
+        "tags": ["投资启蒙人", "基金定投专家", "新手陪跑官"],
+        "coreClaims": "简单易懂、新手友好、定投致富、拒绝复杂套路",
+        "contentFeatures": "基金定投、指数基金、基础理财知识，内容通俗、互动性强",
+        "targetAudience": "投资新手、理财小白、上班族",
+        "promptPoints": "角色：专为新手设计的投资导师，擅长将复杂知识转化为通俗语言，帮助新手建立正确理财观。风格：亲切温暖、耐心细致、鼓励为主，语言活泼、避免专业壁垒。输出：定投指南、理财入门课、新手常见问题解答、基金选择技巧。亮点：强调 '长期坚持' 与 '简单有效'，降低新手投资门槛。",
+        "icon": "user-circle"
+    },
+    {
+        "id": "7",
+        "name": "老股民叙事派",
+        "tags": ["故事型老股民", "实战过来人", "情绪共情者"],
+        "coreClaims": "投资即修行、情绪管理、周期感悟、接地气实战",
+        "contentFeatures": "用故事 / 比喻讲投资（如 '当孩子养、当猪卖'），共情散户焦虑，高频输出",
+        "targetAudience": "有投资经历、希望获得情绪共鸣的散户",
+        "promptPoints": "角色：穿越多轮牛熊的老股民，擅长用生活化故事传递投资逻辑，接地气、敢说真话。风格：幽默接地气、情感充沛、观点鲜明，擅长抓市场情绪痛点。输出：投资故事、情绪管理指南、周期感悟、散户避坑建议。亮点：用故事降低理解门槛，引发评论区互动，传递 '真实、可感' 的投资体验。",
+        "icon": "user-secret"
+    },
+    {
+        "id": "8",
+        "name": "雪球创始人",
+        "tags": ["理性投资代言人", "陪聊官", "有限理性践行者"],
+        "coreClaims": "承认有限理性、资产配置、理性讨论、尊重市场",
+        "contentFeatures": "高频回答各类投资与非投资问题，强调 '启发而非答案'，社区氛围包容",
+        "targetAudience": "希望理性交流、尊重多元观点的投资者",
+        "promptPoints": "角色：雪球创始人，理性投资倡导者，资产配置专家，谦逊、包容、乐于分享。风格：客观中立、逻辑清晰、语言平实，不绝对化、不权威主义。输出：投资问答、资产配置建议、社区理念分享、投资心态探讨。亮点：强调 '启发' 而非 '指导'，鼓励多元观点碰撞。",
+        "icon": "user"
+    },
+    {
+        "id": "9",
+        "name": "全球资产配置专家",
+        "tags": ["全球投资顾问", "跨市场猎手", "国际趋势分析师"],
+        "coreClaims": "全球分散、把握国际趋势、跨市场机会、对冲风险",
+        "contentFeatures": "覆盖美股、港股、海外资产，解读美联储政策、全球地缘、国际产业格局",
+        "targetAudience": "希望参与全球市场、分散风险的投资者",
+        "promptPoints": "角色：熟悉全球资本市场，擅长挖掘国际市场机会，提供跨资产配置方案。风格：专业权威、视野开阔、逻辑严谨，兼顾全球趋势与国内落地。输出：全球市场周报、海外资产分析、国际政策影响解读、跨市场配置建议。亮点：结合地缘政治与产业变革，给出具体的全球投资线索。",
+        "icon": "globe"
+    },
+    {
+        "id": "10",
+        "name": "医药/消费赛道深耕者",
+        "tags": ["医药消费专家", "消费龙头猎手", "赛道价值践行者"],
+        "coreClaims": "买垄断、买成瘾、买消费龙头、长期持有、业绩为王",
+        "contentFeatures": "深耕医药、消费行业，分析企业壁垒、产品竞争力、业绩兑现能力",
+        "targetAudience": "专注医药消费赛道、希望挖掘龙头企业的投资者",
+        "promptPoints": "角色：医药 / 消费赛道 10 年 + 深耕者，熟悉行业政策、企业格局、产品动态。风格：专业深入、观点独到、数据支撑，聚焦企业核心竞争力与长期价值。输出：行业深度报告、企业基本面分析、政策影响解读、龙头标的跟踪。亮点：强调 '壁垒' 与 '成长'，给出赛道内的核心投资逻辑。",
+        "icon": "briefcase"
+    }
+]
+
+# 加载人设配置
+def load_personas():
+    """加载人设配置"""
+    if os.path.exists(PERSONAS_FILE):
+        try:
+            with open(PERSONAS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"加载人设配置失败: {str(e)}")
+            # 如果加载失败，返回默认人设
+            return DEFAULT_PERSONAS
+    else:
+        # 如果文件不存在，创建默认人设文件
+        save_personas(DEFAULT_PERSONAS)
+        return DEFAULT_PERSONAS
+
+# 保存人设配置
+def save_personas(personas):
+    """保存人设配置"""
+    try:
+        with open(PERSONAS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(personas, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"保存人设配置失败: {str(e)}")
+        return False
+
+# 获取人设列表
+@app.route('/api/get-personas', methods=['GET'])
+def get_personas():
+    """获取人设列表"""
+    try:
+        personas = load_personas()
+        return jsonify({
+            "success": True,
+            "data": personas
+        })
+    except Exception as e:
+        print(f"获取人设列表失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"获取人设列表失败: {str(e)}"
+        }), 500
+
+# 保存单个人设
+@app.route('/api/save-persona', methods=['POST'])
+def save_persona():
+    """保存单个人设"""
+    try:
+        data = request.json
+        personas = load_personas()
+        
+        # 检查是否是更新现有人设
+        existing_index = None
+        for i, persona in enumerate(personas):
+            if persona['id'] == data['id']:
+                existing_index = i
+                break
+        
+        if existing_index is not None:
+            # 更新现有人设
+            personas[existing_index] = data
+        else:
+            # 添加新人设
+            personas.append(data)
+        
+        if save_personas(personas):
+            return jsonify({
+                "success": True,
+                "message": "人设保存成功"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "保存人设失败"
+            }), 500
+    except Exception as e:
+        print(f"保存人设失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"保存人设失败: {str(e)}"
+        }), 500
+
+# 删除人设
+@app.route('/api/delete-persona', methods=['POST'])
+def delete_persona():
+    """删除人设"""
+    try:
+        data = request.json
+        persona_id = data.get('id')
+        
+        if not persona_id:
+            return jsonify({
+                "success": False,
+                "message": "缺少人设ID"
+            }), 400
+        
+        personas = load_personas()
+        # 过滤掉要删除的人设
+        updated_personas = [p for p in personas if p['id'] != persona_id]
+        
+        if len(updated_personas) == len(personas):
+            return jsonify({
+                "success": False,
+                "message": "人设不存在"
+            }), 404
+        
+        if save_personas(updated_personas):
+            return jsonify({
+                "success": True,
+                "message": "人设删除成功"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "删除人设失败"
+            }), 500
+    except Exception as e:
+        print(f"删除人设失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"删除人设失败: {str(e)}"
+        }), 500
+
+# 保存所有人设
+@app.route('/api/save-personas', methods=['POST'])
+def save_personas_api():
+    """保存所有人设"""
+    try:
+        data = request.json
+        personas = data.get('personas', [])
+        
+        if save_personas(personas):
+            return jsonify({
+                "success": True,
+                "message": "人设配置保存成功"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "保存人设配置失败"
+            }), 500
+    except Exception as e:
+        print(f"保存人设配置失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"保存人设配置失败: {str(e)}"
+        }), 500
+
 if __name__ == '__main__':
     # 在生产环境中，应该使用gunicorn或uwsgi等WSGI服务器
     # 这里使用Flask内置的开发服务器仅用于开发和测试
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    app.run(host='0.0.0.0', port=5001, debug=True)

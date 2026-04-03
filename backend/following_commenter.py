@@ -295,6 +295,10 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
         api_key = models.get('baidu', {}).get('apiKey')
     elif selected_model == 'alibaba':
         api_key = models.get('alibaba', {}).get('apiKey')
+    elif selected_model == 'deepseek':
+        api_key = models.get('deepseek', {}).get('apiKey')
+    elif selected_model == 'gemini':
+        api_key = models.get('gemini', {}).get('apiKey')
     else:
         api_key = None
     
