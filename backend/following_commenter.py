@@ -282,7 +282,22 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
         add_log("缺少Cookie", "error")
         return {"success": False, "message": "缺少Cookie", "logs": logs}
     
-    api_key = config.get('arkApiKey')
+    # 获取选中的模型和API Key
+    selected_model = config.get('selectedModel', 'ark')
+    models = config.get('models', {})
+    
+    # 根据选中的模型获取API Key
+    if selected_model == 'ark':
+        api_key = models.get('ark', {}).get('apiKey')
+    elif selected_model == 'openai':
+        api_key = models.get('openai', {}).get('apiKey')
+    elif selected_model == 'baidu':
+        api_key = models.get('baidu', {}).get('apiKey')
+    elif selected_model == 'alibaba':
+        api_key = models.get('alibaba', {}).get('apiKey')
+    else:
+        api_key = None
+    
     if not api_key:
         add_log("缺少AI API Key", "error")
         return {"success": False, "message": "缺少AI API Key", "logs": logs}

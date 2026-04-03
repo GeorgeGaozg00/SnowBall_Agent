@@ -111,7 +111,18 @@ def start_commenting():
                 "message": "请求体不能为空"
             }), 400
         
-        if not config.get('arkApiKey'):
+        # 提取 API Key（支持新旧格式）
+        ark_api_key = None
+        if config.get('arkApiKey'):
+            # 旧格式
+            ark_api_key = config['arkApiKey']
+        elif config.get('models'):
+            # 新格式
+            selected_model = config.get('selectedModel', 'ark')
+            if selected_model == 'ark' and config['models'].get('ark'):
+                ark_api_key = config['models']['ark'].get('apiKey')
+        
+        if not ark_api_key:
             print("错误: 缺少火山引擎API Key")
             return jsonify({
                 "success": False,
@@ -143,7 +154,7 @@ def start_commenting():
             # 创建新的评论器实例
             print("创建新的评论器实例")
             commenter_instance = XueQiuCommenter(
-                ark_api_key=config['arkApiKey'],
+                ark_api_key=ark_api_key,
                 xueqiu_cookie=config['xueQiuCookie'],
                 log_callback=log_callback
             )
@@ -223,15 +234,16 @@ def get_run_status():
     global commenter_instance, following_commenter_instance, following_comments_logs, following_comments_status
     
     try:
-        # 检查热门帖/推荐帖评论任务状态
+        # 检查热门帖/推荐帖评论任务状态（优先检查正在运行的任务）
         commenter = None
         with commenter_lock:
             commenter = commenter_instance
         
-        if commenter:
+        # 如果热门帖/推荐帖任务正在运行，返回其状态
+        if commenter and commenter.is_running:
             return jsonify({
                 "success": True,
-                "isRunning": commenter.is_running,
+                "isRunning": True,
                 "taskType": "commenting",
                 "data": commenter.get_stats(),
                 "logs": commenter.get_logs()[-20:],  # 返回最近20条日志
@@ -243,14 +255,36 @@ def get_run_status():
         with following_commenter_lock:
             following_commenter = following_commenter_instance
         
-        if following_commenter:
-            # 无论任务是否运行，都返回关注者评论任务的状态和日志
+        # 如果关注者评论任务正在运行，返回其状态
+        if following_commenter and following_commenter.is_running:
             return jsonify({
                 "success": True,
-                "isRunning": following_commenter.is_running,
+                "isRunning": True,
                 "taskType": "following",
                 "data": following_comments_status,
                 "logs": following_comments_logs[-20:],  # 返回最近20条日志
+                "message": "获取运行状态成功"
+            })
+        
+        # 如果关注者评论任务存在但已停止，仍然返回其状态（用于显示最终结果）
+        if following_commenter:
+            return jsonify({
+                "success": True,
+                "isRunning": False,
+                "taskType": "following",
+                "data": following_comments_status,
+                "logs": following_comments_logs[-20:],  # 返回最近20条日志
+                "message": "获取运行状态成功"
+            })
+        
+        # 如果热门帖/推荐帖任务存在但已停止，仍然返回其状态
+        if commenter:
+            return jsonify({
+                "success": True,
+                "isRunning": False,
+                "taskType": "commenting",
+                "data": commenter.get_stats(),
+                "logs": commenter.get_logs()[-20:],  # 返回最近20条日志
                 "message": "获取运行状态成功"
             })
         

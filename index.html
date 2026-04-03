@@ -103,9 +103,17 @@
                 <i class="fa fa-dashboard w-6"></i>
                 <span>运行状态</span>
             </div>
-            <div class="menu-item" id="menuConfig">
-                <i class="fa fa-cog w-6"></i>
-                <span>系统配置</span>
+            <div class="menu-item" id="menuModelConfig">
+                <i class="fa fa-microchip w-6"></i>
+                <span>大模型配置</span>
+            </div>
+            <div class="menu-item" id="menuCommentConfig">
+                <i class="fa fa-sliders w-6"></i>
+                <span>评论设置</span>
+            </div>
+            <div class="menu-item" id="menuCookieConfig">
+                <i class="fa fa-key w-6"></i>
+                <span>用户Cookie配置</span>
             </div>
             <div class="menu-item" id="menuFollowing">
                 <i class="fa fa-users w-6"></i>
@@ -209,31 +217,126 @@
         </div>
     </main>
 
-    <!-- 配置弹窗 -->
-    <div id="configModal" class="modal-overlay">
+    <!-- 大模型配置弹窗 -->
+    <div id="modelConfigModal" class="modal-overlay">
         <div class="modal-content">
             <!-- 弹窗头部 -->
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
-                    <i class="fa fa-cog mr-2"></i>
-                    系统配置
+                    <i class="fa fa-brain mr-2"></i>
+                    大模型配置
                 </h3>
-                <button id="closeModalBtn" class="text-white hover:text-gray-200 transition-colors">
+                <button class="close-modal-btn text-white hover:text-gray-200 transition-colors">
                     <i class="fa fa-times text-xl"></i>
                 </button>
             </div>
             
             <!-- 弹窗内容 -->
             <div class="p-6">
-                <!-- 火山引擎API Key -->
+                <!-- 大模型选择 -->
                 <div class="mb-5">
-                    <label for="arkApiKey" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fa fa-key mr-1 text-blue-600"></i>
-                        火山引擎API Key
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        <i class="fa fa-brain mr-1 text-blue-600"></i>
+                        大模型选择
                     </label>
-                    <input type="text" id="arkApiKey" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="输入火山引擎API Key">
+                    
+                    <div class="space-y-4">
+                        <!-- 火山引擎 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center mb-3">
+                                <input type="radio" id="model-ark" name="selectedModel" value="ark" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="model-ark" class="ml-2 block text-sm font-medium text-gray-700">
+                                    火山引擎（Doubao）
+                                </label>
+                            </div>
+                            <div>
+                                <label for="arkApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
+                                <input type="text" id="arkApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入火山引擎API Key">
+                            </div>
+                        </div>
+                        
+                        <!-- OpenAI -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center mb-3">
+                                <input type="radio" id="model-openai" name="selectedModel" value="openai" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="model-openai" class="ml-2 block text-sm font-medium text-gray-700">
+                                    OpenAI（GPT）
+                                </label>
+                            </div>
+                            <div>
+                                <label for="openaiApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
+                                <input type="text" id="openaiApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入OpenAI API Key">
+                                <label for="openaiBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
+                                <input type="text" id="openaiBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入OpenAI Base URL" value="https://api.openai.com/v1">
+                            </div>
+                        </div>
+                        
+                        <!-- 百度文心一言 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center mb-3">
+                                <input type="radio" id="model-baidu" name="selectedModel" value="baidu" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="model-baidu" class="ml-2 block text-sm font-medium text-gray-700">
+                                    百度文心一言
+                                </label>
+                            </div>
+                            <div>
+                                <label for="baiduApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
+                                <input type="text" id="baiduApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入百度API Key">
+                                <label for="baiduSecretKey" class="block text-xs text-gray-500 mb-1 mt-2">Secret Key</label>
+                                <input type="text" id="baiduSecretKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入百度Secret Key">
+                            </div>
+                        </div>
+                        
+                        <!-- 阿里通义千问 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center mb-3">
+                                <input type="radio" id="model-alibaba" name="selectedModel" value="alibaba" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="model-alibaba" class="ml-2 block text-sm font-medium text-gray-700">
+                                    阿里通义千问
+                                </label>
+                            </div>
+                            <div>
+                                <label for="alibabaApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
+                                <input type="text" id="alibabaApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入阿里API Key">
+                                <label for="alibabaBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
+                                <input type="text" id="alibabaBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入阿里Base URL">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
+
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <i class="fa fa-save mr-2"></i>
+                    保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户Cookie配置弹窗 -->
+    <div id="cookieConfigModal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 弹窗头部 -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-cookie mr-2"></i>
+                    用户Cookie配置
+                </h3>
+                <button class="close-modal-btn text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
                 <!-- 雪球Cookie -->
                 <div class="mb-5">
                     <label for="xueQiuCookie" class="block text-sm font-medium text-gray-700 mb-2">
@@ -242,7 +345,37 @@
                     </label>
                     <textarea id="xueQiuCookie" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="4" placeholder="输入雪球Cookie"></textarea>
                 </div>
-                
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                    <i class="fa fa-save mr-2"></i>
+                    保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 评论设置弹窗 -->
+    <div id="commentConfigModal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 弹窗头部 -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-sliders mr-2"></i>
+                    评论设置
+                </h3>
+                <button class="close-modal-btn text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
                 <!-- 评论设置 -->
                 <div class="mb-5">
                     <label class="block text-sm font-medium text-gray-700 mb-3">
@@ -274,10 +407,10 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button id="cancelConfigBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                     取消
                 </button>
-                <button id="saveConfigModalBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                     <i class="fa fa-save mr-2"></i>
                     保存配置
                 </button>
@@ -466,7 +599,24 @@
         
         // 配置数据
         let config = {
-            arkApiKey: '',
+            selectedModel: 'ark',
+            models: {
+                ark: {
+                    apiKey: ''
+                },
+                openai: {
+                    apiKey: '',
+                    baseUrl: 'https://api.openai.com/v1'
+                },
+                baidu: {
+                    apiKey: '',
+                    secretKey: ''
+                },
+                alibaba: {
+                    apiKey: '',
+                    baseUrl: ''
+                }
+            },
             xueQiuCookie: '',
             dailyLimit: 60,
             delayMin: 30,
@@ -475,17 +625,25 @@
         };
         
         // DOM 元素
+        const selectedModelRadios = document.querySelectorAll('input[name="selectedModel"]');
         const arkApiKeyInput = document.getElementById('arkApiKey');
+        const openaiApiKeyInput = document.getElementById('openaiApiKey');
+        const openaiBaseUrlInput = document.getElementById('openaiBaseUrl');
+        const baiduApiKeyInput = document.getElementById('baiduApiKey');
+        const baiduSecretKeyInput = document.getElementById('baiduSecretKey');
+        const alibabaApiKeyInput = document.getElementById('alibabaApiKey');
+        const alibabaBaseUrlInput = document.getElementById('alibabaBaseUrl');
         const xueQiuCookieInput = document.getElementById('xueQiuCookie');
         const dailyLimitInput = document.getElementById('dailyLimit');
         const delayMinInput = document.getElementById('delayMin');
         const delayMaxInput = document.getElementById('delayMax');
         const testModeCheckbox = document.getElementById('testMode');
-        const configModal = document.getElementById('configModal');
-        const menuConfig = document.getElementById('menuConfig');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const cancelConfigBtn = document.getElementById('cancelConfigBtn');
-        const saveConfigModalBtn = document.getElementById('saveConfigModalBtn');
+        const modelConfigModal = document.getElementById('modelConfigModal');
+        const commentConfigModal = document.getElementById('commentConfigModal');
+        const cookieConfigModal = document.getElementById('cookieConfigModal');
+        const menuModelConfig = document.getElementById('menuModelConfig');
+        const menuCommentConfig = document.getElementById('menuCommentConfig');
+        const menuCookieConfig = document.getElementById('menuCookieConfig');
         const menuFollowing = document.getElementById('menuFollowing');
         const menuHot = document.getElementById('menuHot');
         const menuRecommend = document.getElementById('menuRecommend');
@@ -534,7 +692,9 @@
         // 设置事件监听
         function setupEventListeners() {
             // 菜单点击
-            menuConfig.addEventListener('click', openConfigModal);
+            menuModelConfig.addEventListener('click', openModelConfigModal);
+            menuCommentConfig.addEventListener('click', openCommentConfigModal);
+            menuCookieConfig.addEventListener('click', openCookieConfigModal);
             menuFollowing.addEventListener('click', checkAndShowFollowingList);
             
             // 启动按钮
@@ -542,9 +702,15 @@
             startRecommendBtn.addEventListener('click', toggleRecommendCommenting);
             
             // 配置弹窗按钮
-            closeModalBtn.addEventListener('click', closeConfigModal);
-            cancelConfigBtn.addEventListener('click', closeConfigModal);
-            saveConfigModalBtn.addEventListener('click', saveConfig);
+            document.querySelectorAll('.close-modal-btn').forEach(btn => {
+                btn.addEventListener('click', closeAllModals);
+            });
+            document.querySelectorAll('.cancel-config-btn').forEach(btn => {
+                btn.addEventListener('click', closeAllModals);
+            });
+            document.querySelectorAll('.save-config-btn').forEach(btn => {
+                btn.addEventListener('click', saveConfig);
+            });
             
             // 确认更新弹窗按钮
             closeConfirmModalBtn.addEventListener('click', closeConfirmModal);
@@ -567,9 +733,19 @@
             deselectAllFollowingBtn.addEventListener('click', deselectAllFollowing);
             
             // 点击弹窗外部关闭
-            configModal.addEventListener('click', (e) => {
-                if (e.target === configModal) {
-                    closeConfigModal();
+            modelConfigModal.addEventListener('click', (e) => {
+                if (e.target === modelConfigModal) {
+                    closeAllModals();
+                }
+            });
+            commentConfigModal.addEventListener('click', (e) => {
+                if (e.target === commentConfigModal) {
+                    closeAllModals();
+                }
+            });
+            cookieConfigModal.addEventListener('click', (e) => {
+                if (e.target === cookieConfigModal) {
+                    closeAllModals();
                 }
             });
             confirmUpdateModal.addEventListener('click', (e) => {
@@ -584,15 +760,32 @@
             });
         }
         
-        // 打开配置弹窗
-        function openConfigModal() {
+        // 打开大模型配置弹窗
+        async function openModelConfigModal() {
+            await loadConfigFromServer();
             updateConfigUI();
-            configModal.classList.add('show');
+            modelConfigModal.classList.add('show');
         }
         
-        // 关闭配置弹窗
-        function closeConfigModal() {
-            configModal.classList.remove('show');
+        // 打开用户Cookie配置弹窗
+        async function openCookieConfigModal() {
+            await loadConfigFromServer();
+            updateConfigUI();
+            cookieConfigModal.classList.add('show');
+        }
+        
+        // 打开评论设置弹窗
+        async function openCommentConfigModal() {
+            await loadConfigFromServer();
+            updateConfigUI();
+            commentConfigModal.classList.add('show');
+        }
+        
+        // 关闭所有弹窗
+        function closeAllModals() {
+            modelConfigModal.classList.remove('show');
+            commentConfigModal.classList.remove('show');
+            cookieConfigModal.classList.remove('show');
         }
         
         // 从服务器加载配置
@@ -603,7 +796,23 @@
                 
                 if (result.success && result.exists) {
                     const serverConfig = result.data;
-                    if (serverConfig.arkApiKey) config.arkApiKey = serverConfig.arkApiKey;
+                    
+                    // 加载选中的模型
+                    if (serverConfig.selectedModel) config.selectedModel = serverConfig.selectedModel;
+                    
+                    // 加载模型配置
+                    if (serverConfig.models) {
+                        config.models = {
+                            ark: serverConfig.models.ark || { apiKey: '' },
+                            openai: serverConfig.models.openai || { apiKey: '', baseUrl: 'https://api.openai.com/v1' },
+                            baidu: serverConfig.models.baidu || { apiKey: '', secretKey: '' },
+                            alibaba: serverConfig.models.alibaba || { apiKey: '', baseUrl: '' }
+                        };
+                    }
+                    
+                    // 兼容旧配置格式
+                    if (serverConfig.arkApiKey) config.models.ark.apiKey = serverConfig.arkApiKey;
+                    
                     if (serverConfig.xueQiuCookie) config.xueQiuCookie = serverConfig.xueQiuCookie;
                     if (serverConfig.dailyLimit) config.dailyLimit = serverConfig.dailyLimit;
                     if (serverConfig.delayMin) config.delayMin = serverConfig.delayMin;
@@ -622,7 +831,22 @@
         
         // 保存配置
         async function saveConfig() {
-            config.arkApiKey = arkApiKeyInput.value;
+            // 保存选中的模型
+            selectedModelRadios.forEach(radio => {
+                if (radio.checked) {
+                    config.selectedModel = radio.value;
+                }
+            });
+            
+            // 保存模型配置
+            config.models.ark.apiKey = arkApiKeyInput.value;
+            config.models.openai.apiKey = openaiApiKeyInput.value;
+            config.models.openai.baseUrl = openaiBaseUrlInput.value;
+            config.models.baidu.apiKey = baiduApiKeyInput.value;
+            config.models.baidu.secretKey = baiduSecretKeyInput.value;
+            config.models.alibaba.apiKey = alibabaApiKeyInput.value;
+            config.models.alibaba.baseUrl = alibabaBaseUrlInput.value;
+            
             config.xueQiuCookie = xueQiuCookieInput.value;
             config.dailyLimit = parseInt(dailyLimitInput.value) || 60;
             config.delayMin = parseInt(delayMinInput.value) || 30;
@@ -639,7 +863,7 @@
                 const result = await response.json();
                 if (result.success) {
                     addLog('配置保存成功', 'success');
-                    closeConfigModal();
+                    closeAllModals();
                 } else {
                     addLog(`保存失败: ${result.message}`, 'error');
                 }
@@ -650,7 +874,22 @@
         
         // 更新配置界面
         function updateConfigUI() {
-            arkApiKeyInput.value = config.arkApiKey;
+            // 更新选中的模型
+            selectedModelRadios.forEach(radio => {
+                if (radio.value === config.selectedModel) {
+                    radio.checked = true;
+                }
+            });
+            
+            // 更新模型配置
+            arkApiKeyInput.value = config.models.ark.apiKey;
+            openaiApiKeyInput.value = config.models.openai.apiKey;
+            openaiBaseUrlInput.value = config.models.openai.baseUrl;
+            baiduApiKeyInput.value = config.models.baidu.apiKey;
+            baiduSecretKeyInput.value = config.models.baidu.secretKey;
+            alibabaApiKeyInput.value = config.models.alibaba.apiKey;
+            alibabaBaseUrlInput.value = config.models.alibaba.baseUrl;
+            
             xueQiuCookieInput.value = config.xueQiuCookie;
             dailyLimitInput.value = config.dailyLimit;
             delayMinInput.value = config.delayMin;
@@ -662,7 +901,7 @@
         async function checkAndShowFollowingList() {
             if (!config.xueQiuCookie) {
                 addLog('错误: 请先配置雪球Cookie', 'error');
-                openConfigModal();
+                openModelConfigModal();
                 return;
             }
             
@@ -783,9 +1022,23 @@
         
         // 开始热门帖评论
         async function startHotCommenting() {
-            if (!config.arkApiKey || !config.xueQiuCookie) {
+            // 根据选中的模型检查对应的API Key
+            let apiKey = '';
+            const selectedModel = config.selectedModel || 'ark';
+            
+            if (selectedModel === 'ark') {
+                apiKey = config.models.ark.apiKey;
+            } else if (selectedModel === 'openai') {
+                apiKey = config.models.openai.apiKey;
+            } else if (selectedModel === 'baidu') {
+                apiKey = config.models.baidu.apiKey;
+            } else if (selectedModel === 'alibaba') {
+                apiKey = config.models.alibaba.apiKey;
+            }
+            
+            if (!apiKey || !config.xueQiuCookie) {
                 addLog('错误: 请先完成系统配置', 'error');
-                openConfigModal();
+                openModelConfigModal();
                 return;
             }
             
@@ -797,7 +1050,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        arkApiKey: config.arkApiKey,
+                        models: config.models,
+                        selectedModel: config.selectedModel,
                         xueQiuCookie: config.xueQiuCookie,
                         dailyLimit: config.dailyLimit,
                         delayMin: config.delayMin,
@@ -853,9 +1107,23 @@
         
         // 开始推荐帖评论
         async function startRecommendCommenting() {
-            if (!config.arkApiKey || !config.xueQiuCookie) {
+            // 根据选中的模型检查对应的API Key
+            let apiKey = '';
+            const selectedModel = config.selectedModel || 'ark';
+            
+            if (selectedModel === 'ark') {
+                apiKey = config.models.ark.apiKey;
+            } else if (selectedModel === 'openai') {
+                apiKey = config.models.openai.apiKey;
+            } else if (selectedModel === 'baidu') {
+                apiKey = config.models.baidu.apiKey;
+            } else if (selectedModel === 'alibaba') {
+                apiKey = config.models.alibaba.apiKey;
+            }
+            
+            if (!apiKey || !config.xueQiuCookie) {
                 addLog('错误: 请先完成系统配置', 'error');
-                openConfigModal();
+                openModelConfigModal();
                 return;
             }
             
@@ -867,7 +1135,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        arkApiKey: config.arkApiKey,
+                        models: config.models,
+                        selectedModel: config.selectedModel,
                         xueQiuCookie: config.xueQiuCookie,
                         dailyLimit: config.dailyLimit,
                         delayMin: config.delayMin,
@@ -1239,10 +1508,27 @@
         }
         
         // 打开关注者评论弹窗
-        function openFollowingCommentsModal() {
-            if (!config.arkApiKey || !config.xueQiuCookie) {
+        async function openFollowingCommentsModal() {
+            // 确保配置已加载
+            await loadConfigFromServer();
+            
+            // 根据选中的模型检查对应的API Key
+            let apiKey = '';
+            const selectedModel = config.selectedModel || 'ark';
+            
+            if (selectedModel === 'ark') {
+                apiKey = config.models.ark.apiKey;
+            } else if (selectedModel === 'openai') {
+                apiKey = config.models.openai.apiKey;
+            } else if (selectedModel === 'baidu') {
+                apiKey = config.models.baidu.apiKey;
+            } else if (selectedModel === 'alibaba') {
+                apiKey = config.models.alibaba.apiKey;
+            }
+            
+            if (!apiKey || !config.xueQiuCookie) {
                 addLog('错误: 请先完成系统配置', 'error');
-                openConfigModal();
+                openModelConfigModal();
                 return;
             }
             followingCommentsModal.classList.add('show');
@@ -1280,6 +1566,9 @@
                 addLog('错误: 已有其他任务在运行，请先停止', 'error');
                 return;
             }
+            
+            // 重置已显示日志集合
+            displayedLogs.clear();
             
             const actionTypeText = actionType === 'like' ? '点赞' : '评论';
             addLog(`正在启动关注者${actionTypeText}任务...`, 'info');
