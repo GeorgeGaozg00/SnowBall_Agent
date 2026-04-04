@@ -4,6 +4,7 @@ import random
 import threading
 import json
 from datetime import datetime
+from article_utils import get_article_full_attributes
 
 class XueQiuCommenter:
     def __init__(self, ark_api_key, xueqiu_cookie, log_callback=None):
@@ -534,17 +535,29 @@ class XueQiuCommenter:
                         break
                     
                     try:
-                        title = article.get("title", "无标题")
-                        text = article.get("text", "")
-                        article_id = article.get("id", "")
+                        # 获取文章完整属性
+                        article_info = get_article_full_attributes(article)
+                        
+                        title = article_info.get("标题", "无标题")
+                        text = article_info.get("内容", "")
+                        article_id = article_info.get("ID", "")
+                        article_attrs = article_info.get("属性", {})
+                        reward_info = article_info.get("打赏/悬赏信息", {})
                         
                         if not article_id:
                             self.add_log('warning', f'跳过无ID的文章: {title}')
                             continue
                         
-                        self.add_log('info', f'处理文章: {title}', {
+                        # 记录文章标题
+                        self.add_log('info', f'处理文章: {title[:50]}...')
+                        
+                        # 记录所有文章属性作为一行日志，使用鲜艳颜色
+                        attrs_str = f"点赞: {article_attrs.get('点赞数', 0)} | 评论: {article_attrs.get('评论数', 0)} | 转发: {article_attrs.get('转发数', 0)} | 阅读: {article_attrs.get('阅读数', 0)} | 收藏: {article_attrs.get('收藏数', 0)} | 专栏: {article_attrs.get('是否专栏', '否')} | 原创: {article_attrs.get('是否原创声明', '否')} | 时间: {article_attrs.get('创建时间', '未知')} | 打赏: {reward_info.get('类型', '无')}"
+                        
+                        # 使用info类型但前端可以根据内容识别为需要鲜艳颜色的日志
+                        self.add_log('info', f'  📊 文章属性: {attrs_str}', {
                             'articleId': article_id,
-                            'articleTitle': title
+                            'isAttributeLog': True
                         })
                         
                         # 生成评论

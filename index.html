@@ -7,122 +7,120 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
-        /* 全局样式 */
-        :root {
-            --primary-color: #1e40af;
-            --primary-light: #3b82f6;
-            --primary-dark: #1e3a8a;
-            --secondary-color: #4f46e5;
-            --accent-color: #f59e0b;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-light: #f8fafc;
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f1f5f9;
-            --border-color: #e2e8f0;
-            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --border-radius: 8px;
-            --transition: all 0.3s ease;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-        }
-        
-        /* 滚动条样式 */
         .scrollbar-thin {
             scrollbar-width: thin;
         }
-        
         .scrollbar-thin::-webkit-scrollbar {
             width: 6px;
         }
-        
         .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.05);
-            border-radius: 3px;
+            background: rgba(15, 23, 42, 0.1);
         }
-        
         .scrollbar-thin::-webkit-scrollbar-thumb {
             background-color: rgba(59, 130, 246, 0.5);
             border-radius: 3px;
         }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(59, 130, 246, 0.7);
-        }
-        
         /* 左侧菜单栏 */
         .sidebar {
             position: fixed;
             left: 0;
-            top: 0;
+            top: 60px;
             bottom: 0;
-            width: 240px;
-            background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-            z-index: 1000;
+            width: 220px;
+            background-color: #ffffff;
+            z-index: 999;
             overflow-y: auto;
-            box-shadow: var(--shadow-md);
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            border-right: 1px solid #e5e7eb;
         }
-        
         /* 主内容区域 */
         .main-content {
-            margin-left: 240px;
-            min-height: 100vh;
-            background-color: var(--bg-primary);
+            margin-left: 220px;
+            min-height: calc(100vh - 60px);
+            background-color: #f8fafc;
         }
-        
         /* 菜单项 */
         .menu-item {
             display: flex;
             align-items: center;
-            padding: 14px 24px;
-            color: rgba(255, 255, 255, 0.8);
-            transition: var(--transition);
+            padding: 12px 20px;
+            color: #64748b;
+            transition: all 0.3s;
             cursor: pointer;
             border-left: 3px solid transparent;
-            position: relative;
         }
-        
         .menu-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            transform: translateX(4px);
+            background-color: #f1f5f9;
+            color: #1e40af;
         }
-        
         .menu-item.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border-left-color: var(--primary-light);
+            background-color: #eff6ff;
+            color: #1e40af;
+            border-left-color: #3b82f6;
+            font-weight: 500;
         }
-        
-        .menu-item.active::after {
-            content: '';
-            position: absolute;
+        .menu-item i {
+            margin-right: 12px;
+            width: 18px;
+            text-align: center;
+            color: #94a3b8;
+        }
+        .menu-item.active i {
+            color: #3b82f6;
+        }
+        /* 顶部Banner */
+        .banner {
+            position: fixed;
+            top: 0;
+            left: 0;
             right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 60%;
-            background-color: var(--primary-light);
-            border-radius: 0 3px 3px 0;
+            z-index: 1000;
+            background-color: #1e293b;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+        .banner .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+        }
+        .banner .logo i {
+            margin-right: 0.6rem;
+            font-size: 1.8rem;
+        }
+        .banner .status {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .banner .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+        .banner .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .banner .status-badge.running {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+        .banner .status-badge.stopped {
+            background-color: rgba(255,255,255,0.15);
+            color: #e2e8f0;
+        }
         /* 弹窗遮罩 */
         .modal-overlay {
             display: none;
@@ -135,402 +133,280 @@
             z-index: 2000;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(2px);
         }
-        
         .modal-overlay.show {
             display: flex;
-            animation: fadeIn 0.3s ease;
         }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
         /* 弹窗内容 */
         .modal-content {
-            background: var(--bg-secondary);
-            border-radius: var(--border-radius);
+            background: white;
+            border-radius: 12px;
             width: 90%;
             max-width: 600px;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            animation: slideIn 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
-        
         .modal-header {
-            cursor: move;
-        }
-        
-        .modal-content {
-            cursor: default;
-        }
-        
-        .modal-content > *:not(.modal-header) {
-            cursor: default;
-        }
-        
-        .modal-content > * {
-            flex-shrink: 0;
-        }
-        
-        .modal-content > .p-6 {
-            flex-shrink: 1;
-            overflow-y: auto;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* 卡片样式 */
-        .card {
-            background: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-        }
-        
-        .card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-        
-        /* 按钮样式 */
-        .btn {
-            display: inline-flex;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            padding: 8px 16px;
-            border-radius: var(--border-radius);
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        .modal-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        .modal-header h3 i { margin-right: 0.5rem; }
+        .close-modal-btn {
+            background: none; border: none; color: #fff;
+            font-size: 1.25rem; cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-modal-btn:hover { color: rgba(255,255,255,0.8); }
+        /* 弹窗表单 */
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .form-input::placeholder { color: #9ca3af; }
+        /* 弹窗按钮 */
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            border-radius: 0 0 12px 12px;
+            background-color: #f9fafb;
+        }
+        .btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
             font-weight: 500;
-            transition: var(--transition);
             cursor: pointer;
             border: none;
-            outline: none;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-        
-        .btn-secondary {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-        
-        .btn-secondary:hover {
-            background-color: var(--border-color);
-        }
-        
-        /* 输入框样式 */
-        .input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            font-size: 14px;
-        }
-        
-        .input:focus {
-            outline: none;
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        /* 标题样式 */
-        .h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        
-        .h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        /* 文本颜色 */
-        .text-primary {
-            color: var(--text-primary);
-        }
-        
-        .text-secondary {
-            color: var(--text-secondary);
-        }
-        
-        .text-light {
-            color: var(--text-light);
-        }
-        
-        /* 背景颜色 */
-        .bg-primary {
-            background-color: var(--bg-primary);
-        }
-        
-        .bg-secondary {
-            background-color: var(--bg-secondary);
-        }
-        
-        .bg-tertiary {
-            background-color: var(--bg-tertiary);
-        }
-        
-        /* 边框 */
-        .border {
-            border: 1px solid var(--border-color);
-        }
-        
-        .border-radius {
-            border-radius: var(--border-radius);
-        }
-        
-        /* 间距 */
-        .m-1 { margin: 0.25rem; }
-        .m-2 { margin: 0.5rem; }
-        .m-3 { margin: 0.75rem; }
-        .m-4 { margin: 1rem; }
-        .m-5 { margin: 1.25rem; }
-        
-        .p-1 { padding: 0.25rem; }
-        .p-2 { padding: 0.5rem; }
-        .p-3 { padding: 0.75rem; }
-        .p-4 { padding: 1rem; }
-        .p-5 { padding: 1.25rem; }
-        
-        /* 工具类 */
-        .flex {
-            display: flex;
-        }
-        
-        .flex-col {
-            flex-direction: column;
-        }
-        
-        .items-center {
+            transition: all 0.2s;
+            display: inline-flex;
             align-items: center;
         }
-        
-        .justify-between {
-            justify-content: space-between;
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
         }
-        
-        .w-full {
-            width: 100%;
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
         }
-        
-        .text-center {
-            text-align: center;
-        }
-        
-        .shadow {
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .shadow-md {
-            box-shadow: var(--shadow-md);
-        }
-        
-        .transition {
-            transition: var(--transition);
+        .btn-secondary:hover { background-color: #d1d5db; }
+        /* 状态栏 */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 220px;
+            right: 0;
+            z-index: 998;
         }
     </style>
+
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- 左侧菜单栏 -->
-    <aside class="sidebar">
-        <!-- Logo区域 -->
-        <div class="p-6 border-b border-white border-opacity-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
-                    <i class="fa fa-comment-o text-2xl text-white"></i>
+    <!-- 顶部Banner -->
+    <div class="banner">
+        <div class="flex justify-between items-center w-full">
+            <div class="logo">
+                <i class="fa fa-comment-o"></i>
+                <span>雪球智能评论系统</span>
+            </div>
+            <div class="status">
+                <div class="status-item">
+                    <span>系统状态:</span>
+                    <span id="runStatus" class="status-badge stopped">未运行</span>
+                </div>
+                <div class="status-item">
+                    <span>上次运行:</span>
+                    <span id="lastRunTime">未运行</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex" style="min-height: calc(100vh - 60px); margin-top: 60px;">
+        <!-- 左侧菜单栏 -->
+        <aside class="sidebar">
+            
+            <!-- 菜单列表 -->
+            <nav class="py-4">
+                <div class="menu-item active" data-page="dashboard">
+                    <i class="fa fa-dashboard w-6"></i>
+                    <span>运行状态</span>
+                </div>
+                <div class="menu-item" id="menuModelConfig">
+                    <i class="fa fa-cogs w-6"></i>
+                    <span>大模型配置</span>
+                </div>
+                <div class="menu-item" id="menuCommentConfig">
+                    <i class="fa fa-sliders w-6"></i>
+                    <span>评论设置</span>
+                </div>
+                <div class="menu-item" id="menuPersonaConfig">
+                    <i class="fa fa-user-circle w-6"></i>
+                    <span>配置人设</span>
+                </div>
+                <div class="menu-item" id="menuSystemPromptConfig">
+                    <i class="fa fa-file-text-o w-6"></i>
+                    <span>系统提示词配置</span>
+                </div>
+                <div class="menu-item" id="menuUserConfig">
+                    <i class="fa fa-users w-6"></i>
+                    <span>用户信息配置</span>
+                </div>
+                <div class="menu-item" id="menuFollowing">
+                    <i class="fa fa-users w-6"></i>
+                    <span>获取关注列表</span>
+                </div>
+            </nav>
+            
+            <!-- 操作按钮区域 -->
+            <div class="px-4 py-4 border-t border-gray-200">
+                <p class="text-gray-500 text-xs mb-3 font-medium uppercase tracking-wider">自动任务</p>
+                <button id="startHotBtn" class="w-full mb-3 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                    <i class="fa fa-fire mr-2"></i>
+                    <span>启动热门帖回复</span>
+                </button>
+                <button id="startRecommendBtn" class="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                    <i class="fa fa-star mr-2"></i>
+                    <span>启动推荐帖回复</span>
+                </button>
+                <button id="startFollowingBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                    <i class="fa fa-users mr-2"></i>
+                    <span>启动关注者评论</span>
+                </button>
+            </div>
+            
+            <!-- 发布功能区域 -->
+            <div class="px-4 py-4 border-t border-gray-200">
+                <p class="text-gray-500 text-xs mb-3 font-medium uppercase tracking-wider">发布功能</p>
+                <button id="publishPostBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                    <i class="fa fa-edit mr-2"></i>
+                    <span>发布雪球帖</span>
+                </button>
+            </div>
+            
+            <!-- 底部信息 -->
+            <div class="px-4 py-4 border-t border-gray-200 mt-auto">
+                <div class="flex items-center justify-between">
+                    <div class="text-gray-500 text-xs">
+                        <p>版本 1.0.0</p>
+                    </div>
+                    <div class="text-gray-500 text-xs">
+                        <p>© 2026 雪球智能评论</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content flex-1">
+            <!-- 内容区域 -->
+            <div class="p-8">
+                <!-- 页面标题 -->
+                <h2 class="text-xl font-semibold text-gray-800 mb-6" id="pageTitle">运行状态</h2>
+                
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-600 hover:shadow-lg transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1" id="processedLabel">已处理用户数</p>
+                                <p class="text-3xl font-bold text-blue-600" id="processedArticles">0</p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fa fa-users text-blue-600 text-xl" id="processedIcon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-600 hover:shadow-lg transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1" id="successLabel">成功发布评论</p>
+                                <p class="text-3xl font-bold text-green-600" id="successComments">0</p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fa fa-check-circle text-green-600 text-xl" id="successIcon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-600 hover:shadow-lg transition-all duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">失败次数</p>
+                                <p class="text-3xl font-bold text-yellow-600" id="failedAttempts">0</p>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <i class="fa fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 运行日志 -->
+                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <i class="fa fa-terminal mr-2 text-blue-600"></i>
+                            运行日志
+                        </h3>
+                        <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-200">
+                            <i class="fa fa-trash mr-1"></i>
+                            清空日志
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto scrollbar-thin" id="runLog">
+                            <div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 底部Footer -->
+    <footer class="footer bg-gray-800 text-white py-3 px-8 w-full">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <div>
+                    <span class="text-sm text-gray-300">默认模型:</span> <span id="defaultModel" class="text-sm text-white">未设置</span>
                 </div>
                 <div>
-                    <h1 class="text-white font-bold text-lg">雪球智能评论</h1>
-                    <p class="text-white text-opacity-60 text-xs">企业级智能系统</p>
+                    <span class="text-sm text-gray-300">默认提示词:</span> <span id="defaultPrompt" class="text-sm text-white">未设置</span>
                 </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <img id="defaultUserAvatar" src="https://ui-avatars.com/api/?name=User&background=random&color=fff" alt="用户头像" class="w-7 h-7 rounded-full object-cover">
+                <span id="defaultUserName" class="text-sm text-white">未设置</span>
+                <span id="defaultUserUid" class="text-xs text-gray-400">未设置</span>
             </div>
         </div>
-        
-        <!-- 菜单列表 -->
-        <nav class="py-4">
-            <div class="menu-item active" data-page="dashboard">
-                <i class="fa fa-dashboard w-6"></i>
-                <span>运行状态</span>
-            </div>
-            <div class="menu-item" id="menuModelConfig">
-                <i class="fa fa-cogs w-6"></i>
-                <span>大模型配置</span>
-            </div>
-            <div class="menu-item" id="menuCommentConfig">
-                <i class="fa fa-sliders w-6"></i>
-                <span>评论设置</span>
-            </div>
-            <div class="menu-item" id="menuPersonaConfig">
-                <i class="fa fa-user-circle w-6"></i>
-                <span>配置人设</span>
-            </div>
-            <div class="menu-item" id="menuCookieConfig">
-                <i class="fa fa-key w-6"></i>
-                <span>用户Cookie配置</span>
-            </div>
-            <div class="menu-item" id="menuFollowing">
-                <i class="fa fa-users w-6"></i>
-                <span>获取关注列表</span>
-            </div>
-        </nav>
-        
-        <!-- 操作按钮区域 -->
-        <div class="px-4 py-4 border-t border-white border-opacity-20">
-            <p class="text-white text-opacity-50 text-xs mb-3 font-medium uppercase tracking-wider">自动任务</p>
-            <button id="startHotBtn" class="w-full mb-3 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
-                <i class="fa fa-fire mr-2"></i>
-                <span>启动热门帖回复</span>
-            </button>
-            <button id="startRecommendBtn" class="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
-                <i class="fa fa-star mr-2"></i>
-                <span>启动推荐帖回复</span>
-            </button>
-            <button id="startFollowingBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
-                <i class="fa fa-users mr-2"></i>
-                <span>启动关注者评论</span>
-            </button>
-        </div>
-        
-        <!-- 发布功能区域 -->
-        <div class="px-4 py-4 border-t border-white border-opacity-20">
-            <p class="text-white text-opacity-50 text-xs mb-3 font-medium uppercase tracking-wider">发布功能</p>
-            <button id="publishPostBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
-                <i class="fa fa-edit mr-2"></i>
-                <span>发布雪球帖</span>
-            </button>
-        </div>
-        
-        <!-- 底部信息 -->
-        <div class="px-4 py-4 border-t border-white border-opacity-20 mt-auto">
-            <div class="flex items-center justify-between">
-                <div class="text-white text-opacity-60 text-xs">
-                    <p>版本 1.0.0</p>
-                </div>
-                <div class="text-white text-opacity-60 text-xs">
-                    <p>© 2026 雪球智能评论</p>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- 主内容区域 -->
-    <main class="main-content">
-        <!-- 顶部标题栏 -->
-        <header class="bg-white shadow-md px-8 py-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800" id="pageTitle">运行状态</h2>
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">系统状态:</span>
-                        <span id="runStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">未运行</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">上次运行:</span>
-                        <span id="lastRunTime" class="text-sm text-gray-600">未运行</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- 内容区域 -->
-        <div class="p-8">
-            <!-- 统计卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-600 hover:shadow-lg transition-all duration-300">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500 mb-1">已处理用户数</p>
-                            <p class="text-3xl font-bold text-blue-600" id="processedArticles">0</p>
-                        </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
-                            <i class="fa fa-users text-blue-600 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-600 hover:shadow-lg transition-all duration-300">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500 mb-1" id="successLabel">成功发布评论</p>
-                            <p class="text-3xl font-bold text-green-600" id="successComments">0</p>
-                        </div>
-                        <div class="bg-green-100 p-3 rounded-full">
-                            <i class="fa fa-check-circle text-green-600 text-xl" id="successIcon"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-600 hover:shadow-lg transition-all duration-300">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500 mb-1">失败次数</p>
-                            <p class="text-3xl font-bold text-yellow-600" id="failedAttempts">0</p>
-                        </div>
-                        <div class="bg-yellow-100 p-3 rounded-full">
-                            <i class="fa fa-exclamation-triangle text-yellow-600 text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 运行日志 -->
-            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                        <i class="fa fa-terminal mr-2 text-blue-600"></i>
-                        运行日志
-                    </h3>
-                    <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-200">
-                        <i class="fa fa-trash mr-1"></i>
-                        清空日志
-                    </button>
-                </div>
-                <div class="p-6">
-                    <div class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto scrollbar-thin" id="runLog">
-                        <div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+    </footer>
 
     <!-- 大模型配置弹窗 -->
     <div id="modelConfigModal" class="modal-overlay">
@@ -684,14 +560,72 @@
         </div>
     </div>
 
-    <!-- 用户Cookie配置弹窗 -->
-    <div id="cookieConfigModal" class="modal-overlay">
-        <div class="modal-content">
+    <!-- 用户信息配置弹窗 -->
+    <div id="userConfigModal" class="modal-overlay">
+        <div class="modal-content w-full max-w-4xl">
             <!-- 弹窗头部 -->
             <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
                 <h3 class="text-lg font-semibold text-white flex items-center">
-                    <i class="fa fa-cookie mr-2"></i>
-                    用户Cookie配置
+                    <i class="fa fa-users mr-2"></i>
+                    用户信息配置
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <button id="refreshUserListBtn" class="text-white hover:text-gray-200 transition-colors flex items-center">
+                        <i class="fa fa-refresh mr-1"></i> 刷新
+                    </button>
+                    <button class="close-modal-btn text-white hover:text-gray-200 transition-colors">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 弹窗内容 -->
+            <div class="p-6">
+                <!-- 用户列表 -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-medium text-gray-800">用户列表</h4>
+                        <button id="addUserBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <i class="fa fa-plus mr-2"></i>添加用户
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">头像</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名称</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户UID</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户简介</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cookie状态</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userList" class="divide-y divide-gray-200">
+                                <!-- 用户列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑用户弹窗 -->
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- 弹窗头部 -->
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center" id="editUserTitle">
+                    <i class="fa fa-user mr-2"></i>
+                    添加用户
                 </h3>
                 <button class="close-modal-btn text-white hover:text-gray-200 transition-colors">
                     <i class="fa fa-times text-xl"></i>
@@ -700,13 +634,44 @@
             
             <!-- 弹窗内容 -->
             <div class="p-6">
+                <input type="hidden" id="userId">
+                
+                <!-- 用户基本信息 -->
+                <div class="mb-5 p-4 bg-gray-50 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-700 mb-3">用户基本信息</h4>
+                    <div class="flex items-center mb-4">
+                        <div class="w-16 h-16 overflow-hidden rounded-full mr-4">
+                            <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=random&color=fff&size=64" alt="用户头像" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <div class="mb-1">
+                                <span class="text-sm text-gray-500">用户名:</span>
+                                <span id="userName" class="ml-2 text-sm font-medium">未知</span>
+                            </div>
+                            <div class="mb-1">
+                                <span class="text-sm text-gray-500">用户UID:</span>
+                                <span id="userUid" class="ml-2 text-sm font-medium">未知</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-sm text-gray-500">用户简介:</span>
+                    </div>
+                    <div class="bg-white p-3 rounded border border-gray-200">
+                        <p id="userBio" class="text-sm text-gray-600">无</p>
+                    </div>
+                </div>
+                
                 <!-- 雪球Cookie -->
                 <div class="mb-5">
-                    <label for="xueQiuCookie" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fa fa-cookie mr-1 text-blue-600"></i>
+                    <label for="userCookie" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-key mr-1 text-blue-600"></i>
                         雪球Cookie
                     </label>
-                    <textarea id="xueQiuCookie" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="4" placeholder="输入雪球Cookie"></textarea>
+                    <textarea id="userCookie" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="4" placeholder="输入雪球Cookie"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">
+                        从浏览器中获取雪球网的Cookie，用于登录和操作
+                    </p>
                 </div>
             </div>
             
@@ -715,7 +680,7 @@
                 <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                     取消
                 </button>
-                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button id="saveUserBtn" class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                     <i class="fa fa-save mr-2"></i>
                     保存配置
                 </button>
@@ -998,6 +963,35 @@
                     </label>
                 </div>
                 
+                <!-- 生成配图选项（仅长文时显示） -->
+                <div id="generateImageOption" class="mb-4 hidden">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="generateImage" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-700">
+                            <i class="fa fa-image mr-1"></i>生成配图
+                        </span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1">为文章生成一张相关配图并插入到文章中</p>
+                </div>
+                
+                <!-- 当前默认提示词显示 -->
+                <div id="currentSystemPromptSection" class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fa fa-cog mr-1 text-indigo-600"></i>
+                            当前默认提示词
+                        </label>
+                        <button id="changeSystemPromptBtn" class="text-sm text-indigo-600 hover:text-indigo-800 transition-colors flex items-center">
+                            <i class="fa fa-exchange mr-1"></i>
+                            配置默认提示词
+                        </button>
+                    </div>
+                    <div id="currentSystemPromptDisplay" class="w-full px-4 py-3 border border-indigo-200 rounded-lg bg-indigo-50">
+                        <p class="text-gray-500 text-sm">正在加载默认提示词...</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">使用系统默认提示词时，将跳过第一阶段直接生成文章</p>
+                </div>
+                
                 <!-- 提示词输入 -->
                 <div class="mb-4">
                     <label for="aiPrompt" class="block text-sm font-medium text-gray-700 mb-2">
@@ -1005,7 +999,7 @@
                         AI提示词（简单描述）
                     </label>
                     <textarea id="aiPrompt" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" rows="3" placeholder="请输入您想要AI生成的内容描述...&#10;例如：茅台投资价值分析"></textarea>
-                    <p class="text-xs text-gray-500 mt-1">简单描述您想要的内容，AI会先为您生成详细的雪球风格提示词</p>
+                    <p class="text-xs text-gray-500 mt-1" id="promptHint">简单描述您想要的内容，AI会先为您生成详细的雪球风格提示词</p>
                 </div>
                 
                 <!-- 详细提示词显示（可折叠） -->
@@ -1143,6 +1137,8 @@
             testMode: false
         };
         
+
+        
         // DOM 元素
         const selectedModelRadios = document.querySelectorAll('input[name="selectedModel"]');
         const arkApiKeyInput = document.getElementById('arkApiKey');
@@ -1152,6 +1148,8 @@
         const baiduSecretKeyInput = document.getElementById('baiduSecretKey');
         const alibabaApiKeyInput = document.getElementById('alibabaApiKey');
         const alibabaBaseUrlInput = document.getElementById('alibabaBaseUrl');
+        const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const geminiBaseUrlInput = document.getElementById('geminiBaseUrl');
         const xueQiuCookieInput = document.getElementById('xueQiuCookie');
         const dailyLimitInput = document.getElementById('dailyLimit');
         const delayMinInput = document.getElementById('delayMin');
@@ -1159,15 +1157,17 @@
         const testModeCheckbox = document.getElementById('testMode');
         const modelConfigModal = document.getElementById('modelConfigModal');
         const commentConfigModal = document.getElementById('commentConfigModal');
-        const cookieConfigModal = document.getElementById('cookieConfigModal');
+        const userConfigModal = document.getElementById('userConfigModal');
         const menuModelConfig = document.getElementById('menuModelConfig');
         const menuCommentConfig = document.getElementById('menuCommentConfig');
-        const menuCookieConfig = document.getElementById('menuCookieConfig');
+        const menuUserConfig = document.getElementById('menuUserConfig');
         const menuFollowing = document.getElementById('menuFollowing');
         const menuHot = document.getElementById('menuHot');
         const menuRecommend = document.getElementById('menuRecommend');
         const clearLogBtn = document.getElementById('clearLogBtn');
         const runStatusElement = document.getElementById('runStatus');
+        const processedLabelElement = document.getElementById('processedLabel');
+        const processedIconElement = document.getElementById('processedIcon');
         const processedArticlesElement = document.getElementById('processedArticles');
         const successCommentsElement = document.getElementById('successComments');
         const failedAttemptsElement = document.getElementById('failedAttempts');
@@ -1212,34 +1212,116 @@
         const articleTitleInput = document.getElementById('articleTitle');
         const contentPreviewDiv = document.getElementById('contentPreview');
         const columnOptionDiv = document.getElementById('columnOption');
+        const generateImageOption = document.getElementById('generateImageOption');
         const articleTitleSection = document.getElementById('articleTitleSection');
         const publishAsColumnCheckbox = document.getElementById('publishAsColumn');
+        const generateImageCheckbox = document.getElementById('generateImage');
         const postTypeRadios = document.querySelectorAll('input[name="postType"]');
         const detailedPromptSection = document.getElementById('detailedPromptSection');
         const detailedPromptContent = document.getElementById('detailedPromptContent');
         const detailedPromptToggle = document.getElementById('detailedPromptToggle');
+        const changeSystemPromptBtn = document.getElementById('changeSystemPromptBtn');
         
         // 初始化
         async function init() {
             setupEventListeners();
             await loadConfigFromServer();
+            // 加载默认配置到Footer
+            loadDefaultConfigToFooter();
             // 初始化关注者评论按钮
             resetFollowingButton();
+        }
+        
+        // 加载默认配置到Footer
+        function loadDefaultConfigToFooter() {
+            // 获取默认模型和提示词
+            const config = JSON.parse(localStorage.getItem('snowball_comment_config')) || {};
+            const models = config.models || {};
+            const selectedModel = config.selectedModel || 'ark';
+            const defaultPrompt = config.defaultPrompt || '未设置';
+            
+            // 显示默认模型
+            document.getElementById('defaultModel').textContent = selectedModel;
+            // 显示默认提示词
+            document.getElementById('defaultPrompt').textContent = defaultPrompt;
+            
+            // 获取默认用户信息
+            fetch(`${API_BASE_URL}/get-default-user`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        const user = result.user;
+                        const name = user.name || '未设置';
+                        const avatar = user.avatar || 'https://ui-avatars.com/api/?name=User&background=random&color=fff';
+                        // 更新 Footer
+                        document.getElementById('defaultUserName').textContent = name;
+                        document.getElementById('defaultUserAvatar').src = avatar;
+                        // 更新 Status Bar
+                        const statusBarName = document.getElementById('user-name');
+                        const statusBarAvatar = document.getElementById('user-avatar');
+                        if (statusBarName) statusBarName.textContent = name;
+                        if (statusBarAvatar) statusBarAvatar.src = avatar;
+                    }
+                });
         }
         
         // 设置事件监听
         function setupEventListeners() {
             // 菜单点击
-            menuModelConfig.addEventListener('click', openModelConfigModal);
-            menuCommentConfig.addEventListener('click', openCommentConfigModal);
-            menuCookieConfig.addEventListener('click', openCookieConfigModal);
-            menuFollowing.addEventListener('click', checkAndShowFollowingList);
-            openPublishPostBtn.addEventListener('click', openPublishPostModal);
+            if (menuModelConfig) menuModelConfig.addEventListener('click', openModelConfigModal);
+            if (menuCommentConfig) menuCommentConfig.addEventListener('click', openCommentConfigModal);
+            if (menuUserConfig) menuUserConfig.addEventListener('click', openUserConfigModal);
+            if (menuFollowing) menuFollowing.addEventListener('click', checkAndShowFollowingList);
+            if (openPublishPostBtn) openPublishPostBtn.addEventListener('click', openPublishPostModal);
+            
+            // 用户配置相关按钮
+            const addUserBtn = document.getElementById('addUserBtn');
+            const saveUserBtn = document.getElementById('saveUserBtn');
+            const refreshUserListBtn = document.getElementById('refreshUserListBtn');
+            if (addUserBtn) addUserBtn.addEventListener('click', () => openEditUserModal());
+            if (saveUserBtn) saveUserBtn.addEventListener('click', saveUser);
+            if (refreshUserListBtn) refreshUserListBtn.addEventListener('click', refreshUserList);
             
             // 配置人设菜单
             const menuPersonaConfig = document.getElementById('menuPersonaConfig');
             if (menuPersonaConfig) {
                 menuPersonaConfig.addEventListener('click', openPersonaConfigModal);
+            }
+            
+            // 系统提示词配置菜单
+            const menuSystemPromptConfig = document.getElementById('menuSystemPromptConfig');
+            if (menuSystemPromptConfig) {
+                menuSystemPromptConfig.addEventListener('click', openSystemPromptConfigModal);
+            }
+            
+            // 系统提示词配置弹窗按钮
+            const closeSystemPromptConfigModalBtn = document.getElementById('closeSystemPromptConfigModal');
+            const addSystemPromptBtn = document.getElementById('addSystemPromptBtn');
+            const saveSystemPromptConfigBtn = document.getElementById('saveSystemPromptConfig');
+            
+            if (closeSystemPromptConfigModalBtn) {
+                closeSystemPromptConfigModalBtn.addEventListener('click', closeSystemPromptConfigModal);
+            }
+            if (addSystemPromptBtn) {
+                addSystemPromptBtn.addEventListener('click', () => openAddSystemPromptModal());
+            }
+            if (saveSystemPromptConfigBtn) {
+                saveSystemPromptConfigBtn.addEventListener('click', saveSystemPromptConfig);
+            }
+            
+            // 添加/编辑系统提示词弹窗按钮
+            const closeAddSystemPromptModalBtn = document.getElementById('closeAddSystemPromptModal');
+            const cancelAddSystemPrompt = document.getElementById('cancelAddSystemPrompt');
+            const saveSystemPromptBtn = document.getElementById('saveSystemPrompt');
+            
+            if (closeAddSystemPromptModalBtn) {
+                closeAddSystemPromptModalBtn.addEventListener('click', closeAddSystemPromptModal);
+            }
+            if (cancelAddSystemPrompt) {
+                cancelAddSystemPrompt.addEventListener('click', closeAddSystemPromptModal);
+            }
+            if (saveSystemPromptBtn) {
+                saveSystemPromptBtn.addEventListener('click', saveSystemPrompt);
             }
             
             // 配置人设弹窗按钮
@@ -1273,8 +1355,9 @@
             }
             
             // 启动按钮
-            startHotBtn.addEventListener('click', toggleHotCommenting);
-            startRecommendBtn.addEventListener('click', toggleRecommendCommenting);
+            if (startHotBtn) startHotBtn.addEventListener('click', toggleHotCommenting);
+            if (startRecommendBtn) startRecommendBtn.addEventListener('click', toggleRecommendCommenting);
+            if (startFollowingBtn) startFollowingBtn.addEventListener('click', openFollowingCommentsModal);
             
             // 配置弹窗按钮
             document.querySelectorAll('.close-modal-btn').forEach(btn => {
@@ -1288,64 +1371,68 @@
             });
             
             // 确认更新弹窗按钮
-            closeConfirmModalBtn.addEventListener('click', closeConfirmModal);
-            cancelUpdateBtn.addEventListener('click', closeConfirmModal);
-            confirmUpdateBtn.addEventListener('click', () => {
+            if (closeConfirmModalBtn) closeConfirmModalBtn.addEventListener('click', closeConfirmModal);
+            if (cancelUpdateBtn) cancelUpdateBtn.addEventListener('click', closeConfirmModal);
+            if (confirmUpdateBtn) confirmUpdateBtn.addEventListener('click', () => {
                 closeConfirmModal();
                 doGetFollowingList();
             });
             
             // 其他按钮
-            clearLogBtn.addEventListener('click', clearLog);
-            // 关注者评论按钮的点击事件在resetFollowingButton函数中设置
+            if (clearLogBtn) clearLogBtn.addEventListener('click', clearLog);
             
             // 关注者评论弹窗按钮
-            closeFollowingModalBtn.addEventListener('click', closeFollowingCommentsModal);
-            cancelFollowingBtn.addEventListener('click', closeFollowingCommentsModal);
-            startFollowingCommentsBtn.addEventListener('click', startFollowingComments);
-            refreshFollowingListBtn.addEventListener('click', loadFollowingListForSelection);
-            selectAllFollowingBtn.addEventListener('click', selectAllFollowing);
-            deselectAllFollowingBtn.addEventListener('click', deselectAllFollowing);
+            if (closeFollowingModalBtn) closeFollowingModalBtn.addEventListener('click', closeFollowingCommentsModal);
+            if (cancelFollowingBtn) cancelFollowingBtn.addEventListener('click', closeFollowingCommentsModal);
+            if (startFollowingCommentsBtn) startFollowingCommentsBtn.addEventListener('click', startFollowingComments);
+            if (refreshFollowingListBtn) refreshFollowingListBtn.addEventListener('click', loadFollowingListForSelection);
+            if (selectAllFollowingBtn) selectAllFollowingBtn.addEventListener('click', selectAllFollowing);
+            if (deselectAllFollowingBtn) deselectAllFollowingBtn.addEventListener('click', deselectAllFollowing);
             
             // 发布雪球帖弹窗按钮
-            closePublishModalBtn.addEventListener('click', closePublishPostModal);
-            cancelPublishBtn.addEventListener('click', closePublishPostModal);
-            generateContentBtn.addEventListener('click', generateContent);
-            regenerateContentBtn.addEventListener('click', generateContent);
-            submitPublishBtn.addEventListener('click', publishPost);
+            if (closePublishModalBtn) closePublishModalBtn.addEventListener('click', closePublishPostModal);
+            if (cancelPublishBtn) cancelPublishBtn.addEventListener('click', closePublishPostModal);
+            if (generateContentBtn) generateContentBtn.addEventListener('click', generateContent);
+            if (regenerateContentBtn) regenerateContentBtn.addEventListener('click', generateContent);
+            if (submitPublishBtn) submitPublishBtn.addEventListener('click', publishPost);
+            
+            // 配置默认提示词按钮
+            if (changeSystemPromptBtn) {
+                changeSystemPromptBtn.addEventListener('click', () => {
+                    closePublishPostModal();
+                    openSystemPromptConfigModal();
+                });
+            }
             
             // 发布类型切换
-            postTypeRadios.forEach(radio => {
-                radio.addEventListener('change', handlePostTypeChange);
-            });
+            if (postTypeRadios.length > 0) {
+                postTypeRadios.forEach(radio => {
+                    radio.addEventListener('change', handlePostTypeChange);
+                });
+            }
             
             // 点击弹窗外部关闭
-            modelConfigModal.addEventListener('click', (e) => {
+            if (modelConfigModal) modelConfigModal.addEventListener('click', (e) => {
                 if (e.target === modelConfigModal) {
                     closeAllModals();
                 }
             });
-            commentConfigModal.addEventListener('click', (e) => {
+            if (commentConfigModal) commentConfigModal.addEventListener('click', (e) => {
                 if (e.target === commentConfigModal) {
                     closeAllModals();
                 }
             });
-            cookieConfigModal.addEventListener('click', (e) => {
-                if (e.target === cookieConfigModal) {
-                    closeAllModals();
-                }
-            });
-            confirmUpdateModal.addEventListener('click', (e) => {
+            if (confirmUpdateModal) confirmUpdateModal.addEventListener('click', (e) => {
                 if (e.target === confirmUpdateModal) {
                     closeConfirmModal();
                 }
             });
-            followingCommentsModal.addEventListener('click', (e) => {
+            if (followingCommentsModal) followingCommentsModal.addEventListener('click', (e) => {
                 if (e.target === followingCommentsModal) {
                     closeFollowingCommentsModal();
                 }
             });
-            publishPostModal.addEventListener('click', (e) => {
+            if (publishPostModal) publishPostModal.addEventListener('click', (e) => {
                 if (e.target === publishPostModal) {
                     closePublishPostModal();
                 }
@@ -1359,11 +1446,39 @@
             modelConfigModal.classList.add('show');
         }
         
-        // 打开用户Cookie配置弹窗
-        async function openCookieConfigModal() {
-            await loadConfigFromServer();
-            updateConfigUI();
-            cookieConfigModal.classList.add('show');
+        // 打开用户信息配置弹窗
+        async function openUserConfigModal() {
+            console.log('openUserConfigModal 函数被调用');
+            console.log('userConfigModal 元素:', userConfigModal);
+            
+            // 从服务器加载用户列表
+            try {
+                console.log('开始加载用户列表，API地址:', `${API_BASE_URL}/get-users`);
+                const response = await fetch(`${API_BASE_URL}/get-users`);
+                console.log('响应状态码:', response.status);
+                
+                // 检查响应是否成功
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('响应结果:', result);
+                
+                if (result.success) {
+                    console.log('用户列表加载成功，用户数量:', result.users.length);
+                    renderUserList(result.users);
+                } else {
+                    console.error('加载用户列表失败，服务器返回错误:', result.message);
+                    addLog(`加载用户列表失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('加载用户列表失败:', error);
+                addLog(`加载用户列表失败: ${error.message}`, 'error');
+            }
+            
+            console.log('显示用户配置弹窗');
+            userConfigModal.classList.add('show');
         }
         
         // 打开评论设置弹窗
@@ -1377,13 +1492,243 @@
         function closeAllModals() {
             modelConfigModal.classList.remove('show');
             commentConfigModal.classList.remove('show');
-            cookieConfigModal.classList.remove('show');
+            userConfigModal.classList.remove('show');
+            document.getElementById('editUserModal').classList.remove('show');
+        }
+        
+        // 打开添加/编辑用户弹窗
+        function openEditUserModal(userId = null) {
+            if (userId) {
+                // 编辑用户
+                document.getElementById('editUserTitle').textContent = '编辑用户';
+                // 从服务器获取用户信息
+                fetch(`${API_BASE_URL}/get-user?id=${userId}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            document.getElementById('userId').value = userId;
+                            document.getElementById('userCookie').value = result.user.cookie;
+                            // 显示用户基本信息
+                            document.getElementById('userName').textContent = result.user.name || '未知';
+                            document.getElementById('userUid').textContent = result.user.uid || '未知';
+                            document.getElementById('userBio').textContent = result.user.bio || '无';
+                            document.getElementById('userAvatar').src = result.user.avatar || 'https://ui-avatars.com/api/?name=User&background=random&color=fff&size=64';
+                        }
+                    });
+            } else {
+                // 添加新用户
+                document.getElementById('editUserTitle').textContent = '添加用户';
+                document.getElementById('userId').value = '';
+                document.getElementById('userCookie').value = '';
+                // 重置用户基本信息
+                document.getElementById('userName').textContent = '未知';
+                document.getElementById('userUid').textContent = '未知';
+                document.getElementById('userBio').textContent = '无';
+                document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?name=User&background=random&color=fff&size=64';
+            }
+            document.getElementById('editUserModal').classList.add('show');
+        }
+        
+        // 关闭添加/编辑用户弹窗
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.remove('show');
+        }
+        
+        // 刷新用户列表
+        async function refreshUserList() {
+            try {
+                // 首先检查所有用户的cookie有效性
+                console.log('开始检查所有用户的cookie有效性');
+                const checkResponse = await fetch(`${API_BASE_URL}/check-all-cookies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log('检查cookie有效性响应状态码:', checkResponse.status);
+                
+                // 检查响应是否成功
+                if (!checkResponse.ok) {
+                    throw new Error(`HTTP error! status: ${checkResponse.status}`);
+                }
+                
+                const checkResult = await checkResponse.json();
+                console.log('检查cookie有效性响应结果:', checkResult);
+                
+                if (checkResult.success) {
+                    addLog('cookie有效性检查完成', 'success');
+                    
+                    // 然后获取更新后的用户列表
+                    console.log('开始刷新用户列表，API地址:', `${API_BASE_URL}/get-users`);
+                    const response = await fetch(`${API_BASE_URL}/get-users`);
+                    console.log('响应状态码:', response.status);
+                    
+                    // 检查响应是否成功
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('响应结果:', result);
+                    
+                    if (result.success) {
+                        console.log('用户列表加载成功，用户数量:', result.users.length);
+                        renderUserList(result.users);
+                        addLog('用户列表刷新成功', 'success');
+                    } else {
+                        console.error('加载用户列表失败，服务器返回错误:', result.message);
+                        addLog(`加载用户列表失败: ${result.message}`, 'error');
+                    }
+                } else {
+                    console.error('检查cookie有效性失败，服务器返回错误:', checkResult.message);
+                    addLog(`检查cookie有效性失败: ${checkResult.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('刷新用户列表失败:', error);
+                addLog(`刷新用户列表失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 渲染用户列表
+        function renderUserList(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            
+            if (users && users.length > 0) {
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    // 为默认用户添加高亮样式
+                    if (user.isDefault) {
+                        row.className = 'bg-blue-50 border-l-4 border-blue-500';
+                    }
+                    row.innerHTML = `
+                        <td class="py-3 px-4">
+                            <div class="w-10 h-10 overflow-hidden rounded-full flex items-center justify-center">
+                                <img src="${user.avatar || 'https://ui-avatars.com/api/?name=User&background=random&color=fff'}" alt="${user.name}" class="w-full h-full object-cover">
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-gray-900">${user.name || '未知'}</div>
+                            ${user.isDefault ? '<div class="text-xs text-blue-600">当前默认用户</div>' : ''}
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="text-sm text-gray-500">${user.uid || '未知'}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="text-sm text-gray-500 max-w-xs">${user.bio || '无'}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 text-xs rounded-full ${user.cookieValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${user.cookieValid ? '有效' : '无效'}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <button onclick="setDefaultUser('${user.id}')" class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center" title="${user.isDefault ? '默认' : '设为默认'}">
+                                    <i class="fa fa-star"></i>
+                                </button>
+                                <button onclick="openEditUserModal('${user.id}')" class="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center" title="编辑">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button onclick="deleteUser('${user.id}')" class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center" title="删除">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    userList.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="6" class="py-8 px-4 text-center text-gray-500">
+                        暂无用户，请添加用户
+                    </td>
+                `;
+                userList.appendChild(row);
+            }
+        }
+        
+        // 设置默认用户
+        function setDefaultUser(userId) {
+            fetch(`${API_BASE_URL}/set-default-user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    addLog('默认用户设置成功', 'success');
+                    openUserConfigModal(); // 重新加载用户列表
+                } else {
+                    addLog('默认用户设置失败: ' + result.message, 'error');
+                }
+            });
+        }
+        
+        // 删除用户
+        function deleteUser(userId) {
+            if (confirm('确定要删除这个用户吗？')) {
+                fetch(`${API_BASE_URL}/delete-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        addLog('用户删除成功', 'success');
+                        openUserConfigModal(); // 重新加载用户列表
+                    } else {
+                        addLog('用户删除失败: ' + result.message, 'error');
+                    }
+                });
+            }
+        }
+        
+        // 保存用户信息
+        function saveUser() {
+            const userId = document.getElementById('userId').value;
+            const userCookie = document.getElementById('userCookie').value;
+            
+            if (!userCookie) {
+                addLog('请输入雪球Cookie', 'error');
+                return;
+            }
+            
+            const data = {
+                id: userId,
+                cookie: userCookie
+            };
+            
+            fetch(`${API_BASE_URL}/${userId ? 'update-user' : 'add-user'}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    addLog(userId ? '用户更新成功' : '用户添加成功', 'success');
+                    closeEditUserModal();
+                    openUserConfigModal(); // 重新加载用户列表
+                } else {
+                    addLog((userId ? '用户更新' : '用户添加') + '失败: ' + result.message, 'error');
+                }
+            });
         }
         
         // 从服务器加载配置
         async function loadConfigFromServer() {
             try {
-                const response = await fetch('/api/config');
+                const response = await fetch(`${API_BASE_URL}/config`);
                 const result = await response.json();
                 
                 if (result.success && result.exists) {
@@ -1398,7 +1743,8 @@
                             ark: serverConfig.models.ark || { apiKey: '' },
                             openai: serverConfig.models.openai || { apiKey: '', baseUrl: 'https://api.openai.com/v1' },
                             baidu: serverConfig.models.baidu || { apiKey: '', secretKey: '' },
-                            alibaba: serverConfig.models.alibaba || { apiKey: '', baseUrl: '' }
+                            alibaba: serverConfig.models.alibaba || { apiKey: '', baseUrl: '' },
+                            gemini: serverConfig.models.gemini || { apiKey: '', baseUrl: 'https://generativelanguage.googleapis.com/v1' }
                         };
                     }
                     
@@ -1438,15 +1784,19 @@
             config.models.baidu.secretKey = baiduSecretKeyInput.value;
             config.models.alibaba.apiKey = alibabaApiKeyInput.value;
             config.models.alibaba.baseUrl = alibabaBaseUrlInput.value;
+            config.models.gemini.apiKey = geminiApiKeyInput.value;
+            config.models.gemini.baseUrl = geminiBaseUrlInput.value;
             
-            config.xueQiuCookie = xueQiuCookieInput.value;
+            if (xueQiuCookieInput) {
+                config.xueQiuCookie = xueQiuCookieInput.value;
+            }
             config.dailyLimit = parseInt(dailyLimitInput.value) || 60;
             config.delayMin = parseInt(delayMinInput.value) || 30;
             config.delayMax = parseInt(delayMaxInput.value) || 120;
             config.testMode = testModeCheckbox.checked;
             
             try {
-                const response = await fetch('/api/config', {
+                const response = await fetch(`${API_BASE_URL}/config`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
@@ -1481,8 +1831,12 @@
             baiduSecretKeyInput.value = config.models.baidu.secretKey;
             alibabaApiKeyInput.value = config.models.alibaba.apiKey;
             alibabaBaseUrlInput.value = config.models.alibaba.baseUrl;
+            geminiApiKeyInput.value = config.models.gemini.apiKey;
+            geminiBaseUrlInput.value = config.models.gemini.baseUrl;
             
-            xueQiuCookieInput.value = config.xueQiuCookie;
+            if (xueQiuCookieInput) {
+                xueQiuCookieInput.value = config.xueQiuCookie;
+            }
             dailyLimitInput.value = config.dailyLimit;
             delayMinInput.value = config.delayMin;
             delayMaxInput.value = config.delayMax;
@@ -1499,7 +1853,7 @@
             
             try {
                 // 先检查本地缓存
-                const response = await fetch('/api/check-following-cache');
+                const response = await fetch(`${API_BASE_URL}/check-following-cache`);
                 const result = await response.json();
                 
                 if (result.success && result.exists) {
@@ -1565,10 +1919,10 @@
             addLog('正在获取关注列表...', 'info');
             
             try {
-                const response = await fetch('/api/get-following-list', {
+                const response = await fetch(`${API_BASE_URL}/get-following-list`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ xueQiuCookie: config.xueQiuCookie })
+                    body: JSON.stringify({})
                 });
                 
                 const result = await response.json();
@@ -1626,6 +1980,8 @@
                 apiKey = config.models.baidu.apiKey;
             } else if (selectedModel === 'alibaba') {
                 apiKey = config.models.alibaba.apiKey;
+            } else if (selectedModel === 'gemini') {
+                apiKey = config.models.gemini.apiKey;
             }
             
             if (!apiKey || !config.xueQiuCookie) {
@@ -1711,6 +2067,8 @@
                 apiKey = config.models.baidu.apiKey;
             } else if (selectedModel === 'alibaba') {
                 apiKey = config.models.alibaba.apiKey;
+            } else if (selectedModel === 'gemini') {
+                apiKey = config.models.gemini.apiKey;
             }
             
             if (!apiKey || !config.xueQiuCookie) {
@@ -1881,11 +2239,23 @@
                     // 根据任务类型更新统计数据
                     if (result.taskType === 'following') {
                         // 关注者任务
+                        if (processedLabelElement) {
+                            processedLabelElement.textContent = '已处理用户数';
+                        }
+                        if (processedIconElement) {
+                            processedIconElement.className = 'fa fa-users text-blue-600 text-xl';
+                        }
                         processedArticlesElement.textContent = result.data.processedUsers || 0;
                         successCommentsElement.textContent = result.data.successComments || 0;
                         failedAttemptsElement.textContent = result.data.failedAttempts || 0;
                     } else {
                         // 热门帖/推荐帖评论任务
+                        if (processedLabelElement) {
+                            processedLabelElement.textContent = '已处理文章数';
+                        }
+                        if (processedIconElement) {
+                            processedIconElement.className = 'fa fa-file-text-o text-blue-600 text-xl';
+                        }
                         processedArticlesElement.textContent = result.data.processedArticles || 0;
                         successCommentsElement.textContent = result.data.successComments || 0;
                         failedAttemptsElement.textContent = result.data.failedAttempts || 0;
@@ -1956,11 +2326,27 @@
             } else if (type === 'warning') {
                 typeColor = 'border-yellow-500 bg-yellow-50';
                 typeIcon = 'fa-exclamation-triangle';
+            } else if (message.includes('📊 文章属性:')) {
+                // 文章属性日志使用鲜艳的颜色
+                typeColor = 'border-blue-500 bg-blue-50';
+                typeIcon = 'fa-bar-chart';
             }
             
             logEntry.classList.add(...typeColor.split(' '));
+            // 确定图标颜色
+            let iconColor = 'text-gray-400';
+            if (type === 'success') {
+                iconColor = 'text-green-500';
+            } else if (type === 'error') {
+                iconColor = 'text-red-500';
+            } else if (type === 'warning') {
+                iconColor = 'text-yellow-500';
+            } else if (message.includes('📊 文章属性:')) {
+                iconColor = 'text-blue-500';
+            }
+            
             logEntry.innerHTML = `
-                <i class="fa ${typeIcon} mr-2 ${type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : 'text-gray-400'}"></i>
+                <i class="fa ${typeIcon} mr-2 ${iconColor}"></i>
                 <span class="text-gray-400 font-mono">[${timeStr}]</span>
                 <span class="ml-2">${message}</span>
             `;
@@ -2008,9 +2394,7 @@
                     const response = await fetch(`${API_BASE_URL}/get-following-list`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            xueQiuCookie: config.xueQiuCookie
-                        })
+                        body: JSON.stringify({})
                     });
                     
                     const result = await response.json();
@@ -2118,6 +2502,8 @@
                 apiKey = config.models.baidu.apiKey;
             } else if (selectedModel === 'alibaba') {
                 apiKey = config.models.alibaba.apiKey;
+            } else if (selectedModel === 'gemini') {
+                apiKey = config.models.gemini.apiKey;
             }
             
             if (!apiKey || !config.xueQiuCookie) {
@@ -2173,7 +2559,7 @@
             
             try {
                 // 发送POST请求启动任务
-                const response = await fetch('/api/start-following-comments', {
+                const response = await fetch(`${API_BASE_URL}/start-following-comments`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2292,6 +2678,8 @@
                 apiKey = config.models.baidu.apiKey;
             } else if (selectedModel === 'alibaba') {
                 apiKey = config.models.alibaba.apiKey;
+            } else if (selectedModel === 'gemini') {
+                apiKey = config.models.gemini.apiKey;
             }
             
             if (!apiKey || !config.xueQiuCookie) {
@@ -2306,16 +2694,100 @@
             contentPreviewDiv.innerHTML = '<p class="text-gray-400 text-sm">AI生成的内容将显示在这里...</p>';
             regenerateContentBtn.classList.add('hidden');
             
+            // 禁用发布按钮，直到内容生成成功
+            submitPublishBtn.disabled = true;
+            submitPublishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitPublishBtn.classList.remove('hover:bg-indigo-700');
+            
             // 默认选择发讨论
             document.querySelector('input[name="postType"][value="discussion"]').checked = true;
             handlePostTypeChange();
             
+            // 加载并显示当前默认提示词
+            loadAndDisplayCurrentSystemPrompt();
+            
             publishPostModal.classList.add('show');
+        }
+        
+        // 加载并显示当前默认提示词
+        async function loadAndDisplayCurrentSystemPrompt() {
+            const displayDiv = document.getElementById('currentSystemPromptDisplay');
+            const promptHint = document.getElementById('promptHint');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/system-prompts`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const prompts = result.data || [];
+                    const defaultPrompt = prompts.find(p => p.isDefault);
+                    
+                    // 更新全局systemPrompts变量，确保generateContent函数能获取到
+                    systemPrompts = prompts;
+                    
+                    if (defaultPrompt) {
+                        // 有默认提示词
+                        displayDiv.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span class="text-indigo-700 font-medium">${defaultPrompt.title}</span>
+                                <span class="px-2 py-1 bg-blue-600 text-white text-xs rounded">默认</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-2 line-clamp-3">${defaultPrompt.content.substring(0, 150)}...</p>
+                        `;
+                        promptHint.textContent = '已配置系统默认提示词，将直接生成文章（跳过提示词生成阶段）';
+                        promptHint.className = 'text-xs text-indigo-600 mt-1';
+                    } else {
+                        // 无默认提示词
+                        displayDiv.innerHTML = `
+                            <div class="flex items-center text-gray-500">
+                                <i class="fa fa-info-circle mr-2"></i>
+                                <span>未配置默认提示词，将采用两阶段生成模式</span>
+                            </div>
+                        `;
+                        promptHint.textContent = '简单描述您想要的内容，AI会先为您生成详细的雪球风格提示词';
+                        promptHint.className = 'text-xs text-gray-500 mt-1';
+                    }
+                } else {
+                    displayDiv.innerHTML = `
+                        <div class="flex items-center text-red-500">
+                            <i class="fa fa-exclamation-circle mr-2"></i>
+                            <span>加载提示词失败</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                displayDiv.innerHTML = `
+                    <div class="flex items-center text-red-500">
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        <span>加载提示词失败: ${error.message}</span>
+                    </div>
+                `;
+            }
         }
         
         // 关闭发布雪球帖弹窗
         function closePublishPostModal() {
             publishPostModal.classList.remove('show');
+        }
+        
+        // 系统提示词配置弹窗相关函数
+        function openSystemPromptConfigModal() {
+            document.getElementById('systemPromptConfigModal').classList.add('show');
+            loadSystemPromptList();
+        }
+        
+        function closeSystemPromptConfigModal() {
+            document.getElementById('systemPromptConfigModal').classList.remove('show');
+        }
+        
+        // 配置人设弹窗相关函数
+        function openPersonaConfigModal() {
+            document.getElementById('personaConfigModal').classList.add('show');
+            loadPersonas();
+        }
+        
+        function closePersonaConfigModal() {
+            document.getElementById('personaConfigModal').classList.remove('show');
         }
         
         // 处理发布类型切换
@@ -2324,9 +2796,11 @@
             
             if (postType === 'article') {
                 columnOptionDiv.classList.remove('hidden');
+                generateImageOption.classList.remove('hidden');
                 articleTitleSection.classList.remove('hidden');
             } else {
                 columnOptionDiv.classList.add('hidden');
+                generateImageOption.classList.add('hidden');
                 articleTitleSection.classList.add('hidden');
             }
         }
@@ -2342,60 +2816,84 @@
             
             const postType = document.querySelector('input[name="postType"]:checked').value;
             
-            // 第一轮：生成详细提示词
+            // 检查是否有默认系统提示词
+            const defaultSystemPrompt = getDefaultSystemPrompt();
+            
             const statusDisplay = document.getElementById('statusDisplay');
-            statusDisplay.innerHTML = '<span class="text-sm text-gray-700">【第一轮】正在生成雪球风格的详细提示词...</span>';
-            addLog('【第1轮】正在生成雪球风格的详细提示词...', 'info');
-            addLog('根据您的简单描述，AI正在分析并生成详细的写作提示词...', 'info');
             generateContentBtn.disabled = true;
-            generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第一轮：提示词生成中...';
             
             try {
-                // 调用第一轮API
-                const promptResponse = await fetch(`${API_BASE_URL}/generate-prompt`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        postType: postType,
-                        selectedModel: config.selectedModel,
-                        models: config.models
-                    })
-                });
+                let detailedPrompt = '';
                 
-                const promptResult = await promptResponse.json();
-                
-                if (!promptResult.success) {
-                    statusDisplay.innerHTML = '<span class="text-sm text-red-600">【第一轮】提示词生成失败</span>';
-                    addLog(`提示词生成失败: ${promptResult.message}`, 'error');
-                    return;
-                }
-                
-                statusDisplay.innerHTML = '<span class="text-sm text-green-600">【第一轮】详细提示词生成成功</span>';
-                addLog('【第1轮】详细提示词生成成功', 'success');
-                
-                // 显示详细提示词
-                if (promptResult.detailedPrompt) {
+                if (defaultSystemPrompt) {
+                    // 使用系统默认提示词，跳过第一阶段
+                    addLog(`使用系统默认提示词: ${defaultSystemPrompt.title}`, 'info');
+                    statusDisplay.innerHTML = '<span class="text-sm text-gray-700">使用系统默认提示词，直接生成文章...</span>';
+                    generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>文章生成中...';
+                    
+                    // 将用户输入与系统提示词结合
+                    detailedPrompt = `${defaultSystemPrompt.content}\n\n用户输入主题/要求：${prompt}`;
+                    
+                    // 显示使用的提示词
                     detailedPromptSection.classList.remove('hidden');
-                    detailedPromptContent.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${promptResult.detailedPrompt}</div>`;
-                    addLog('详细提示词已生成，可在下方查看', 'info');
+                    detailedPromptContent.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${detailedPrompt}</div>`;
+                    addLog('系统提示词已加载，直接生成文章', 'info');
+                } else {
+                    // 没有默认提示词，执行两阶段生成
+                    // 第一轮：生成详细提示词
+                    statusDisplay.innerHTML = '<span class="text-sm text-gray-700">【第一轮】正在生成雪球风格的详细提示词...</span>';
+                    addLog('【第1轮】正在生成雪球风格的详细提示词...', 'info');
+                    addLog('根据您的简单描述，AI正在分析并生成详细的写作提示词...', 'info');
+                    generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第一轮：提示词生成中...';
+                    
+                    // 调用第一轮API
+                    const promptResponse = await fetch(`${API_BASE_URL}/generate-prompt`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            postType: postType,
+                            selectedModel: config.selectedModel,
+                            models: config.models
+                        })
+                    });
+                    
+                    const promptResult = await promptResponse.json();
+                    
+                    if (!promptResult.success) {
+                        statusDisplay.innerHTML = '<span class="text-sm text-red-600">【第一轮】提示词生成失败</span>';
+                        addLog(`提示词生成失败: ${promptResult.message}`, 'error');
+                        return;
+                    }
+                    
+                    statusDisplay.innerHTML = '<span class="text-sm text-green-600">【第一轮】详细提示词生成成功</span>';
+                    addLog('【第1轮】详细提示词生成成功', 'success');
+                    
+                    // 显示详细提示词
+                    if (promptResult.detailedPrompt) {
+                        detailedPromptSection.classList.remove('hidden');
+                        detailedPromptContent.innerHTML = `<div class="text-gray-800 text-sm whitespace-pre-wrap">${promptResult.detailedPrompt}</div>`;
+                        addLog('详细提示词已生成，可在下方查看', 'info');
+                    }
+                    
+                    detailedPrompt = promptResult.detailedPrompt;
+                    
+                    // 第二轮：根据详细提示词生成正式文章
+                    statusDisplay.innerHTML = '<span class="text-sm text-gray-700">【第二轮】正在根据详细提示词生成正式文章...</span>';
+                    addLog('【第2轮】正在根据详细提示词生成正式文章...', 'info');
+                    generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第二轮：文章生成中...';
                 }
                 
-                // 第二轮：根据详细提示词生成正式文章
-                statusDisplay.innerHTML = '<span class="text-sm text-gray-700">【第二轮】正在根据详细提示词生成正式文章...</span>';
-                addLog('【第2轮】正在根据详细提示词生成正式文章...', 'info');
-                generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>第二轮：文章生成中...';
-                
-                // 调用第二轮API
+                // 调用生成文章API
                 const contentResponse = await fetch(`${API_BASE_URL}/generate-content`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        detailedPrompt: promptResult.detailedPrompt,
+                        detailedPrompt: detailedPrompt,
                         postType: postType,
                         selectedModel: config.selectedModel,
                         models: config.models
@@ -2405,7 +2903,7 @@
                 const contentResult = await contentResponse.json();
                 
                 if (contentResult.success) {
-                    statusDisplay.innerHTML = '<span class="text-sm text-green-600">【第二轮】正式文章生成成功</span>';
+                    statusDisplay.innerHTML = '<span class="text-sm text-green-600">文章生成成功</span>';
                     // 显示生成的内容（直接设置HTML，保留格式）
                     contentPreviewDiv.innerHTML = contentResult.content;
                     
@@ -2414,8 +2912,12 @@
                         articleTitleInput.value = contentResult.title;
                     }
                     
-                    addLog('【第2轮】正式文章生成成功', 'success');
-                    addLog('两轮交互完成，内容已生成', 'success');
+                    if (defaultSystemPrompt) {
+                        addLog('文章生成成功（使用系统默认提示词）', 'success');
+                    } else {
+                        addLog('【第2轮】正式文章生成成功', 'success');
+                        addLog('两轮交互完成，内容已生成', 'success');
+                    }
                     
                     // 显示重新生成按钮
                     regenerateContentBtn.classList.remove('hidden');
@@ -2423,13 +2925,98 @@
                     // 保存生成的内容到全局变量
                     window.generatedContent = contentResult.content;
                     window.generatedTitle = contentResult.title;
+                    
+                    // 启用发布按钮
+                    submitPublishBtn.disabled = false;
+                    submitPublishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    submitPublishBtn.classList.add('hover:bg-indigo-700');
+                    
+                    // 如果选择了生成配图且是长文
+                    if (postType === 'article' && generateImageCheckbox.checked) {
+                        // 检查当前选择的模型是否支持图片生成
+                        if (config.selectedModel === 'ark') {
+                            statusDisplay.innerHTML = '<span class="text-sm text-yellow-600">配图生成失败</span>';
+                            addLog('当前选择的模型暂不支持图片生成功能，请选择OpenAI或Google Gemini模型', 'warning');
+                            return;
+                        }
+                        
+                        statusDisplay.innerHTML = '<span class="text-sm text-gray-700">正在为文章生成配图...</span>';
+                        addLog('正在为文章生成配图...', 'info');
+                        generateContentBtn.disabled = true;
+                        generateContentBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>配图生成中...';
+                        
+                        try {
+                            // 调用生成图片API
+                            const imageResponse = await fetch(`${API_BASE_URL}/generate-image`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    content: contentResult.content,
+                                    title: contentResult.title || prompt,
+                                    selectedModel: config.selectedModel,
+                                    models: config.models
+                                })
+                            });
+                            
+                            const imageResult = await imageResponse.json();
+                            
+                            if (imageResult.success && imageResult.imageUrl) {
+                                statusDisplay.innerHTML = '<span class="text-sm text-green-600">配图生成成功并插入文章</span>';
+                                addLog('配图生成成功并插入文章', 'success');
+                                
+                                // 将图片插入到文章开头
+                                const imageHtml = `<div class="text-center mb-4"><img src="${imageResult.imageUrl}" alt="文章配图" class="max-w-full h-auto rounded-lg"></div>`;
+                                const updatedContent = imageHtml + contentResult.content;
+                                
+                                // 更新预览和全局变量
+                                contentPreviewDiv.innerHTML = updatedContent;
+                                window.generatedContent = updatedContent;
+                                
+                                // 确保发布按钮保持启用状态
+                                submitPublishBtn.disabled = false;
+                                submitPublishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                submitPublishBtn.classList.add('hover:bg-indigo-700');
+                            } else {
+                                statusDisplay.innerHTML = '<span class="text-sm text-yellow-600">文章生成成功，但配图生成失败</span>';
+                                addLog(`配图生成失败: ${imageResult.message || '未知错误'}`, 'warning');
+                                
+                                // 配图生成失败，但文章已生成，发布按钮应该可用
+                                submitPublishBtn.disabled = false;
+                                submitPublishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                submitPublishBtn.classList.add('hover:bg-indigo-700');
+                            }
+                        } catch (error) {
+                            statusDisplay.innerHTML = '<span class="text-sm text-yellow-600">文章生成成功，但配图生成出错</span>';
+                            addLog(`配图生成请求失败: ${error.message}`, 'warning');
+                            
+                            // 配图生成出错，但文章已生成，发布按钮应该可用
+                            submitPublishBtn.disabled = false;
+                            submitPublishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            submitPublishBtn.classList.add('hover:bg-indigo-700');
+                        } finally {
+                            generateContentBtn.disabled = false;
+                            generateContentBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>生成内容';
+                        }
+                    }
                 } else {
-                    statusDisplay.innerHTML = '<span class="text-sm text-red-600">【第二轮】文章生成失败</span>';
+                    statusDisplay.innerHTML = '<span class="text-sm text-red-600">文章生成失败</span>';
                     addLog(`文章生成失败: ${contentResult.message}`, 'error');
+                    
+                    // 文章生成失败，发布按钮保持禁用状态
+                    submitPublishBtn.disabled = true;
+                    submitPublishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    submitPublishBtn.classList.remove('hover:bg-indigo-700');
                 }
             } catch (error) {
                 statusDisplay.innerHTML = '<span class="text-sm text-red-600">生成过程出错</span>';
                 addLog(`内容生成请求失败: ${error.message}`, 'error');
+                
+                // 生成过程出错，发布按钮保持禁用状态
+                submitPublishBtn.disabled = true;
+                submitPublishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitPublishBtn.classList.remove('hover:bg-indigo-700');
             } finally {
                 generateContentBtn.disabled = false;
                 generateContentBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>生成内容';
@@ -2490,8 +3077,7 @@
                         postType: postType,
                         content: content,
                         title: title,
-                        isColumn: isColumn,
-                        xueQiuCookie: config.xueQiuCookie
+                        isColumn: isColumn
                     })
                 });
                 
@@ -2516,6 +3102,215 @@
                 submitPublishBtn.disabled = false;
                 submitPublishBtn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>发布';
             }
+        }
+        
+        // 系统提示词配置
+        let systemPrompts = [];
+        let editingSystemPromptId = null;
+        
+        // 打开系统提示词配置弹窗
+
+        
+        // 加载系统提示词列表
+        async function loadSystemPromptList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/system-prompts`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    systemPrompts = result.data || [];
+                    renderSystemPromptList();
+                } else {
+                    addLog(`加载系统提示词失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addLog(`加载系统提示词请求失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 渲染系统提示词列表
+        function renderSystemPromptList() {
+            const listContainer = document.getElementById('systemPromptList');
+            
+            // 更新"不设置默认提示词"选项的显示状态
+            updateNoDefaultPromptIndicator();
+            
+            if (systemPrompts.length === 0) {
+                listContainer.innerHTML = '<div class="text-gray-400 text-center py-8">暂无系统提示词，请点击上方按钮添加</div>';
+                return;
+            }
+            
+            listContainer.innerHTML = systemPrompts.map((prompt, index) => `
+                <div class="bg-gray-800 rounded-lg p-4 border ${prompt.isDefault ? 'border-blue-500' : 'border-gray-700'}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <h5 class="text-white font-semibold">${prompt.title}</h5>
+                                ${prompt.isDefault ? '<span class="ml-3 px-2 py-1 bg-blue-600 text-white text-xs rounded">默认</span>' : ''}
+                            </div>
+                            <p class="text-gray-400 text-sm line-clamp-2">${prompt.content.substring(0, 100)}...</p>
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editSystemPrompt(${index})" class="text-blue-400 hover:text-blue-300 transition-colors" title="编辑">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button onclick="deleteSystemPrompt(${index})" class="text-red-400 hover:text-red-300 transition-colors" title="删除">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                            ${!prompt.isDefault ? `<button onclick="setDefaultSystemPrompt(${index})" class="text-green-400 hover:text-green-300 transition-colors" title="设为默认">
+                                <i class="fa fa-check-circle"></i>
+                            </button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 打开添加系统提示词弹窗
+        function openAddSystemPromptModal(promptIndex = null) {
+            const modal = document.getElementById('addSystemPromptModal');
+            const title = document.getElementById('addSystemPromptModalTitle');
+            const form = document.getElementById('systemPromptForm');
+            
+            if (promptIndex !== null) {
+                // 编辑模式
+                editingSystemPromptId = promptIndex;
+                const prompt = systemPrompts[promptIndex];
+                title.textContent = '编辑系统提示词';
+                document.getElementById('systemPromptTitle').value = prompt.title;
+                document.getElementById('systemPromptContent').value = prompt.content;
+                document.getElementById('systemPromptIsDefault').checked = prompt.isDefault || false;
+            } else {
+                // 添加模式
+                editingSystemPromptId = null;
+                title.textContent = '添加系统提示词';
+                form.reset();
+            }
+            
+            modal.classList.add('show');
+        }
+        
+        // 关闭添加系统提示词弹窗
+        function closeAddSystemPromptModal() {
+            document.getElementById('addSystemPromptModal').classList.remove('show');
+            editingSystemPromptId = null;
+        }
+        
+        // 保存系统提示词
+        function saveSystemPrompt() {
+            const title = document.getElementById('systemPromptTitle').value.trim();
+            const content = document.getElementById('systemPromptContent').value.trim();
+            const isDefault = document.getElementById('systemPromptIsDefault').checked;
+            
+            if (!title) {
+                alert('请输入提示词标题');
+                return;
+            }
+            if (!content) {
+                alert('请输入提示词内容');
+                return;
+            }
+            
+            const newPrompt = {
+                id: editingSystemPromptId !== null ? systemPrompts[editingSystemPromptId].id : Date.now().toString(),
+                title,
+                content,
+                isDefault
+            };
+            
+            // 如果设为默认，取消其他提示词的默认状态
+            if (isDefault) {
+                systemPrompts.forEach(p => p.isDefault = false);
+            }
+            
+            if (editingSystemPromptId !== null) {
+                systemPrompts[editingSystemPromptId] = newPrompt;
+            } else {
+                systemPrompts.push(newPrompt);
+            }
+            
+            renderSystemPromptList();
+            closeAddSystemPromptModal();
+            addLog(editingSystemPromptId !== null ? '系统提示词更新成功' : '系统提示词添加成功', 'success');
+        }
+        
+        // 编辑系统提示词
+        function editSystemPrompt(index) {
+            openAddSystemPromptModal(index);
+        }
+        
+        // 删除系统提示词
+        function deleteSystemPrompt(index) {
+            if (confirm('确定要删除这个系统提示词吗？')) {
+                systemPrompts.splice(index, 1);
+                renderSystemPromptList();
+                addLog('系统提示词删除成功', 'success');
+            }
+        }
+        
+        // 设置默认系统提示词
+        function setDefaultSystemPrompt(index) {
+            systemPrompts.forEach((p, i) => {
+                p.isDefault = (i === index);
+            });
+            renderSystemPromptList();
+            updateNoDefaultPromptIndicator();
+            addLog('默认系统提示词设置成功', 'success');
+        }
+        
+        // 设置不默认提示词
+        function setNoDefaultPrompt() {
+            systemPrompts.forEach((p) => {
+                p.isDefault = false;
+            });
+            renderSystemPromptList();
+            updateNoDefaultPromptIndicator();
+            addLog('已取消默认提示词，将使用两阶段生成模式', 'success');
+        }
+        
+        // 更新"不设置默认提示词"选项的显示状态
+        function updateNoDefaultPromptIndicator() {
+            const hasDefault = systemPrompts.some(p => p.isDefault);
+            const indicator = document.getElementById('noDefaultPromptIndicator');
+            const option = document.getElementById('noDefaultPromptOption');
+            
+            if (!hasDefault) {
+                indicator.classList.remove('hidden');
+                option.classList.add('border-green-500');
+                option.classList.remove('border-gray-700');
+            } else {
+                indicator.classList.add('hidden');
+                option.classList.remove('border-green-500');
+                option.classList.add('border-gray-700');
+            }
+        }
+        
+        // 保存系统提示词配置到服务器
+        function saveSystemPromptConfig() {
+            fetch(`${API_BASE_URL}/save-system-prompts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompts: systemPrompts })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    addLog('系统提示词配置保存成功', 'success');
+                    closeSystemPromptConfigModal();
+                } else {
+                    addLog(`保存系统提示词配置失败: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`保存系统提示词配置请求失败: ${error.message}`, 'error');
+            });
+        }
+        
+        // 获取默认系统提示词
+        function getDefaultSystemPrompt() {
+            return systemPrompts.find(p => p.isDefault) || null;
         }
         
         // 人设配置
@@ -2544,15 +3339,7 @@
         }
         
         // 打开配置人设弹窗
-        function openPersonaConfigModal() {
-            document.getElementById('personaConfigModal').classList.remove('hidden');
-            loadPersonas();
-        }
-        
-        // 关闭配置人设弹窗
-        function closePersonaConfigModal() {
-            document.getElementById('personaConfigModal').classList.add('hidden');
-        }
+
         
         // 图标选择相关函数
         function toggleIconDropdown() {
@@ -2619,12 +3406,12 @@
                 document.getElementById('selectedIconPreview').className = 'fa fa-user mr-3 text-blue-400';
             }
             
-            modal.classList.remove('hidden');
+            modal.classList.add('show');
         }
         
         // 关闭添加人设弹窗
         function closeAddPersonaModal() {
-            document.getElementById('addPersonaModal').classList.add('hidden');
+            document.getElementById('addPersonaModal').classList.remove('show');
         }
         
         // 加载人设配置
@@ -2785,18 +3572,21 @@
     </script>
     
     <!-- 配置人设弹窗 -->
-    <div id="personaConfigModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden">
-            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
-                <h3 class="text-2xl font-bold text-white">配置人设</h3>
-                <button id="closePersonaConfigModal" class="text-gray-400 hover:text-white transition-colors">
+    <div id="personaConfigModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-user-circle mr-2"></i>
+                    配置人设
+                </h3>
+                <button id="closePersonaConfigModal" class="close-modal-btn text-white hover:text-gray-200 transition-colors">
                     <i class="fa fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="p-6 max-h-[60vh] overflow-y-auto">
+            <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h4 class="text-lg font-semibold text-white">现有人设</h4>
-                    <button id="addPersonaBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                    <h4 class="text-lg font-semibold text-gray-700">现有人设</h4>
+                    <button id="addPersonaBtn" class="btn btn-primary">
                         <i class="fa fa-plus mr-2"></i>添加人设
                     </button>
                 </div>
@@ -2804,8 +3594,8 @@
                     <!-- 人设列表将通过JavaScript动态生成 -->
                 </div>
             </div>
-            <div class="p-6 border-t border-gray-700 flex justify-end space-x-4">
-                <button id="savePersonaConfig" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center">
+            <div class="modal-footer px-6 py-4 border-t border-gray-100 flex justify-end space-x-4">
+                <button id="savePersonaConfig" class="btn btn-primary">
                     <i class="fa fa-save mr-2"></i>保存配置
                 </button>
             </div>
@@ -2813,90 +3603,93 @@
     </div>
     
     <!-- 添加/编辑人设弹窗 -->
-    <div id="addPersonaModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
-            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
-                <h3 id="addPersonaModalTitle" class="text-2xl font-bold text-white">添加人设</h3>
-                <button id="closeAddPersonaModal" class="text-gray-400 hover:text-white transition-colors">
+    <div id="addPersonaModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 id="addPersonaModalTitle" class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-user-circle mr-2"></i>
+                    添加人设
+                </h3>
+                <button id="closeAddPersonaModal" class="close-modal-btn text-white hover:text-gray-200 transition-colors">
                     <i class="fa fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="p-6 max-h-[60vh] overflow-y-auto">
+            <div class="p-6">
                 <form id="personaForm">
                     <input type="hidden" id="personaId">
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">人设名称</label>
-                        <input type="text" id="personaName" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label class="block text-gray-700 mb-2">人设名称</label>
+                        <input type="text" id="personaName" class="form-input" required>
                     </div>
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">人设标签</label>
-                        <input type="text" id="personaTags" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="用逗号分隔多个标签">
+                        <label class="block text-gray-700 mb-2">人设标签</label>
+                        <input type="text" id="personaTags" class="form-input" placeholder="用逗号分隔多个标签">
                     </div>
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">核心主张</label>
-                        <textarea id="personaCoreClaims" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3"></textarea>
+                        <label class="block text-gray-700 mb-2">核心主张</label>
+                        <textarea id="personaCoreClaims" class="form-input" rows="3"></textarea>
                     </div>
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">内容特征</label>
-                        <textarea id="personaContentFeatures" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3"></textarea>
+                        <label class="block text-gray-700 mb-2">内容特征</label>
+                        <textarea id="personaContentFeatures" class="form-input" rows="3"></textarea>
                     </div>
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">适用人群</label>
-                        <input type="text" id="personaTargetAudience" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-gray-700 mb-2">适用人群</label>
+                        <input type="text" id="personaTargetAudience" class="form-input">
                     </div>
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">提示词要点</label>
-                        <textarea id="personaPromptPoints" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" rows="5"></textarea>
+                        <label class="block text-gray-700 mb-2">提示词要点</label>
+                        <textarea id="personaPromptPoints" class="form-input" rows="5"></textarea>
                     </div>
                     <div class="mb-4">
-                        <label class="block text-gray-300 mb-2">图标</label>
+                        <label class="block text-gray-700 mb-2">图标</label>
                         <div class="relative">
-                            <div id="iconSelectDisplay" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white cursor-pointer flex items-center justify-between hover:bg-gray-700 transition-colors" onclick="toggleIconDropdown()">
+                            <div id="iconSelectDisplay" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-800 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors" onclick="toggleIconDropdown()">
                                 <div class="flex items-center">
-                                    <i id="selectedIconPreview" class="fa fa-user mr-3 text-blue-400"></i>
+                                    <i id="selectedIconPreview" class="fa fa-user mr-3 text-blue-600"></i>
                                     <span id="selectedIconText">用户</span>
                                 </div>
-                                <i class="fa fa-chevron-down text-gray-400"></i>
+                                <i class="fa fa-chevron-down text-gray-500"></i>
                             </div>
-                            <div id="iconDropdown" class="hidden absolute z-50 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="user" onclick="selectIcon('user', '用户', 'fa-user')">
-                                    <i class="fa fa-user mr-3 text-blue-400 w-5"></i>
+                            <div id="iconDropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="user" onclick="selectIcon('user', '用户', 'fa-user')">
+                                    <i class="fa fa-user mr-3 text-blue-600 w-5"></i>
                                     <span>用户</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="user-circle" onclick="selectIcon('user-circle', '用户圈', 'fa-user-circle')">
-                                    <i class="fa fa-user-circle mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="user-circle" onclick="selectIcon('user-circle', '用户圈', 'fa-user-circle')">
+                                    <i class="fa fa-user-circle mr-3 text-blue-600 w-5"></i>
                                     <span>用户圈</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="user-secret" onclick="selectIcon('user-secret', '神秘用户', 'fa-user-secret')">
-                                    <i class="fa fa-user-secret mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="user-secret" onclick="selectIcon('user-secret', '神秘用户', 'fa-user-secret')">
+                                    <i class="fa fa-user-secret mr-3 text-blue-600 w-5"></i>
                                     <span>神秘用户</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="briefcase" onclick="selectIcon('briefcase', '公文包', 'fa-briefcase')">
-                                    <i class="fa fa-briefcase mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="briefcase" onclick="selectIcon('briefcase', '公文包', 'fa-briefcase')">
+                                    <i class="fa fa-briefcase mr-3 text-blue-600 w-5"></i>
                                     <span>公文包</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="graduation-cap" onclick="selectIcon('graduation-cap', '毕业帽', 'fa-graduation-cap')">
-                                    <i class="fa fa-graduation-cap mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="graduation-cap" onclick="selectIcon('graduation-cap', '毕业帽', 'fa-graduation-cap')">
+                                    <i class="fa fa-graduation-cap mr-3 text-blue-600 w-5"></i>
                                     <span>毕业帽</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="line-chart" onclick="selectIcon('line-chart', '折线图', 'fa-line-chart')">
-                                    <i class="fa fa-line-chart mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="line-chart" onclick="selectIcon('line-chart', '折线图', 'fa-line-chart')">
+                                    <i class="fa fa-line-chart mr-3 text-blue-600 w-5"></i>
                                     <span>折线图</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="lightbulb-o" onclick="selectIcon('lightbulb-o', '灯泡', 'fa-lightbulb-o')">
-                                    <i class="fa fa-lightbulb-o mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="lightbulb-o" onclick="selectIcon('lightbulb-o', '灯泡', 'fa-lightbulb-o')">
+                                    <i class="fa fa-lightbulb-o mr-3 text-blue-600 w-5"></i>
                                     <span>灯泡</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="book" onclick="selectIcon('book', '书籍', 'fa-book')">
-                                    <i class="fa fa-book mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="book" onclick="selectIcon('book', '书籍', 'fa-book')">
+                                    <i class="fa fa-book mr-3 text-blue-600 w-5"></i>
                                     <span>书籍</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="globe" onclick="selectIcon('globe', '地球', 'fa-globe')">
-                                    <i class="fa fa-globe mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="globe" onclick="selectIcon('globe', '地球', 'fa-globe')">
+                                    <i class="fa fa-globe mr-3 text-blue-600 w-5"></i>
                                     <span>地球</span>
                                 </div>
-                                <div class="icon-option px-4 py-2 hover:bg-gray-700 cursor-pointer flex items-center text-white" data-value="shield" onclick="selectIcon('shield', '盾牌', 'fa-shield')">
-                                    <i class="fa fa-shield mr-3 text-blue-400 w-5"></i>
+                                <div class="icon-option px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-gray-800" data-value="shield" onclick="selectIcon('shield', '盾牌', 'fa-shield')">
+                                    <i class="fa fa-shield mr-3 text-blue-600 w-5"></i>
                                     <span>盾牌</span>
                                 </div>
                             </div>
@@ -2905,17 +3698,114 @@
                     </div>
                 </form>
             </div>
-            <div class="p-6 border-t border-gray-700 flex justify-end space-x-4">
-                <button id="cancelAddPersona" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+            <div class="modal-footer px-6 py-4 border-t border-gray-100 flex justify-end space-x-4">
+                <button id="cancelAddPersona" class="btn btn-secondary">
                     取消
                 </button>
-                <button id="savePersona" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center">
+                <button id="savePersona" class="btn btn-primary">
                     <i class="fa fa-save mr-2"></i>保存
                 </button>
             </div>
         </div>
     </div>
-
+    
+    <!-- 系统提示词配置弹窗 -->
+    <div id="systemPromptConfigModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-comment mr-2"></i>
+                    系统提示词配置
+                </h3>
+                <button id="closeSystemPromptConfigModal" class="close-modal-btn text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-700">现有提示词</h4>
+                        <p class="text-sm text-gray-500 mt-1">选择一个提示词作为默认提示词，或选择不设置默认提示词</p>
+                    </div>
+                    <button id="addSystemPromptBtn" class="btn btn-primary">
+                        <i class="fa fa-plus mr-2"></i>添加提示词
+                    </button>
+                </div>
+                
+                <!-- 不设置默认提示词选项 -->
+                <div id="noDefaultPromptOption" class="bg-white rounded-lg p-4 border border-gray-200 mb-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm" onclick="setNoDefaultPrompt()">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+                                <i class="fa fa-ban text-gray-500"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-gray-800 font-semibold">不设置默认提示词</h5>
+                                <p class="text-gray-500 text-sm">使用两阶段生成模式（先生成提示词，再生成文章）</p>
+                            </div>
+                        </div>
+                        <div id="noDefaultPromptIndicator" class="hidden">
+                            <i class="fa fa-check-circle text-green-500 text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="systemPromptList" class="space-y-4">
+                    <!-- 提示词列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer px-6 py-4 border-t border-gray-100 flex justify-end space-x-4">
+                <button id="saveSystemPromptConfig" class="btn btn-primary">
+                    <i class="fa fa-save mr-2"></i>保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑系统提示词弹窗 -->
+    <div id="addSystemPromptModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+                <h3 id="addSystemPromptModalTitle" class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-comment mr-2"></i>
+                    添加系统提示词
+                </h3>
+                <button id="closeAddSystemPromptModal" class="close-modal-btn text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="systemPromptForm">
+                    <input type="hidden" id="systemPromptId">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">提示词标题 <span class="text-red-400">*</span></label>
+                        <input type="text" id="systemPromptTitle" class="form-input" placeholder="例如：雪球高端长线深度文" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">提示词内容 <span class="text-red-400">*</span></label>
+                        <textarea id="systemPromptContent" class="form-input" rows="15" placeholder="请输入完整的系统提示词内容..." required></textarea>
+                        <p class="text-xs text-gray-500 mt-1">提示词将直接用于指导AI生成内容</p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="systemPromptIsDefault" class="mr-3 w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500">
+                            <span class="text-gray-700">设为默认提示词</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1 ml-7">设为默认后，发布雪球贴时将自动使用此提示词</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer px-6 py-4 border-t border-gray-100 flex justify-end space-x-4">
+                <button id="cancelAddSystemPrompt" class="btn btn-secondary">
+                    取消
+                </button>
+                <button id="saveSystemPrompt" class="btn btn-primary">
+                    <i class="fa fa-save mr-2"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // 拖拽功能
         function makeDraggable(element) {
@@ -2999,5 +3889,40 @@
             });
         });
     </script>
-</body>
+<!-- 状态栏 -->
+    <div class="status-bar fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-2 text-sm z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="status-left">
+                <span id="status-text">就绪</span>
+            </div>
+            <div class="status-right flex items-center space-x-4">
+                <div id="current-user-info" class="flex items-center space-x-2">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=random" alt="用户头像" class="w-6 h-6 rounded-full">
+                    <span id="user-name" class="text-xs">未设置用户</span>
+                </div>
+                <span id="system-time"></span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 显示系统时间
+        function updateSystemTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('system-time').textContent = timeString;
+        }
+        
+        // 定时更新系统时间
+        setInterval(updateSystemTime, 1000);
+        updateSystemTime();
+        
+        // 加载默认用户信息
+
+    </script>
+    </body>
 </html>

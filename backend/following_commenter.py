@@ -9,9 +9,11 @@ import time
 import requests
 import random
 import os
+from article_utils import get_article_full_attributes
 
 CONFIG_FILE = 'config.json'
 FOLLOWING_LIST_FILE = 'following_list.json'
+
 
 def load_config():
     """加载配置"""
@@ -22,6 +24,7 @@ def load_config():
         print(f"加载配置失败: {e}")
         return None
 
+
 def load_following_list():
     """加载关注列表"""
     try:
@@ -30,6 +33,7 @@ def load_following_list():
     except Exception as e:
         print(f"加载关注列表失败: {e}")
         return None
+
 
 def get_user_posts(user_uid, cookie_str, max_posts=10):
     """获取用户最近发表的文章"""
@@ -77,7 +81,16 @@ def get_user_posts(user_uid, cookie_str, max_posts=10):
                         'author_uid': user_uid,
                         'view_count': status.get('view_count', 0),
                         'reply_count': status.get('reply_count', 0),
-                        'like_count': status.get('like_count', 0)
+                        'like_count': status.get('like_count', 0),
+                        'retweet_count': status.get('retweet_count', 0),
+                        'fav_count': status.get('fav_count', 0),
+                        'is_column': status.get('is_column', False),
+                        'is_original_declare': status.get('is_original_declare', False),
+                        'offer': status.get('offer'),
+                        'can_reward': status.get('can_reward', False),
+                        'reward_count': status.get('reward_count', 0),
+                        'reward_user_count': status.get('reward_user_count', 0),
+                        'reward_amount': status.get('reward_amount', 0)
                     }
                     all_posts.append(post_data)
                     
@@ -93,20 +106,18 @@ def get_user_posts(user_uid, cookie_str, max_posts=10):
     
     return all_posts[:max_posts]
 
-def generate_share_link(author_uid, post_id, share_uid):
-    """生成分享链接"""
-    return f"https://xueqiu.com/{author_uid}/{post_id}?scene=1036&share_uid={share_uid}"
 
-def generate_comment_with_ai(url, api_key):
-    """使用AI API生成评论"""
+def generate_comment_with_ai(article_title, article_content, api_key):
+    """使用AI API生成评论，使用文章标题和内容"""
     api_url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
     
-    # 用户提供的提示词
-    prompt = f"读取雪球指定 URL 帖子全文内容，贴合散户共情口吻，生成一条简短自然、适配社区氛围、可直接发布的暖心评论，不堆砌专业术语、不写长篇大论，纯贴合原文情绪输出。 `{url}`"
+    # 构建提示词，包含文章标题和内容
+    content_preview = article_content[:500] if article_content else ""
+    prompt = f"你是资深投资者，写1-2句理性雪球评论，专业简洁。文章标题：{article_title} 内容：{content_preview} 评论："
     
     payload = {
         "model": "doubao-seed-2-0-pro-260215",
@@ -128,6 +139,7 @@ def generate_comment_with_ai(url, api_key):
     except Exception as e:
         print(f"  生成评论失败: {str(e)}")
         return "分析到位，学习了"
+
 
 def post_comment(article_id, content, cookie_str):
     """使用雪球API发布评论"""
@@ -197,6 +209,7 @@ def post_comment(article_id, content, cookie_str):
     except Exception as e:
         return {"success": False, "message": f"发布评论请求失败: {str(e)}"}
 
+
 def like_post(post_id, cookie_str):
     """
     点赞帖子
@@ -243,18 +256,20 @@ def like_post(post_id, cookie_str):
     except Exception as e:
         return {"success": False, "message": f"点赞请求失败: {str(e)}"}
 
+
 def process_following_comments(selected_users=None, posts_per_user=10, test_mode=False, action_type='comment', log_callback=None, stop_event=None):
     """处理关注列表评论/点赞"""
     # 日志列表
     logs = []
     
-    def add_log(message, type='info'):
+    def add_log(message, type='info', details=None):
         """添加日志"""
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
         log_entry = {
             "timestamp": timestamp,
             "message": message,
-            "type": type
+            "type": type,
+            "details": details
         }
         logs.append(log_entry)
         print(f"[{timestamp}] [{type.upper()}] {message}")
@@ -382,8 +397,25 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
             
             add_log(f"  处理帖子 {j}/{len(posts)}")
             add_log(f"  帖子ID: {post['id']}")
-            if post['title']:
-                add_log(f"  标题: {post['title'][:50]}...")
+            
+            # 获取文章完整属性
+            article_info = get_article_full_attributes(post)
+            
+            # 记录文章标题
+            add_log(f"  文章标题: {article_info['标题'][:50]}...")
+            
+            # 记录所有文章属性作为一行日志，使用鲜艳颜色
+            attrs = article_info['属性']
+            reward_info = article_info['打赏/悬赏信息']
+            
+            # 构建属性字符串
+            attrs_str = f"点赞: {attrs['点赞数']} | 评论: {attrs['评论数']} | 转发: {attrs['转发数']} | 阅读: {attrs['阅读数']} | 收藏: {attrs['收藏数']} | 专栏: {attrs['是否专栏']} | 原创: {attrs['是否原创声明']} | 时间: {attrs['创建时间']} | 打赏: {reward_info['类型']}"
+            
+            # 使用info类型但前端可以根据内容识别为需要鲜艳颜色的日志
+            add_log(f"  📊 文章属性: {attrs_str}", "info", {
+                "articleId": article_info['ID'],
+                "isAttributeLog": True
+            })
             
             if action_type == 'like':
                 # 点赞模式
@@ -403,13 +435,12 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
                     add_log(f"  ❌ 点赞失败: {post_result.get('message')}", "error")
             else:
                 # 评论模式
-                # 生成分享链接
-                share_link = generate_share_link(user_uid, post['id'], my_uid)
-                add_log(f"  分享链接: {share_link}")
+                # 直接使用已经获取的文章信息生成评论
+                article_title = article_info['标题']
+                article_content = article_info['内容']
                 
-                # 使用AI生成评论
                 add_log("  生成评论...")
-                comment = generate_comment_with_ai(share_link, api_key)
+                comment = generate_comment_with_ai(article_title, article_content, api_key)
                 add_log(f"  评论: {comment}")
                 
                 # 发布评论
@@ -479,7 +510,8 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
         "logs": logs
     }
 
+
 if __name__ == "__main__":
     # 测试模式
-    result = process_following_comments(user_limit=2, posts_per_user=2, test_mode=True)
+    result = process_following_comments(posts_per_user=2, test_mode=True)
     print(json.dumps(result, ensure_ascii=False, indent=2))

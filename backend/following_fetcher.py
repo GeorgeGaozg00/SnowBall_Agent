@@ -41,7 +41,31 @@ class FollowingListFetcher:
             str: 用户ID，如果失败返回None
         """
         try:
-            # 访问个人中心页面
+            # 首先尝试从JWT token中提取用户ID
+            import base64
+            
+            # 从cookie中提取xq_id_token
+            token_match = re.search(r'xq_id_token=([^;]+)', self.xueqiu_cookie)
+            if token_match:
+                token = token_match.group(1)
+                # JWT token格式：header.payload.signature
+                parts = token.split('.')
+                if len(parts) >= 2:
+                    try:
+                        # 解码payload部分
+                        payload = parts[1]
+                        # JWT base64编码可能缺少padding，需要补充
+                        payload += '=' * ((4 - len(payload) % 4) % 4)
+                        decoded_payload = base64.urlsafe_b64decode(payload).decode('utf-8')
+                        user_data = json.loads(decoded_payload)
+                        
+                        if 'uid' in user_data:
+                            # 从JWT中获取用户ID
+                            return str(user_data['uid'])
+                    except Exception as e:
+                        print(f"解析JWT token失败: {str(e)}")
+            
+            # 如果从JWT中提取失败，尝试访问个人中心页面
             url = "https://xueqiu.com/center"
             response = requests.get(url, headers=self.headers, timeout=10)
             

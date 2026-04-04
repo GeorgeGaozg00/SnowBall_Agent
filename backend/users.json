@@ -1,0 +1,15 @@
+{
+  "users": [
+    {
+      "id": "8357cf05-1cf6-4af6-a967-5bdc92d7f73f",
+      "cookie": "xq_a_token=d60873c46cdcf7dfa29911900810768e779318a4; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjU2Nzg1OTczMjYsImlzcyI6InVjIiwiZXhwIjoxNzc3NzcxODAwLCJjdG0iOjE3NzUxNzk4MDAwMjMsImNpZCI6ImQ5ZDBuNEFadXAifQ.O7yHgZo1kPBoHyiRabvJEJeJbpnqtzcszqg9BjPzRTRyvTmtGK-1q8r1W-B8i8mrktJdg8NIUeGZHpJLthgtriGsw6DP61kGTE566TkzSIU8vPESw0fgQArDOs-ospFMtykSrR9EWfkJ5CevE9sfeSEya2Z0dZjnF5TzFIBaxPBGlOjWNxfZRfG4IVDobK2jIRroyf6jUA1ehM91n87E0lNPCz4vM7ppSrJTML5PDO8V8oDb1VJHrU0dM1VBjoB0_rc44Fr5NtVpCD2Q3SXmlL2rLyA_-V9wqWFqGUUAyCa2r2324nBNdePJofb4XJCHfeMOFombC2Gs43ba-xGhOw; xq_r_token=1c75559aedff3a301c44a9d3881b136637f01197",
+      "uid": "5678597326",
+      "name": "流畅的金条高手",
+      "avatar": "http://xavatar.imedao.com/community/20261/1771586931466-1771586931842.jpg",
+      "bio": "专注：AI算力爆发 → 电力能源大重构 核心逻辑：AI = 新原油，电力 = 新算力 只做高确定性赛道，不博弈，不猜谜",
+      "cookieValid": true,
+      "isDefault": true
+    }
+  ],
+  "defaultUserId": "8357cf05-1cf6-4af6-a967-5bdc92d7f73f"
+}
