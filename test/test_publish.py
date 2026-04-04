@@ -13,18 +13,52 @@ with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
     COOKIE = config.get('xueQiuCookie', '')
 
-# 文章内容
+# 文章内容（普通长文）
 ARTICLE = {
     "title": "API 发文测试标题",
-    "status": """
-这是正文内容
-支持换行
-支持**加粗**、*斜体*、[链接](https://xueqiu.com)
-""",
+    "status": """<p>这是正文内容，测试普通长文发布功能。</p>
+<p>支持换行和基本格式。</p>
+<p>这是一段足够长的内容，确保超过100字的要求。我们需要测试API发布功能是否正常工作，以及文章类型是否正确识别。</p>
+<p>本文主要测试以下几点：</p>
+<ul>
+<li>文章标题是否正确显示</li>
+<li>文章内容格式是否保留</li>
+<li>文章类型是否为普通长文</li>
+</ul>
+<p>感谢您的关注！</p>""",
     "cover_pic": "",          # 封面图URL（可选）
     "show_cover_pic": "true", # 是否显示封面
     "original": "false",      # 是否声明原创（需开通专栏）
-    "comment_disabled": "false" # 是否关闭评论
+    "comment_disabled": "false", # 是否关闭评论
+    "type": "1"               # 1: 普通长文, 8: 专栏文章
+}
+
+# 专栏文章内容
+ARTICLE_COLUMN = {
+    "title": "API 专栏文章测试标题",
+    "status": """<p>这是专栏文章正文内容，测试专栏文章发布功能。</p>
+<p>专栏文章需要满足以下条件：</p>
+<ol>
+<li>必须有标题（title字段）</li>
+<li>内容必须有HTML标签</li>
+<li>内容长度至少100字</li>
+<li>Referer必须正确设置</li>
+<li>type参数需要设置为8</li>
+</ol>
+<p>本文将测试这些条件是否满足。专栏文章是雪球平台上的重要内容形式，可以获得更多的曝光和推荐。</p>
+<p>专栏文章的优势：</p>
+<ul>
+<li>获得更多推荐机会</li>
+<li>可以建立个人品牌</li>
+<li>获得版权保护</li>
+<li>有机会参与出版计划</li>
+</ul>
+<p>感谢您的关注和支持！</p>""",
+    "cover_pic": "",          # 封面图URL（可选）
+    "show_cover_pic": "true", # 是否显示封面
+    "original": "false",      # 是否声明原创（需开通专栏）
+    "comment_disabled": "false", # 是否关闭评论
+    "type": "8"               # 1: 普通长文, 8: 专栏文章
 }
 
 def publish_xueqiu_article_api(cookie, article):
@@ -37,9 +71,9 @@ def publish_xueqiu_article_api(cookie, article):
         "Content-Type": "application/x-www-form-urlencoded",
         "Cookie": cookie.strip().replace("\n", ""),
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://mp.xueqiu.com/write/",
-        "Origin": "https://mp.xueqiu.com",
-        "Host": "mp.xueqiu.com"
+        "Referer": "https://xueqiu.com/write",
+        "Origin": "https://xueqiu.com",
+        "Host": "xueqiu.com"
     }
     
     # 2. 先访问mp.xueqiu.com/write/页面建立会话
@@ -98,8 +132,8 @@ def publish_xueqiu_article_api(cookie, article):
     
     # 4. 尝试发文
     post_urls = [
-        "https://mp.xueqiu.com/xq/statuses/update.json",
         "https://xueqiu.com/statuses/update.json",
+        "https://mp.xueqiu.com/xq/statuses/update.json",
         "https://mp.xueqiu.com/statuses/update.json"
     ]
     
@@ -117,7 +151,10 @@ def publish_xueqiu_article_api(cookie, article):
             "session_token": session_token,
             "device": "Web",
             "right": "0",
-            "draft_id": "0"
+            "draft_id": "0",
+            "type": article.get("type", "1"),  # 1: 普通长文, 8: 专栏文章
+            "is_column": "true" if article.get("type") == "8" else "false",
+            "column": "true" if article.get("type") == "8" else "false"
         }
         
         # 5. 发送请求
@@ -247,8 +284,12 @@ def main():
     print("雪球长文发布测试 - 最终版")
     print("=" * 60)
     
+    # 测试1：普通长文（type=1）
+    print("\n【测试1】发布普通长文（type=1）")
+    print("-" * 60)
     print(f"文章标题: {ARTICLE['title']}")
     print(f"文章内容: {ARTICLE['status'][:50]}...")
+    print(f"内容类型: type={ARTICLE['type']}")
     print()
     
     # 方案1：使用API发布
@@ -260,18 +301,35 @@ def main():
         result = publish_xueqiu_article_api(COOKIE, ARTICLE)
         
         if result:
-            print("\n✅ API发布成功！")
-            return
+            print("\n✅ 普通长文发布成功！")
         else:
-            print("\n❌ API发布失败，尝试方案2...")
+            print("\n❌ 普通长文发布失败！")
     
-    # 方案2：使用浏览器自动化发布
-    result = publish_xueqiu_article_browser(ARTICLE)
+    # 等待一段时间
+    import time
+    print("\n等待5秒后继续测试...")
+    time.sleep(5)
     
-    if result:
-        print("\n✅ 测试成功！")
-    else:
-        print("\n❌ 测试失败！")
+    # 测试2：专栏文章（type=8）
+    print("\n【测试2】发布专栏文章（type=8）")
+    print("-" * 60)
+    print(f"文章标题: {ARTICLE_COLUMN['title']}")
+    print(f"文章内容: {ARTICLE_COLUMN['status'][:50]}...")
+    print(f"内容类型: type={ARTICLE_COLUMN['type']}")
+    print()
+    
+    # 方案1：使用API发布
+    if COOKIE:
+        print("=== 方案1：使用API发布 ===")
+        print(f"Cookie: {COOKIE[:50]}...")
+        print()
+        
+        result = publish_xueqiu_article_api(COOKIE, ARTICLE_COLUMN)
+        
+        if result:
+            print("\n✅ 专题文章发布成功！")
+        else:
+            print("\n❌ 专题文章发布失败！")
 
 if __name__ == "__main__":
     main()

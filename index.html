@@ -2499,7 +2499,11 @@
                 
                 if (result.success) {
                     statusDisplay.innerHTML = '<span class="text-sm text-green-600">发布成功！</span>';
-                    addLog(`发布成功！帖子ID: ${result.postId}`, 'success');
+                    if (isColumn) {
+                        addLog(`发布成功！帖子ID: ${result.postId}，已收录入本人专栏`, 'success');
+                    } else {
+                        addLog(`发布成功！帖子ID: ${result.postId}`, 'success');
+                    }
                     closePublishPostModal();
                 } else {
                     statusDisplay.innerHTML = '<span class="text-sm text-red-600">发布失败</span>';

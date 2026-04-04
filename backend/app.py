@@ -838,6 +838,63 @@ def publish_post():
             "message": f"发布失败: {str(e)}"
         }), 500
 
+# 文本转HTML函数
+def text_to_html(text):
+    """将纯文本转换为HTML格式"""
+    import re
+    
+    # 先处理Markdown格式的粗体和斜体
+    # 处理粗体 **text**
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+    # 处理斜体 *text*
+    text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+    
+    # 处理列表
+    lines = text.split('\n')
+    in_list = False
+    list_type = None
+    result_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # 检测无序列表
+        if stripped.startswith('- ') or stripped.startswith('* '):
+            if not in_list or list_type != 'ul':
+                if in_list:
+                    result_lines.append(f'</{list_type}>')
+                result_lines.append('<ul>')
+                in_list = True
+                list_type = 'ul'
+            result_lines.append(f'<li>{stripped[2:]}</li>')
+        # 检测有序列表
+        elif re.match(r'^\d+\.\s', stripped):
+            if not in_list or list_type != 'ol':
+                if in_list:
+                    result_lines.append(f'</{list_type}>')
+                result_lines.append('<ol>')
+                in_list = True
+                list_type = 'ol'
+            # 提取列表项内容
+            content = re.sub(r'^\d+\.\s', '', stripped)
+            result_lines.append(f'<li>{content}</li>')
+        else:
+            # 如果之前在列表中，关闭列表
+            if in_list:
+                result_lines.append(f'</{list_type}>')
+                in_list = False
+                list_type = None
+            
+            # 处理普通段落
+            if stripped:
+                result_lines.append(f'<p>{stripped}</p>')
+    
+    # 如果最后还在列表中，关闭列表
+    if in_list:
+        result_lines.append(f'</{list_type}>')
+    
+    return '\n'.join(result_lines)
+
 # AI模型调用函数
 def call_ark_api(api_key, prompt, post_type):
     """调用火山引擎API"""
@@ -876,6 +933,9 @@ def call_ark_api(api_key, prompt, post_type):
             if '标题：' in title_line:
                 title = title_line.replace('标题：', '').strip()
                 content = parts[1].strip()
+    
+    # 将纯文本转换为HTML格式
+    content = text_to_html(content)
     
     return content, title
 
@@ -916,6 +976,9 @@ def call_openai_api(api_key, prompt, post_type, base_url='https://api.openai.com
             if '标题：' in title_line:
                 title = title_line.replace('标题：', '').strip()
                 content = parts[1].strip()
+    
+    # 将纯文本转换为HTML格式
+    content = text_to_html(content)
     
     return content, title
 
@@ -962,6 +1025,9 @@ def call_baidu_api(api_key, secret_key, prompt, post_type):
                 title = title_line.replace('标题：', '').strip()
                 content = parts[1].strip()
     
+    # 将纯文本转换为HTML格式
+    content = text_to_html(content)
+    
     return content, title
 
 def call_alibaba_api(api_key, prompt, post_type, base_url=''):
@@ -1006,6 +1072,9 @@ def call_alibaba_api(api_key, prompt, post_type, base_url=''):
             if '标题：' in title_line:
                 title = title_line.replace('标题：', '').strip()
                 content = parts[1].strip()
+    
+    # 将纯文本转换为HTML格式
+    content = text_to_html(content)
     
     return content, title
 
@@ -1052,6 +1121,9 @@ def call_gemini_api(api_key, prompt, post_type, base_url='https://generativelang
             if '标题：' in title_line:
                 title = title_line.replace('标题：', '').strip()
                 content = parts[1].strip()
+    
+    # 将纯文本转换为HTML格式
+    content = text_to_html(content)
     
     return content, title
 
@@ -1168,10 +1240,9 @@ def publish_discussion_to_xueqiu(content, cookie):
     """发布讨论到雪球"""
     import requests
     
-    # 将HTML内容转换为Markdown
-    print("正在将HTML内容转换为Markdown格式...")
-    markdown_content = html_to_markdown(content)
-    print(f"转换后的内容前200字符: {markdown_content[:200]}")
+    # 雪球接收HTML格式，不需要转换
+    print("准备发布HTML格式内容...")
+    print(f"内容前200字符: {content[:200]}")
     
     # 创建会话
     session = requests.Session()
@@ -1209,7 +1280,7 @@ def publish_discussion_to_xueqiu(content, cookie):
     print("发布讨论...")
     post_url = "https://xueqiu.com/statuses/update.json"
     data = {
-        "status": markdown_content,
+        "status": content,
         "device": "Web",
         "right": "0",
         "session_token": session_token
@@ -1252,47 +1323,46 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
     """发布长文到雪球"""
     import requests
     
-    # 将HTML内容转换为Markdown
-    print("正在将HTML内容转换为Markdown格式...")
-    markdown_content = html_to_markdown(content)
-    print(f"转换后的内容前200字符: {markdown_content[:200]}")
+    # 雪球接收HTML格式，不需要转换
+    print("准备发布HTML格式内容...")
+    print(f"内容前200字符: {content[:200]}")
     
     # 创建会话
     session = requests.Session()
     
-    headers = {
-        "Cookie": cookie.strip(),
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
-        "Referer": "https://mp.xueqiu.com/write/",
-        "X-Requested-With": "XMLHttpRequest",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Origin": "https://mp.xueqiu.com"
-    }
+    # 根据是否为专栏文章设置不同的请求头
+    if is_column:
+        headers = {
+            "Cookie": cookie.strip(),
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://xueqiu.com/write",
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Origin": "https://xueqiu.com"
+        }
+    else:
+        headers = {
+            "Cookie": cookie.strip(),
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+            "Referer": "https://mp.xueqiu.com/write/",
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Origin": "https://mp.xueqiu.com"
+        }
     
     # 1. 先访问首页建立会话
     print("访问雪球首页建立会话...")
     home_response = session.get("https://xueqiu.com/", headers=headers)
     print(f"首页访问状态码: {home_response.status_code}")
     
-    # 2. 访问mp页面
-    print("访问mp页面...")
-    mp_response = session.get("https://mp.xueqiu.com/write/", headers=headers)
-    print(f"mp页面访问状态码: {mp_response.status_code}")
-    
-    # 3. 获取session_token
+    # 2. 获取session_token
     print("获取session_token...")
-    token_url = "https://mp.xueqiu.com/xq/provider/session/token.json?api_path=%2Fstatuses%2Fupdate.json"
+    token_url = "https://xueqiu.com/provider/session/token.json?api_path=%2Fstatuses%2Fupdate.json"
     token_response = session.get(token_url, headers=headers)
     print(f"获取token状态码: {token_response.status_code}")
     
     if token_response.status_code != 200:
-        # 尝试使用另一个token获取URL
-        token_url = "https://xueqiu.com/provider/session/token.json?api_path=%2Fstatuses%2Fupdate.json"
-        token_response = session.get(token_url, headers=headers)
-        print(f"尝试另一个token URL，状态码: {token_response.status_code}")
-        
-        if token_response.status_code != 200:
-            raise Exception(f"获取token失败，状态码: {token_response.status_code}")
+        raise Exception(f"获取token失败，状态码: {token_response.status_code}")
     
     token_data = token_response.json()
     if "session_token" not in token_data:
@@ -1301,30 +1371,34 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
     session_token = token_data["session_token"]
     print(f"获取session_token成功：{session_token[:16]}...")
     
-    # 4. 发布长文
+    # 3. 发布长文
     print("发布长文...")
     
     if is_column:
-        # 专栏发表使用不同的API端点
-        post_url = "https://mp.xueqiu.com/notes/create.json"
+        # 专栏文章发布
+        post_url = "https://xueqiu.com/statuses/update.json"
         data = {
             "title": title,
-            "status": markdown_content,
+            "status": content,
             "cover_pic": "",
             "show_cover_pic": "true",
-            "original": "false",
+            "original": "true",  # 专栏文章必须声明原创
             "comment_disabled": "false",
             "session_token": session_token,
             "device": "Web",
             "right": "0",
-            "draft_id": "0"
+            "draft_id": "0",
+            "type": "8",  # 专栏文章类型
+            "is_column": "true",
+            "column": "true",
+            "article_type": "1"  # 1: 个人文章
         }
     else:
         # 普通长文发表
         post_url = "https://mp.xueqiu.com/xq/statuses/update.json"
         data = {
             "title": title,
-            "status": markdown_content,
+            "status": content,
             "cover_pic": "",
             "show_cover_pic": "true",
             "original": "false",
@@ -1332,7 +1406,8 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
             "session_token": session_token,
             "device": "Web",
             "right": "0",
-            "draft_id": "0"
+            "draft_id": "0",
+            "type": "1"  # 普通文章类型为1
         }
     
     print(f"发布长文请求数据: {data}")
