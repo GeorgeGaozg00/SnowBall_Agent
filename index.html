@@ -38,8 +38,36 @@
         /* 主内容区域 */
         .main-content {
             margin-left: 220px;
-            min-height: calc(100vh - 60px);
+            height: calc(100vh - 60px - 44px);
             background-color: #f8fafc;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content > .p-6 {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .main-content > .p-6 > .bg-white:last-child {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content > .p-6 > .bg-white:last-child > .p-6 {
+            flex: 1;
+            min-height: 0;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content #runLog {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
         }
         /* 菜单项 */
         .menu-item {
@@ -215,15 +243,16 @@
             background-color: #e5e7eb;
             color: #374151;
         }
-        .btn-secondary:hover { background-color: #d1d5db; }
-        /* 状态栏 */
-        .status-bar {
+        /* 底部Footer */
+        .footer {
             position: fixed;
             bottom: 0;
-            left: 220px;
+            left: 0;
             right: 0;
-            z-index: 998;
+            z-index: 1001;
+            padding-left: 220px;
         }
+        .btn-secondary:hover { background-color: #d1d5db; }
     </style>
 
 </head>
@@ -254,11 +283,7 @@
             
             <!-- 菜单列表 -->
             <nav class="py-4">
-                <div class="menu-item active" data-page="dashboard">
-                    <i class="fa fa-dashboard w-6"></i>
-                    <span>运行状态</span>
-                </div>
-                <div class="menu-item" id="menuModelConfig">
+                <div class="menu-item active" id="menuModelConfig">
                     <i class="fa fa-cogs w-6"></i>
                     <span>大模型配置</span>
                 </div>
@@ -286,7 +311,6 @@
             
             <!-- 操作按钮区域 -->
             <div class="px-4 py-4 border-t border-gray-200">
-                <p class="text-gray-500 text-xs mb-3 font-medium uppercase tracking-wider">自动任务</p>
                 <button id="startHotBtn" class="w-full mb-3 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
                     <i class="fa fa-fire mr-2"></i>
                     <span>启动热门帖回复</span>
@@ -303,7 +327,6 @@
             
             <!-- 发布功能区域 -->
             <div class="px-4 py-4 border-t border-gray-200">
-                <p class="text-gray-500 text-xs mb-3 font-medium uppercase tracking-wider">发布功能</p>
                 <button id="publishPostBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
                     <i class="fa fa-edit mr-2"></i>
                     <span>发布雪球帖</span>
@@ -326,12 +349,9 @@
         <!-- 主内容区域 -->
         <main class="main-content flex-1">
             <!-- 内容区域 -->
-            <div class="p-8">
-                <!-- 页面标题 -->
-                <h2 class="text-xl font-semibold text-gray-800 mb-6" id="pageTitle">运行状态</h2>
-                
+            <div class="p-6">
                 <!-- 统计卡片 -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                     <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-600 hover:shadow-lg transition-all duration-300">
                         <div class="flex items-center justify-between">
                             <div>
@@ -380,7 +400,7 @@
                         </button>
                     </div>
                     <div class="p-6">
-                        <div class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto scrollbar-thin" id="runLog">
+                        <div class="bg-gray-50 rounded-lg p-4 overflow-y-auto scrollbar-thin" id="runLog">
                             <div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>
                         </div>
                     </div>
@@ -393,11 +413,13 @@
     <footer class="footer bg-gray-800 text-white py-3 px-8 w-full">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-8">
-                <div>
-                    <span class="text-sm text-gray-300">默认模型:</span> <span id="defaultModel" class="text-sm text-white">未设置</span>
+                <div class="flex items-center space-x-2">
+                    <i class="fa fa-microchip text-blue-400"></i>
+                    <span id="defaultModel" class="text-sm text-white">未设置</span>
                 </div>
-                <div>
-                    <span class="text-sm text-gray-300">默认提示词:</span> <span id="defaultPrompt" class="text-sm text-white">未设置</span>
+                <div class="flex items-center space-x-2">
+                    <i class="fa fa-file-text-o text-green-400"></i>
+                    <span id="defaultPrompt" class="text-sm text-white">未设置</span>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -1234,35 +1256,27 @@
         
         // 加载默认配置到Footer
         function loadDefaultConfigToFooter() {
-            // 获取默认模型和提示词
             const config = JSON.parse(localStorage.getItem('snowball_comment_config')) || {};
-            const models = config.models || {};
             const selectedModel = config.selectedModel || 'ark';
-            const defaultPrompt = config.defaultPrompt || '未设置';
-            
-            // 显示默认模型
             document.getElementById('defaultModel').textContent = selectedModel;
-            // 显示默认提示词
-            document.getElementById('defaultPrompt').textContent = defaultPrompt;
-            
-            // 获取默认用户信息
-            fetch(`${API_BASE_URL}/get-default-user`)
-                .then(response => response.json())
+            fetch(`${API_BASE_URL}/system-prompts`)
+                .then(r => r.json())
                 .then(result => {
-                    if (result.success) {
-                        const user = result.user;
-                        const name = user.name || '未设置';
-                        const avatar = user.avatar || 'https://ui-avatars.com/api/?name=User&background=random&color=fff';
-                        // 更新 Footer
-                        document.getElementById('defaultUserName').textContent = name;
-                        document.getElementById('defaultUserAvatar').src = avatar;
-                        // 更新 Status Bar
-                        const statusBarName = document.getElementById('user-name');
-                        const statusBarAvatar = document.getElementById('user-avatar');
-                        if (statusBarName) statusBarName.textContent = name;
-                        if (statusBarAvatar) statusBarAvatar.src = avatar;
+                    if (result.success && result.data) {
+                        const defaultPrompt = result.data.find(p => p.isDefault);
+                        document.getElementById('defaultPrompt').textContent = defaultPrompt ? defaultPrompt.title : '未设置';
                     }
-                });
+                })
+                .catch(err => console.error('加载提示词失败:', err));
+            fetch(`${API_BASE_URL}/get-default-user`)
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success && result.user) {
+                        document.getElementById('defaultUserName').textContent = result.user.name || '未设置';
+                        document.getElementById('defaultUserAvatar').src = result.user.avatar || 'https://ui-avatars.com/api/?name=User&background=random&color=fff';
+                    }
+                })
+                .catch(err => console.error('加载用户失败:', err));
         }
         
         // 设置事件监听
@@ -3888,41 +3902,6 @@
                 }
             });
         });
-    </script>
-<!-- 状态栏 -->
-    <div class="status-bar fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-2 text-sm z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="status-left">
-                <span id="status-text">就绪</span>
-            </div>
-            <div class="status-right flex items-center space-x-4">
-                <div id="current-user-info" class="flex items-center space-x-2">
-                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=random" alt="用户头像" class="w-6 h-6 rounded-full">
-                    <span id="user-name" class="text-xs">未设置用户</span>
-                </div>
-                <span id="system-time"></span>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // 显示系统时间
-        function updateSystemTime() {
-            const now = new Date();
-            const timeString = now.toLocaleString('zh-CN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            document.getElementById('system-time').textContent = timeString;
-        }
-        
-        // 定时更新系统时间
-        setInterval(updateSystemTime, 1000);
-        updateSystemTime();
-        
-        // 加载默认用户信息
-
     </script>
     </body>
 </html>
