@@ -1557,6 +1557,7 @@
                 .then(r => r.json())
                 .then(result => {
                     if (result.success && result.data) {
+                        systemPrompts = result.data;
                         const defaultPrompt = result.data.find(p => p.isDefault);
                         document.getElementById('defaultPrompt').textContent = defaultPrompt ? defaultPrompt.title : '未设置';
                     }
