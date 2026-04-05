@@ -1331,26 +1331,28 @@
                 </div>
             </div>
             
-            <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <button onclick="selectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
-                        <i class="fa fa-check-square-o mr-2"></i>全选
-                    </button>
-                    <button onclick="deselectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
-                        <i class="fa fa-square-o mr-2"></i>取消全选
-                    </button>
-                    <span id="hotSpotsSaveInfo" class="text-sm text-gray-500"></span>
+            <div class="px-6 py-4 border-t border-gray-100">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-4">
+                        <button onclick="selectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                            <i class="fa fa-check-square-o mr-2"></i>全选
+                        </button>
+                        <button onclick="deselectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                            <i class="fa fa-square-o mr-2"></i>取消全选
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="refreshHotSpots()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
+                            <i class="fa fa-refresh mr-2"></i>
+                            刷新
+                        </button>
+                        <button id="batchGenerateBtn" onclick="batchGenerateArticles()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
+                            <i class="fa fa-magic mr-2"></i>
+                            批量生成长文
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="refreshHotSpots()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
-                        <i class="fa fa-refresh mr-2"></i>
-                        刷新
-                    </button>
-                    <button id="batchGenerateBtn" onclick="batchGenerateArticles()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
-                        <i class="fa fa-magic mr-2"></i>
-                        批量生成长文
-                    </button>
-                </div>
+                <div id="hotSpotsSaveInfo" class="text-sm text-gray-500"></div>
             </div>
         </div>
     </div>
@@ -3635,7 +3637,7 @@
                         title: title,
                         content: content,
                         postType: 'article',
-                        publishAsColumn: publishAsColumn
+                        isColumn: publishAsColumn
                     })
                 });
                 
