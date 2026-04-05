@@ -1302,7 +1302,7 @@
 
     <!-- 雪球热点弹窗 -->
     <div id="hotSpotsModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+        <div class="modal-content" style="max-width: 1000px; max-height: 90vh;">
             <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-orange-600 to-red-600">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-fire mr-2"></i>
@@ -1332,12 +1332,12 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <button onclick="selectAllHotSpots()" class="text-sm text-blue-600 hover:text-blue-800">
-                        <i class="fa fa-check-square-o mr-1"></i>全选
+                <div class="flex items-center gap-4">
+                    <button onclick="selectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                        <i class="fa fa-check-square-o mr-2"></i>全选
                     </button>
-                    <button onclick="deselectAllHotSpots()" class="text-sm text-gray-600 hover:text-gray-800">
-                        <i class="fa fa-square-o mr-1"></i>取消全选
+                    <button onclick="deselectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                        <i class="fa fa-square-o mr-2"></i>取消全选
                     </button>
                     <span id="hotSpotsSaveInfo" class="text-sm text-gray-500"></span>
                 </div>
