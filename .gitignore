@@ -4,6 +4,13 @@ backend/config.json
 # 数据文件
 backend/following_list.json
 backend/*_articles.json
+data/
+
+# 测试生成的文件
+test/*.json
+test/*.html
+backend/*.html
+backend/test_*.py
 
 # Python 缓存
 __pycache__/
@@ -11,10 +18,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-
-# 测试生成的文件
-test/*.json
-test/*.html
 
 # IDE 配置
 .vscode/

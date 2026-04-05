@@ -2958,6 +2958,221 @@ def analyze_user_articles():
         traceback.print_exc()
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route('/api/get-hot-spots', methods=['GET'])
+def get_hot_spots():
+    """获取今日雪球热点"""
+    import requests
+    import json
+    import os
+    import re
+    from datetime import datetime
+    from bs4 import BeautifulSoup
+    
+    print(f"[{time.strftime('%H:%M:%S')}] ========== 获取今日雪球热点 ==========")
+    
+    try:
+        session = requests.Session()
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Referer": "https://xueqiu.com/",
+            "Accept-Language": "zh-CN,zh;q=0.9"
+        }
+        
+        # 先访问雪球首页建立会话
+        print(f"[{time.strftime('%H:%M:%S')}] 访问雪球首页建立会话...")
+        session.get("https://xueqiu.com/", headers=headers)
+        
+        # 访问雪球热点页面
+        url = "https://xueqiu.com/hot/spot"
+        print(f"[{time.strftime('%H:%M:%S')}] 正在请求热点页面: {url}")
+        response = session.get(url, headers=headers, timeout=30)
+        print(f"[{time.strftime('%H:%M:%S')}] 响应状态码: {response.status_code}")
+        
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": f"请求失败，状态码: {response.status_code}"}), 500
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        hot_spots = []
+        
+        # 1. 从页面中提取 hashtag 链接
+        print(f"[{time.strftime('%H:%M:%S')}] 提取 hashtag 链接...")
+        all_links = soup.find_all('a')
+        hashtag_links = []
+        
+        for link in all_links:
+            href = link.get('href', '')
+            if '/hashtag/' in href:
+                hashtag_links.append(href)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 找到 {len(hashtag_links)} 个 hashtag 链接")
+        
+        # 2. 从页面中提取热点信息（标题、股票、涨跌幅、热度值）
+        print(f"[{time.strftime('%H:%M:%S')}] 解析热点信息...")
+        
+        # 查找所有包含"热度值"的元素
+        hot_items = []
+        
+        # 查找所有包含"热度值"的文本
+        all_text = response.text
+        
+        # 模式: 1#标题#股票+涨跌幅 热度值 X万
+        pattern = r'(\d+)#([^#]+)#([^#]+?)\s*热度值\s*([\d.]+万?)'
+        matches = re.findall(pattern, all_text)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 找到 {len(matches)} 条热点记录")
+        
+        # 3. 处理每条热点
+        for i, match in enumerate(matches):
+            num, title, stock_part, heat = match
+            
+            # 解析股票和涨跌幅
+            stock_name = ''
+            stock_change = ''
+            stock_match = re.search(r'(.+?)([+-][\d.]+%)', stock_part)
+            if stock_match:
+                stock_name = stock_match.group(1)
+                stock_change = stock_match.group(2)
+            else:
+                stock_name = stock_part
+            
+            # 获取对应的 hashtag 链接
+            url = ''
+            if i < len(hashtag_links):
+                url = f"https://xueqiu.com{hashtag_links[i]}"
+            
+            # 获取详细内容
+            detail_content = ''
+            if url:
+                try:
+                    print(f"[{time.strftime('%H:%M:%S')}] [{i+1}/{len(matches)}] 获取详细内容: {title[:30]}...")
+                    detail_response = session.get(url, headers=headers, timeout=30)
+                    if detail_response.status_code == 200:
+                        detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
+                        
+                        # 提取热点直击内容
+                        detail_text = detail_soup.get_text()
+                        
+                        # 查找"热点直击"后面的内容
+                        if '热点直击' in detail_text:
+                            idx = detail_text.find('热点直击')
+                            # 查找"热门话题"之前的内容
+                            end_idx = detail_text.find('热门话题', idx)
+                            if end_idx == -1:
+                                end_idx = idx + 2000
+                            detail_content = detail_text[idx+6:end_idx].strip()
+                except Exception as e:
+                    print(f"[{time.strftime('%H:%M:%S')}] 获取详细内容失败: {e}")
+            
+            hot_spots.append({
+                "id": int(num),
+                "title": title,
+                "content": detail_content,
+                "description": title,
+                "url": url,
+                "stock": stock_name,
+                "change": stock_change,
+                "heat": heat,
+                "view_count": 0,
+                "like_count": 0,
+                "reply_count": 0,
+                "retweet_count": 0,
+                "created_at": ''
+            })
+        
+        # 如果没有找到数据，使用备用方案
+        if not hot_spots:
+            print(f"[{time.strftime('%H:%M:%S')}] 使用备用方案...")
+            # 遍历每个 hashtag 链接获取内容
+            for i, hashtag_href in enumerate(hashtag_links[:10]):
+                url = f"https://xueqiu.com{hashtag_href}"
+                try:
+                    print(f"[{time.strftime('%H:%M:%S')}] [{i+1}/{len(hashtag_links)}] 访问: {url}")
+                    detail_response = session.get(url, headers=headers, timeout=30)
+                    if detail_response.status_code == 200:
+                        detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
+                        
+                        # 从页面标题中提取
+                        title = ''
+                        if detail_soup.title:
+                            title_text = detail_soup.title.string
+                            if '#' in title_text:
+                                title = title_text.split('#')[1] if len(title_text.split('#')) > 1 else title_text
+                        
+                        # 提取内容
+                        detail_content = ''
+                        detail_text = detail_soup.get_text()
+                        if '热点直击' in detail_text:
+                            idx = detail_text.find('热点直击')
+                            end_idx = detail_text.find('热门话题', idx)
+                            if end_idx == -1:
+                                end_idx = idx + 2000
+                            detail_content = detail_text[idx+6:end_idx].strip()
+                        
+                        # 提取热度值
+                        heat = ''
+                        heat_match = re.search(r'热度值\s*([\d.]+万?)', detail_text)
+                        if heat_match:
+                            heat = heat_match.group(1)
+                        
+                        hot_spots.append({
+                            "id": i + 1,
+                            "title": title if title else f"热点 {i+1}",
+                            "content": detail_content,
+                            "description": title if title else '',
+                            "url": url,
+                            "stock": '',
+                            "change": '',
+                            "heat": heat,
+                            "view_count": 0,
+                            "like_count": 0,
+                            "reply_count": 0,
+                            "retweet_count": 0,
+                            "created_at": ''
+                        })
+                except Exception as e:
+                    print(f"[{time.strftime('%H:%M:%S')}] 访问失败: {e}")
+                    continue
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 共获取到 {len(hot_spots)} 条热点")
+        
+        # 保存到JSON文件
+        today = datetime.now().strftime('%Y-%m-%d')
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        
+        filename = os.path.join(data_dir, f'hot_spots_{today}.json')
+        
+        # 准备保存的数据
+        save_data = {
+            "date": today,
+            "timestamp": time.time(),
+            "count": len(hot_spots),
+            "hot_spots": hot_spots
+        }
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(save_data, f, ensure_ascii=False, indent=2)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 热点已保存到: {filename}")
+        print(f"[{time.strftime('%H:%M:%S')}] ========== 获取热点完成，共 {len(hot_spots)} 条 ==========\n")
+        
+        return jsonify({
+            "success": True,
+            "hot_spots": hot_spots,
+            "saved_file": filename,
+            "count": len(hot_spots)
+        })
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 获取热点失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == '__main__':
     # 在生产环境中，应该使用gunicorn或uwsgi等WSGI服务器
     # 这里使用Flask内置的开发服务器仅用于开发和测试
