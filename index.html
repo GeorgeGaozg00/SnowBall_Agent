@@ -220,11 +220,9 @@
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 2000;
-            justify-content: center;
-            align-items: center;
         }
         .modal-overlay.show {
-            display: flex;
+            display: block;
         }
         /* 弹窗内容 */
         .modal-content {
@@ -235,6 +233,10 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
         .modal-header {
             padding: 1rem 1.5rem;
@@ -245,6 +247,8 @@
             background: linear-gradient(to right, #2563eb, #1d4ed8);
             color: white;
             border-radius: 12px 12px 0 0;
+            cursor: move;
+            user-select: none;
         }
         .modal-header h3 {
             font-size: 1.125rem;
@@ -4785,49 +4789,44 @@
             const header = element.querySelector('.modal-header');
             
             if (header) {
+                header.style.cursor = 'move';
                 header.onmousedown = dragMouseDown;
-            } else {
-                element.onmousedown = dragMouseDown;
             }
             
             function dragMouseDown(e) {
                 e = e || window.event;
-                // 检查点击的是否是头部区域
-                const target = e.target;
-                if (!target.closest('.modal-header')) {
-                    return;
-                }
                 e.preventDefault();
+                
                 pos3 = e.clientX;
                 pos4 = e.clientY;
+                
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
             }
             
             function elementDrag(e) {
                 e = e || window.event;
-                // 只在拖拽头部时才执行
                 e.preventDefault();
+                
                 pos1 = pos3 - e.clientX;
                 pos2 = pos4 - e.clientY;
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 
                 const rect = element.getBoundingClientRect();
-                const newTop = rect.top - pos2;
-                const newLeft = rect.left - pos1;
+                let newTop = rect.top - pos2;
+                let newLeft = rect.left - pos1;
                 
-                // 限制在视口内
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 const elementWidth = rect.width;
                 const elementHeight = rect.height;
                 
-                const constrainedTop = Math.max(0, Math.min(newTop, viewportHeight - elementHeight - 20));
-                const constrainedLeft = Math.max(0, Math.min(newLeft, viewportWidth - elementWidth - 20));
+                newTop = Math.max(20, Math.min(newTop, viewportHeight - 100));
+                newLeft = Math.max(20, Math.min(newLeft, viewportWidth - elementWidth - 20));
                 
-                element.style.top = constrainedTop + 'px';
-                element.style.left = constrainedLeft + 'px';
+                element.style.top = newTop + 'px';
+                element.style.left = newLeft + 'px';
                 element.style.transform = 'none';
             }
             
@@ -4842,22 +4841,6 @@
             const modals = document.querySelectorAll('.modal-content');
             modals.forEach(modal => {
                 makeDraggable(modal);
-            });
-            
-            // 监听弹窗显示事件，为新显示的弹窗添加拖拽功能
-            document.addEventListener('click', function(e) {
-                if (e.target && e.target.classList.contains('open-modal') || 
-                    e.target && e.target.closest('.open-modal')) {
-                    setTimeout(() => {
-                        const modals = document.querySelectorAll('.modal-content');
-                        modals.forEach(modal => {
-                            if (!modal._draggable) {
-                                makeDraggable(modal);
-                                modal._draggable = true;
-                            }
-                        });
-                    }, 100);
-                }
             });
         });
     </script>
