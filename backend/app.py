@@ -1571,6 +1571,70 @@ def text_to_html(text):
     return '\n'.join(result_lines)
 
 # AI模型调用函数
+def call_ark_api_with_logs(api_key, prompt, task_name='分析文章'):
+    """调用火山引擎API（带详细日志）- 与 call_ark_api 完全一致"""
+    import requests
+    
+    print(f"\n[{time.strftime('%H:%M:%S')}] ========== Ark API 调用开始 ==========")
+    print(f"[{time.strftime('%H:%M:%S')}] 任务: {task_name}")
+    print(f"[{time.strftime('%H:%M:%S')}] API URL: https://ark.cn-beijing.volces.com/api/v3/chat/completions")
+    
+    url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "model": "doubao-seed-2-0-pro-260215",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.8,
+        "max_tokens": 4000
+    }
+    
+    print(f"[{time.strftime('%H:%M:%S')}] 请求参数:")
+    print(f"  - model: {data['model']}")
+    print(f"  - temperature: {data['temperature']}")
+    print(f"  - max_tokens: {data['max_tokens']}")
+    print(f"  - messages长度: {len(data['messages'])}")
+    print(f"  - timeout: 120 秒")
+    print(f"  - proxies: {{'http': None, 'https': None}}")
+    print(f"[{time.strftime('%H:%M:%S')}] 提示词内容（前500字符）: {prompt[:500]}...")
+    print(f"[{time.strftime('%H:%M:%S')}] 提示词总长度: {len(prompt)} 字符")
+    
+    try:
+        print(f"[{time.strftime('%H:%M:%S')}] 正在发送请求...")
+        proxies_config = {'http': None, 'https': None}
+        response = requests.post(url, headers=headers, json=data, timeout=120, proxies=proxies_config)
+        print(f"[{time.strftime('%H:%M:%S')}] 响应状态码: {response.status_code}")
+        
+        result = response.json()
+        print(f"[{time.strftime('%H:%M:%S')}] 响应内容（前500字符）: {str(result)[:500]}...")
+        
+        if 'choices' not in result:
+            error_msg = result.get('error', {}).get('message', '未知错误')
+            print(f"[{time.strftime('%H:%M:%S')}] API调用失败: {error_msg}")
+            raise Exception(f"API调用失败: {error_msg}")
+        
+        content = result['choices'][0]['message']['content']
+        print(f"[{time.strftime('%H:%M:%S')}] 返回内容长度: {len(content)} 字符")
+        print(f"[{time.strftime('%H:%M:%S')}] 返回内容（前500字符）: {content[:500]}...")
+        print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用成功 ==========\n")
+        
+        return content.strip()
+        
+    except requests.exceptions.Timeout:
+        print(f"[{time.strftime('%H:%M:%S')}] API调用超时")
+        print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用失败（超时） ==========\n")
+        raise Exception("API调用超时")
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] API调用异常: {str(e)}")
+        print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用失败 ==========\n")
+        raise
+
 def call_ark_api(api_key, prompt, post_type):
     """调用火山引擎API"""
     import requests
@@ -1591,7 +1655,7 @@ def call_ark_api(api_key, prompt, post_type):
         "max_tokens": 2000 if post_type == 'article' else 500
     }
     
-    response = requests.post(url, headers=headers, json=data, timeout=120)
+    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
     result = response.json()
     
     if 'choices' not in result:
@@ -1634,7 +1698,7 @@ def call_openai_api(api_key, prompt, post_type, base_url='https://api.openai.com
         "max_tokens": 2000 if post_type == 'article' else 500
     }
     
-    response = requests.post(url, headers=headers, json=data, timeout=120)
+    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
     result = response.json()
     
     if 'choices' not in result:
@@ -1663,7 +1727,7 @@ def call_baidu_api(api_key, secret_key, prompt, post_type):
     
     # 获取access token
     token_url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
-    token_response = requests.post(token_url)
+    token_response = requests.post(token_url, proxies={'http': None, 'https': None})
     access_token = token_response.json().get('access_token')
     
     if not access_token:
@@ -1682,7 +1746,7 @@ def call_baidu_api(api_key, secret_key, prompt, post_type):
         ]
     }
     
-    response = requests.post(url, headers=headers, json=data, timeout=120)
+    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
     result = response.json()
     
     if 'result' not in result:
@@ -1730,7 +1794,7 @@ def call_alibaba_api(api_key, prompt, post_type, base_url=''):
         }
     }
     
-    response = requests.post(base_url, headers=headers, json=data, timeout=120)
+    response = requests.post(base_url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
     result = response.json()
     
     if 'output' not in result:
@@ -1778,7 +1842,7 @@ def call_gemini_api(api_key, prompt, post_type, base_url='https://generativelang
         }
     }
     
-    response = requests.post(url, headers=headers, json=data, timeout=120)
+    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
     result = response.json()
     
     if 'candidates' not in result:
@@ -2600,6 +2664,299 @@ def generate_image():
             "success": False,
             "message": f"生成配图失败: {str(e)}"
         }), 500
+
+@app.route('/api/get-user-articles', methods=['POST'])
+def get_user_articles():
+    """获取指定用户的文章列表"""
+    try:
+        data = request.get_json()
+        uid = data.get('uid')
+        count = data.get('count', 30)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 开始获取用户文章，UID: {uid}, 数量: {count}")
+        
+        if not uid:
+            return jsonify({"success": False, "message": "缺少用户UID"}), 400
+        
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        if not default_user_id:
+            return jsonify({"success": False, "message": "没有设置默认用户"}), 400
+        
+        default_user = next((u for u in users_data.get("users", []) if u.get("id") == default_user_id), None)
+        if not default_user or not default_user.get("cookie"):
+            return jsonify({"success": False, "message": "默认用户未配置Cookie"}), 400
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 使用默认用户: {default_user.get('nickname')} 的Cookie")
+        
+        xueqiu_cookie = default_user.get("cookie")
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://xueqiu.com/",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest",
+            "Cookie": xueqiu_cookie
+        }
+        
+        session = requests.Session()
+        print(f"[{time.strftime('%H:%M:%S')}] 正在访问雪球首页建立会话...")
+        session.get("https://xueqiu.com/", headers=headers)
+        
+        all_articles = []
+        page = 1
+        page_size = 20
+        
+        while len(all_articles) < count:
+            api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={uid}&page={page}&type=edit"
+            if page == 1:
+                print(f"[{time.strftime('%H:%M:%S')}] 正在请求用户文章列表API (第{page}页)...")
+            response = session.get(api_url, headers=headers)
+            
+            if response.status_code != 200:
+                print(f"[{time.strftime('%H:%M:%S')}] API请求失败，状态码: {response.status_code}")
+                break
+            
+            data = response.json()
+            articles = data.get("statuses", [])
+            
+            if not articles:
+                break
+                
+            all_articles.extend(articles)
+            print(f"[{time.strftime('%H:%M:%S')}] 第{page}页获取到 {len(articles)} 篇文章，累计 {len(all_articles)} 篇")
+            
+            if len(articles) < page_size:
+                break
+                
+            page += 1
+            time.sleep(0.3)
+        
+        articles = all_articles[:count]
+        print(f"[{time.strftime('%H:%M:%S')}] 最终获取到 {len(articles)} 篇文章")
+        
+        result = []
+        for art in articles:
+            created_at = art.get("created_at")
+            created_time = ""
+            if created_at:
+                from datetime import datetime
+                created_time = datetime.fromtimestamp(created_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            
+            content = art.get("text", "") or art.get("description", "")
+            
+            offer = art.get("offer")
+            reward_info = {"type": "none", "amount": 0}
+            if offer and isinstance(offer, dict):
+                reward_info = {
+                    "type": "offer",
+                    "amount": round(offer.get("amount", 0) / 100, 2),
+                    "state": offer.get("state", "")
+                }
+            elif art.get("can_reward", False):
+                reward_info = {
+                    "type": "reward",
+                    "amount": round(art.get("reward_amount", 0) / 100, 2),
+                    "count": art.get("reward_count", 0)
+                }
+            
+            result.append({
+                "id": art.get("id"),
+                "title": art.get("title") or "无标题",
+                "content": content[:500] + "..." if len(content) > 500 else content,
+                "fullContent": content,
+                "like_count": art.get("like_count", 0),
+                "reply_count": art.get("reply_count", 0),
+                "retweet_count": art.get("retweet_count", 0),
+                "view_count": art.get("view_count", 0),
+                "fav_count": art.get("fav_count", 0),
+                "is_column": art.get("is_column", False),
+                "created_at": created_time,
+                "reward": reward_info
+            })
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 成功返回 {len(result)} 篇文章数据")
+        return jsonify({"success": True, "articles": result, "count": len(result)})
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 获取用户文章失败: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/analyze-user-articles', methods=['POST'])
+def analyze_user_articles():
+    """使用AI分析用户文章"""
+    try:
+        data = request.get_json()
+        articles = data.get('articles', [])
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 开始分析 {len(articles)} 篇文章")
+        
+        if not articles:
+            return jsonify({"success": False, "message": "没有文章数据"}), 400
+        
+        config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+        
+        selected_model = config_data.get('selectedModel', 'gemini')
+        print(f"[{time.strftime('%H:%M:%S')}] 使用模型: {selected_model} 进行分析")
+        
+        articles_text_list = []
+        for i, art in enumerate(articles, 1):
+            content_preview = (art.get('fullContent') or art.get('content') or '')[:300]
+            articles_text_list.append(f"""【文章{i}】
+标题：{art.get('title', '无标题')}
+发布时间：{art.get('created_at', '未知')}
+互动数据：点赞 {art.get('like_count', 0)} | 评论 {art.get('reply_count', 0)} | 转发 {art.get('retweet_count', 0)} | 阅读 {art.get('view_count', 0)} | 收藏 {art.get('fav_count', 0)}
+内容摘要：
+{content_preview}""")
+        
+        articles_full_text = "\n\n".join(articles_text_list)
+        
+        prompt = f"""你是一位资深的社交媒体内容分析师和投资领域专家。请对以下雪球用户的{len(articles)}篇文章进行深度专业分析，输出一份有价值的分析报告。
+
+## 分析要求
+
+请从以下6个维度进行系统性分析，每个维度都要给出具体的数据支撑和洞察：
+
+### 一、内容主题与领域画像
+- 用户主要关注哪些行业/板块/话题？
+- 内容覆盖的广度和深度如何？
+- 是否有明显的投资偏好或风格倾向？
+- 关键词和热词提取
+
+### 二、内容创作特征分析
+- 写作风格（专业/通俗/幽默/严肃）
+- 文章结构特点（长文/短帖/图文比例）
+- 发布频率和时间规律
+- 原创性与信息来源分析
+
+### 三、互动表现深度评估
+- 平均点赞率、评论率、阅读量分析
+- 高互动文章的共同特征是什么？
+- 低互动文章可能存在的问题
+- 与同级别创作者的对比评估
+
+### 四、内容质量专业评审
+- 信息准确性和专业性评分
+- 观点独到性和深度评价
+- 可读性和传播性分析
+- 内容价值和参考意义
+
+### 五、受众群体画像推断
+- 从评论和互动推测目标受众
+- 受众关注点和痛点分析
+- 粉丝粘性和活跃度评估
+
+### 六、 actionable 改进建议（最重要）
+- 具体可操作的内容优化建议（至少5条）
+- 标题优化建议（举例说明）
+- 互动提升策略
+- 个人品牌建设建议
+- 变现潜力评估和建议
+
+## 待分析的文章数据
+
+{articles_full_text}
+
+## 输出格式要求
+
+请用中文输出，格式如下：
+
+# 📊 用户文章深度分析报告
+
+## 一、内容主题与领域画像
+[详细分析...]
+
+## 二、内容创作特征分析
+[详细分析...]
+
+...（其他维度）
+
+## 六、Actionable 改进建议
+[具体建议，每条建议都要有可操作性]
+
+---
+**报告生成时间**：自动填充
+**分析文章数量**：{len(articles)}篇"""
+
+        if 'gemini' in str(selected_model).lower():
+            api_key = config_data.get('models', {}).get('gemini', {}).get('apiKey')
+            if not api_key:
+                print(f"[{time.strftime('%H:%M:%S')}] 未配置Gemini API密钥")
+                return jsonify({"success": False, "message": "未配置Gemini API密钥"}), 400
+            
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+            
+            print(f"[{time.strftime('%H:%M:%S')}] 正在调用Gemini API进行分析...")
+            response = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=120)
+            
+            if response.status_code == 200:
+                result = response.json()
+                analysis = result['candidates'][0]['content']['parts'][0]['text']
+                print(f"[{time.strftime('%H:%M:%S')}] Gemini分析完成，结果长度: {len(analysis)} 字符")
+                analysis = text_to_html(analysis)
+                print(f"[{time.strftime('%H:%M:%S')}] 已转换为HTML格式")
+                return jsonify({"success": True, "analysis": analysis})
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] Gemini API错误: {response.text}")
+                return jsonify({"success": False, "message": f"Gemini API错误: {response.text}"}), 500
+                
+        elif selected_model == 'ark':
+            api_key = config_data.get('models', {}).get('ark', {}).get('apiKey')
+            if not api_key:
+                print(f"[{time.strftime('%H:%M:%S')}] 未配置Ark API密钥")
+                return jsonify({"success": False, "message": "未配置Ark API密钥"}), 400
+            
+            print(f"[{time.strftime('%H:%M:%S')}] 正在调用Ark(豆包)API进行分析...")
+            try:
+                analysis = call_ark_api_with_logs(api_key, prompt, task_name='分析用户文章')
+                print(f"[{time.strftime('%H:%M:%S')}] Ark分析完成，结果长度: {len(analysis)} 字符")
+                analysis = text_to_html(analysis)
+                print(f"[{time.strftime('%H:%M:%S')}] 已转换为HTML格式")
+                return jsonify({"success": True, "analysis": analysis})
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}] Ark API错误: {str(e)}")
+                return jsonify({"success": False, "message": f"Ark API错误: {str(e)}"}), 500
+                
+        elif selected_model == 'baidu':
+            api_key = config_data.get('models', {}).get('baidu', {}).get('apiKey')
+            secret_key = config_data.get('models', {}).get('baidu', {}).get('secretKey')
+            if not api_key or not secret_key:
+                print(f"[{time.strftime('%H:%M:%S')}] 未配置百度文心API密钥")
+                return jsonify({"success": False, "message": "未配置百度文心API密钥"}), 400
+            
+            print(f"[{time.strftime('%H:%M:%S')}] 正在调用百度文心API进行分析...")
+            try:
+                token_url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
+                token_response = requests.get(token_url, proxies={'http': None, 'https': None})
+                access_token = token_response.json().get("access_token")
+                
+                url = f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={access_token}"
+                headers = {"Content-Type": "application/json"}
+                data = {"messages": [{"role": "user", "content": prompt}]}
+                response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
+                result = response.json()
+                
+                if 'result' not in result:
+                    raise Exception(f"API调用失败: {result.get('error_msg', '未知错误')}")
+                
+                analysis_html = result['result']
+                print(f"[{time.strftime('%H:%M:%S')}] 百度文心分析完成，结果长度: {len(analysis_html)} 字符")
+                return jsonify({"success": True, "analysis": analysis_html})
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}] 百度文心API错误: {str(e)}")
+                return jsonify({"success": False, "message": f"百度文心API错误: {str(e)}"}), 500
+        else:
+            print(f"[{time.strftime('%H:%M:%S')}] 不支持的模型: {selected_model}")
+            return jsonify({"success": False, "message": f"不支持的模型: {selected_model}，支持 gemini/ark/baidu"}), 400
+            
+    except Exception as e:
+        import traceback
+        print(f"[{time.strftime('%H:%M:%S')}] 分析文章失败: {str(e)}")
+        traceback.print_exc()
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
     # 在生产环境中，应该使用gunicorn或uwsgi等WSGI服务器
