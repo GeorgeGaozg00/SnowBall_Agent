@@ -488,17 +488,17 @@
             <div class="flex items-center space-x-8">
                 <div class="flex items-center space-x-2">
                     <i class="fa fa-microchip text-blue-400"></i>
-                    <span id="defaultModel" class="text-sm text-white">未设置</span>
+                    <span id="defaultModel" class="text-sm text-white"></span>
                 </div>
                 <div class="flex items-center space-x-2">
                     <i class="fa fa-file-text-o text-green-400"></i>
-                    <span id="defaultPrompt" class="text-sm text-white">未设置</span>
+                    <span id="defaultPrompt" class="text-sm text-white"></span>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
                 <img id="defaultUserAvatar" src="https://ui-avatars.com/api/?name=User&background=random&color=fff" alt="用户头像" class="w-7 h-7 rounded-full object-cover">
-                <span id="defaultUserName" class="text-sm text-white">未设置</span>
-                <span id="defaultUserUid" class="text-xs text-gray-400">未设置</span>
+                <span id="defaultUserName" class="text-sm text-white"></span>
+                <span id="defaultUserUid" class="text-xs text-gray-400"></span>
             </div>
         </div>
     </footer>
@@ -1592,7 +1592,7 @@
                     if (result.success && result.data) {
                         systemPrompts = result.data;
                         const defaultPrompt = result.data.find(p => p.isDefault);
-                        document.getElementById('defaultPrompt').textContent = defaultPrompt ? defaultPrompt.title : '未设置';
+                        document.getElementById('defaultPrompt').textContent = defaultPrompt ? defaultPrompt.title : '';
                     }
                 })
                 .catch(err => console.error('加载提示词失败:', err));
@@ -1600,7 +1600,7 @@
                 .then(r => r.json())
                 .then(result => {
                     if (result.success && result.user) {
-                        document.getElementById('defaultUserName').textContent = result.user.name || '未设置';
+                        document.getElementById('defaultUserName').textContent = result.user.name || '';
                         document.getElementById('defaultUserAvatar').src = result.user.avatar || 'https://ui-avatars.com/api/?name=User&background=random&color=fff';
                     }
                 })
