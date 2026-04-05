@@ -1302,7 +1302,7 @@
 
     <!-- 雪球热点弹窗 -->
     <div id="hotSpotsModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
             <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-orange-600 to-red-600">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-fire mr-2"></i>
@@ -1313,7 +1313,7 @@
                 </button>
             </div>
             
-            <div class="p-6 overflow-y-auto" style="max-height: calc(85vh - 140px);">
+            <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 240px);">
                 <div id="hotSpotsLoading" class="text-center py-8">
                     <i class="fa fa-spinner fa-spin text-3xl text-orange-500 mb-3"></i>
                     <p class="text-gray-600">正在获取今日热点...</p>
@@ -1322,11 +1322,81 @@
                 </div>
             </div>
             
+            <!-- 处理日志区域 -->
+            <div id="hotSpotsLogArea" class="px-6 py-3 border-t border-gray-200 bg-gray-50" style="display: none;">
+                <div class="text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fa fa-terminal mr-1"></i>处理日志
+                </div>
+                <div id="hotSpotsLog" class="bg-gray-900 text-green-400 text-xs font-mono p-3 rounded max-h-32 overflow-y-auto">
+                </div>
+            </div>
+            
             <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
-                <span id="hotSpotsSaveInfo" class="text-sm text-gray-500"></span>
-                <button onclick="refreshHotSpots()" class="px-8 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
-                    <i class="fa fa-refresh mr-2"></i>
-                    刷新
+                <div class="flex items-center gap-3">
+                    <button onclick="selectAllHotSpots()" class="text-sm text-blue-600 hover:text-blue-800">
+                        <i class="fa fa-check-square-o mr-1"></i>全选
+                    </button>
+                    <button onclick="deselectAllHotSpots()" class="text-sm text-gray-600 hover:text-gray-800">
+                        <i class="fa fa-square-o mr-1"></i>取消全选
+                    </button>
+                    <span id="hotSpotsSaveInfo" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="refreshHotSpots()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                        <i class="fa fa-refresh mr-2"></i>
+                        刷新
+                    </button>
+                    <button id="batchGenerateBtn" onclick="batchGenerateArticles()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
+                        <i class="fa fa-magic mr-2"></i>
+                        批量生成长文
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 热点文章预览和发送弹窗 -->
+    <div id="hotSpotArticleModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fa fa-file-text-o mr-2"></i>
+                    <span id="hotSpotArticleTitle">文章预览</span>
+                </h3>
+                <button onclick="closeHotSpotArticleModal()" class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 180px);">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">文章标题 <span class="text-red-400">*</span></label>
+                    <input type="text" id="hotSpotArticleTitleInput" class="form-input" placeholder="请输入文章标题">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">文章内容 <span class="text-red-400">*</span></label>
+                    <div id="hotSpotArticleContent" contenteditable="true" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white min-h-64 max-h-96 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-indigo-500" style="min-height: 300px;">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">可以直接编辑内容，支持富文本格式</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="hotSpotPublishAsColumn" class="mr-3 w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500">
+                        <span class="text-gray-700">发专栏</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1 ml-7">选中后将发布为专栏文章</p>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button onclick="cancelHotSpotArticle()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    取消
+                </button>
+                <button id="sendHotSpotArticleBtn" onclick="sendHotSpotArticle()" class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center">
+                    <i class="fa fa-paper-plane mr-2"></i>
+                    发送
                 </button>
             </div>
         </div>
@@ -3217,6 +3287,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    window.currentHotSpotsData = result.hot_spots;
                     renderHotSpots(result.hot_spots, result.saved_file);
                 } else {
                     alert('获取热点失败: ' + (result.error || '未知错误'));
@@ -3246,20 +3317,27 @@
                     }
                     
                     spotDiv.innerHTML = `
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full">${index + 1}</span>
-                                    <span class="font-semibold text-gray-800">${spot.title || '热点'}</span>
-                                </div>
-                                ${spot.stock ? `<div class="text-sm text-blue-600 mb-1">${spot.stock} ${spot.change || ''}</div>` : ''}
-                                ${spot.url ? `<div class="text-sm text-gray-500 mb-1"><i class="fa fa-link mr-1"></i><a href="${spot.url}" target="_blank" class="text-blue-600 hover:underline">查看原文</a></div>` : ''}
-                                ${contentHtml}
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 pt-1">
+                                <input type="checkbox" class="hotSpotCheckbox w-5 h-5 text-orange-600 bg-white border-gray-300 rounded focus:ring-orange-500 cursor-pointer" data-index="${index}">
                             </div>
-                            ${spot.heat ? `<div class="text-right">
-                                <div class="text-lg font-bold text-orange-600">${spot.heat}</div>
-                                <div class="text-xs text-gray-500">热度</div>
-                            </div>` : ''}
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="inline-flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full">${index + 1}</span>
+                                            <span class="font-semibold text-gray-800">${spot.title || '热点'}</span>
+                                        </div>
+                                        ${spot.stock ? `<div class="text-sm text-blue-600 mb-1">${spot.stock} ${spot.change || ''}</div>` : ''}
+                                        ${spot.url ? `<div class="text-sm text-gray-500 mb-1"><i class="fa fa-link mr-1"></i><a href="${spot.url}" target="_blank" class="text-blue-600 hover:underline">查看原文</a></div>` : ''}
+                                        ${contentHtml}
+                                    </div>
+                                    ${spot.heat ? `<div class="text-right">
+                                        <div class="text-lg font-bold text-orange-600">${spot.heat}</div>
+                                        <div class="text-xs text-gray-500">热度</div>
+                                    </div>` : ''}
+                                </div>
+                            </div>
                         </div>
                     `;
                     
@@ -3312,6 +3390,206 @@
             
             if (savedFile) {
                 document.getElementById('hotSpotsSaveInfo').innerHTML = `<i class="fa fa-save mr-1"></i> 已保存到: ${savedFile}`;
+            }
+        }
+        
+        // 全局变量存储热点数据和处理状态
+        let currentHotSpots = [];
+        let currentHotSpotIndex = 0;
+        let isProcessingHotSpots = false;
+        
+        // 全选热点
+        function selectAllHotSpots() {
+            document.querySelectorAll('.hotSpotCheckbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+        
+        // 取消全选
+        function deselectAllHotSpots() {
+            document.querySelectorAll('.hotSpotCheckbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+        
+        // 添加热点处理日志
+        function addHotSpotLog(message, type = 'info') {
+            const logDiv = document.getElementById('hotSpotsLog');
+            const time = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-gray-300';
+            logDiv.innerHTML += `<div class="${colorClass}">[${time}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // 批量生成长文
+        async function batchGenerateArticles() {
+            if (isProcessingHotSpots) {
+                alert('正在处理中，请稍候...');
+                return;
+            }
+            
+            const checkboxes = document.querySelectorAll('.hotSpotCheckbox:checked');
+            if (checkboxes.length === 0) {
+                alert('请至少选择一个热点');
+                return;
+            }
+            
+            currentHotSpots = [];
+            checkboxes.forEach(checkbox => {
+                const index = parseInt(checkbox.dataset.index);
+                currentHotSpots.push(index);
+            });
+            
+            if (window.currentHotSpotsData) {
+                isProcessingHotSpots = true;
+                currentHotSpotIndex = 0;
+                
+                document.getElementById('hotSpotsLogArea').style.display = 'block';
+                document.getElementById('hotSpotsLog').innerHTML = '';
+                document.getElementById('batchGenerateBtn').disabled = true;
+                document.getElementById('batchGenerateBtn').innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>处理中...';
+                
+                addHotSpotLog(`开始处理，共 ${currentHotSpots.length} 个热点`, 'info');
+                
+                processNextHotSpot();
+            } else {
+                alert('请先获取热点数据');
+            }
+        }
+        
+        // 处理下一个热点
+        async function processNextHotSpot() {
+            if (currentHotSpotIndex >= currentHotSpots.length) {
+                isProcessingHotSpots = false;
+                document.getElementById('batchGenerateBtn').disabled = false;
+                document.getElementById('batchGenerateBtn').innerHTML = '<i class="fa fa-magic mr-2"></i>批量生成长文';
+                addHotSpotLog('所有热点处理完成！', 'success');
+                return;
+            }
+            
+            const spotIndex = currentHotSpots[currentHotSpotIndex];
+            const spot = window.currentHotSpotsData[spotIndex];
+            
+            addHotSpotLog(`[${currentHotSpotIndex + 1}/${currentHotSpots.length}] 正在处理: ${spot.title}`, 'info');
+            
+            const defaultSystemPrompt = getDefaultSystemPrompt();
+            if (!defaultSystemPrompt) {
+                addHotSpotLog('错误: 没有设置默认系统提示词', 'error');
+                currentHotSpotIndex++;
+                processNextHotSpot();
+                return;
+            }
+            
+            try {
+                const prompt = `热点标题: ${spot.title}\n\n热点内容: ${spot.content || ''}${spot.stock ? `\n\n相关股票: ${spot.stock} ${spot.change || ''}` : ''}`;
+                const detailedPrompt = `${defaultSystemPrompt.content}\n\n用户输入主题/要求：${prompt}`;
+                
+                addHotSpotLog('正在生成文章...', 'info');
+                
+                const contentResponse = await fetch(`${API_BASE_URL}/generate-content`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        detailedPrompt: detailedPrompt,
+                        postType: 'article',
+                        selectedModel: config.selectedModel,
+                        models: config.models
+                    })
+                });
+                
+                const contentResult = await contentResponse.json();
+                
+                if (contentResult.success) {
+                    addHotSpotLog('文章生成成功！', 'success');
+                    
+                    window.currentGeneratedArticle = {
+                        title: contentResult.title || spot.title,
+                        content: contentResult.content,
+                        spotIndex: spotIndex,
+                        spot: spot
+                    };
+                    
+                    document.getElementById('hotSpotArticleTitle').textContent = `文章预览 (${currentHotSpotIndex + 1}/${currentHotSpots.length})`;
+                    document.getElementById('hotSpotArticleTitleInput').value = contentResult.title || spot.title;
+                    document.getElementById('hotSpotArticleContent').innerHTML = contentResult.content;
+                    document.getElementById('hotSpotPublishAsColumn').checked = false;
+                    
+                    document.getElementById('hotSpotArticleModal').classList.add('show');
+                } else {
+                    addHotSpotLog(`文章生成失败: ${contentResult.message}`, 'error');
+                    currentHotSpotIndex++;
+                    processNextHotSpot();
+                }
+            } catch (error) {
+                addHotSpotLog(`处理异常: ${error.message}`, 'error');
+                currentHotSpotIndex++;
+                processNextHotSpot();
+            }
+        }
+        
+        // 关闭热点文章预览弹窗
+        function closeHotSpotArticleModal() {
+            document.getElementById('hotSpotArticleModal').classList.remove('show');
+        }
+        
+        // 取消当前热点文章
+        function cancelHotSpotArticle() {
+            closeHotSpotArticleModal();
+            addHotSpotLog('跳过当前热点', 'info');
+            currentHotSpotIndex++;
+            processNextHotSpot();
+        }
+        
+        // 发送热点文章
+        async function sendHotSpotArticle() {
+            const title = document.getElementById('hotSpotArticleTitleInput').value.trim();
+            const content = document.getElementById('hotSpotArticleContent').innerHTML;
+            const publishAsColumn = document.getElementById('hotSpotPublishAsColumn').checked;
+            
+            if (!title) {
+                alert('请输入文章标题');
+                return;
+            }
+            
+            if (!content || content === '<p><br></p>' || content === '') {
+                alert('请输入文章内容');
+                return;
+            }
+            
+            const sendBtn = document.getElementById('sendHotSpotArticleBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>发送中...';
+            
+            addHotSpotLog('正在发送文章...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/publish-post`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        content: content,
+                        postType: 'article',
+                        publishAsColumn: publishAsColumn
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addHotSpotLog('文章发送成功！', 'success');
+                    closeHotSpotArticleModal();
+                    currentHotSpotIndex++;
+                    processNextHotSpot();
+                } else {
+                    addHotSpotLog(`发送失败: ${result.message}`, 'error');
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>发送';
+                }
+            } catch (error) {
+                addHotSpotLog(`发送异常: ${error.message}`, 'error');
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>发送';
             }
         }
         
