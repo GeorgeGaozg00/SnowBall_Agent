@@ -3429,14 +3429,57 @@
             }
             
             if (savedFile) {
-                document.getElementById('hotSpotsSaveInfo').innerHTML = `<i class="fa fa-save mr-1"></i> 已保存到: ${savedFile}`;
+                currentSavedFile = savedFile;
+                document.getElementById('hotSpotsSaveInfo').innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <i class="fa fa-save text-gray-500"></i>
+                        <span class="text-gray-700">已保存到:</span>
+                        <span class="text-blue-600 cursor-pointer hover:underline" title="点击复制路径" onclick="copyToClipboard('${savedFile}')">${savedFile}</span>
+                        <button onclick="copyToClipboard('${savedFile}')" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                            <i class="fa fa-copy mr-1"></i>复制
+                        </button>
+                    </div>
+                `;
             }
+        }
+        
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            // 显示提示
+            document.getElementById('hotSpotsSaveInfo').innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fa fa-check text-green-500"></i>
+                    <span class="text-green-700">路径已复制到剪贴板！</span>
+                </div>
+            `;
+            setTimeout(() => {
+                if (currentSavedFile) {
+                    document.getElementById('hotSpotsSaveInfo').innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <i class="fa fa-save text-gray-500"></i>
+                            <span class="text-gray-700">已保存到:</span>
+                            <span class="text-blue-600 cursor-pointer hover:underline" title="点击复制路径" onclick="copyToClipboard('${currentSavedFile}')">${currentSavedFile}</span>
+                            <button onclick="copyToClipboard('${currentSavedFile}')" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                                <i class="fa fa-copy mr-1"></i>复制
+                            </button>
+                        </div>
+                    `;
+                }
+            }, 2000);
         }
         
         // 全局变量存储热点数据和处理状态
         let currentHotSpots = [];
         let currentHotSpotIndex = 0;
         let isProcessingHotSpots = false;
+        let currentSavedFile = '';
         
         // 全选热点
         function selectAllHotSpots() {
