@@ -3503,15 +3503,28 @@
                 if (contentResult.success) {
                     addHotSpotLog('文章生成成功！', 'success');
                     
+                    let articleTitle = contentResult.title || spot.title;
+                    
+                    // 清理标题：移除Markdown格式符号
+                    articleTitle = articleTitle.replace(/^#+\s*/g, ''); // 移除开头的 # 和空格
+                    articleTitle = articleTitle.replace(/#+/g, ''); // 移除所有 #
+                    articleTitle = articleTitle.replace(/\*\*+/g, ''); // 移除所有 **
+                    articleTitle = articleTitle.trim();
+                    
+                    // 限制标题长度在30字以内
+                    if (articleTitle.length > 30) {
+                        articleTitle = articleTitle.substring(0, 30);
+                    }
+                    
                     window.currentGeneratedArticle = {
-                        title: contentResult.title || spot.title,
+                        title: articleTitle,
                         content: contentResult.content,
                         spotIndex: spotIndex,
                         spot: spot
                     };
                     
                     document.getElementById('hotSpotArticleTitle').textContent = `文章预览 (${currentHotSpotIndex + 1}/${currentHotSpots.length})`;
-                    document.getElementById('hotSpotArticleTitleInput').value = contentResult.title || spot.title;
+                    document.getElementById('hotSpotArticleTitleInput').value = articleTitle;
                     document.getElementById('hotSpotArticleContent').innerHTML = contentResult.content;
                     document.getElementById('hotSpotPublishAsColumn').checked = false;
                     
@@ -3543,7 +3556,7 @@
         
         // 发送热点文章
         async function sendHotSpotArticle() {
-            const title = document.getElementById('hotSpotArticleTitleInput').value.trim();
+            let title = document.getElementById('hotSpotArticleTitleInput').value.trim();
             const content = document.getElementById('hotSpotArticleContent').innerHTML;
             const publishAsColumn = document.getElementById('hotSpotPublishAsColumn').checked;
             
@@ -3551,6 +3564,20 @@
                 alert('请输入文章标题');
                 return;
             }
+            
+            // 清理标题：移除Markdown格式符号
+            title = title.replace(/^#+\s*/g, ''); // 移除开头的 # 和空格
+            title = title.replace(/#+/g, ''); // 移除所有 #
+            title = title.replace(/\*\*+/g, ''); // 移除所有 **
+            title = title.trim();
+            
+            // 限制标题长度在30字以内
+            if (title.length > 30) {
+                title = title.substring(0, 30);
+            }
+            
+            // 更新输入框
+            document.getElementById('hotSpotArticleTitleInput').value = title;
             
             if (!content || content === '<p><br></p>' || content === '') {
                 alert('请输入文章内容');
