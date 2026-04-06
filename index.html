@@ -238,6 +238,150 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
+        .modal-content.model-config-modal {
+            max-width: 960px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .modal-content.model-config-modal .modal-header {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        .modal-content.model-config-modal .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .modal-content.model-config-modal .modal-body-scroll {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        .modal-content.model-config-modal .modal-body-scroll .inner-body {
+            padding: 2rem;
+        }
+        .modal-content.model-config-modal .modal-footer {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 1.5rem 2rem;
+            border-top: 1px solid rgba(99, 102, 241, 0.15);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .model-card {
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .model-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.15), 0 10px 10px -5px rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        .model-card.selected {
+            border-color: #6366f1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 20px 25px -5px rgba(99, 102, 241, 0.2), 0 10px 10px -5px rgba(99, 102, 241, 0.15);
+        }
+        .model-card input[type="radio"] {
+            accent-color: #6366f1;
+            width: 20px;
+            height: 20px;
+        }
+        .model-input {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .model-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 4px 6px -1px rgba(99, 102, 241, 0.1);
+            background: white;
+        }
+        .model-input-label {
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .model-input-label i {
+            color: #6366f1;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem 2rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(99, 102, 241, 0.5);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .btn-save:active {
+            transform: translateY(0);
+        }
+        .btn-cancel {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.875rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #64748b;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .btn-cancel:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #475569;
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid;
+            border-image: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899) 1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title i {
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .model-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1rem;
+        }
         .modal-header {
             padding: 1rem 1.5rem;
             border-bottom: 1px solid #e5e7eb;
@@ -487,10 +631,10 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-8">
                 <div class="flex items-center space-x-2">
-                    <i class="fa fa-microchip text-blue-400"></i>
+                    <img id="defaultModelIcon" src="" alt="模型Logo" class="h-5 w-auto">
                     <span id="defaultModel" class="text-sm text-white"></span>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div id="defaultPromptContainer" class="flex items-center space-x-2 cursor-pointer hover:text-green-300 transition-colors" onclick="openSystemPromptConfigModal()">
                     <i class="fa fa-file-text-o text-green-400"></i>
                     <span id="defaultPrompt" class="text-sm text-white"></span>
                 </div>
@@ -505,149 +649,269 @@
 
     <!-- 大模型配置弹窗 -->
     <div id="modelConfigModal" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content model-config-modal">
             <!-- 弹窗头部 -->
-            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
-                <h3 class="text-lg font-semibold text-white flex items-center">
-                    <i class="fa fa-brain mr-2"></i>
+            <div class="modal-header flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-white flex items-center gap-3">
+                    <i class="fa fa-rocket text-2xl"></i>
                     大模型配置
                 </h3>
-                <button class="close-modal-btn text-white hover:text-gray-200 transition-colors">
-                    <i class="fa fa-times text-xl"></i>
+                <button class="close-modal-btn text-white hover:text-gray-200 transition-all duration-300 hover:scale-110">
+                    <i class="fa fa-times text-2xl"></i>
                 </button>
             </div>
             
-            <!-- 弹窗内容 -->
-            <div class="p-6">
-                <!-- 大模型选择 -->
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">
-                        <i class="fa fa-brain mr-1 text-blue-600"></i>
-                        大模型选择
-                    </label>
-                    
-                    <div class="space-y-4">
-                        <!-- 火山引擎 -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
-                            <div class="flex items-center mb-3">
-                                <input type="radio" id="model-ark" name="selectedModel" value="ark" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                                <label for="model-ark" class="ml-2 block text-sm font-medium text-gray-700">
-                                    火山引擎（Doubao）
-                                </label>
-                            </div>
-                            <div>
-                                <label for="arkApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
-                                <input type="text" id="arkApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入火山引擎API Key">
-                            </div>
+            <!-- 弹窗内容（可滚动） -->
+            <div class="modal-body-scroll">
+                <div class="inner-body">
+                    <!-- 大模型选择 -->
+                    <div class="mb-8">
+                        <div class="section-title">
+                            <i class="fa fa-brain"></i>
+                            大模型选择
                         </div>
                         
-                        <!-- OpenAI -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
-                            <div class="flex items-center mb-3">
-                                <input type="radio" id="model-openai" name="selectedModel" value="openai" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                                <label for="model-openai" class="ml-2 block text-sm font-medium text-gray-700">
-                                    OpenAI（GPT）
-                                </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 火山引擎 -->
+                            <div class="model-card" data-model="ark">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-ark" name="selectedModel" value="ark">
+                                    <label for="model-ark" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-microchip text-indigo-600"></i>
+                                        火山引擎（Doubao）
+                                    </label>
+                                </div>
+                                <div>
+                                    <label for="arkApiKey" class="model-input-label">
+                                        <i class="fa fa-key"></i>
+                                        API Key
+                                    </label>
+                                    <input type="text" id="arkApiKey" class="model-input w-full" placeholder="输入火山引擎API Key">
+                                </div>
                             </div>
-                            <div>
-                                <label for="openaiApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
-                                <input type="text" id="openaiApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入OpenAI API Key">
-                                <label for="openaiBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
-                                <input type="text" id="openaiBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入OpenAI Base URL" value="https://api.openai.com/v1">
+                            
+                            <!-- OpenAI -->
+                            <div class="model-card" data-model="openai">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-openai" name="selectedModel" value="openai">
+                                    <label for="model-openai" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-brain text-green-600"></i>
+                                        OpenAI（GPT）
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="openaiApiKey" class="model-input-label">
+                                            <i class="fa fa-key"></i>
+                                            API Key
+                                        </label>
+                                        <input type="text" id="openaiApiKey" class="model-input w-full" placeholder="输入OpenAI API Key">
+                                    </div>
+                                    <div>
+                                        <label for="openaiBaseUrl" class="model-input-label">
+                                            <i class="fa fa-link"></i>
+                                            Base URL (可选)
+                                        </label>
+                                        <input type="text" id="openaiBaseUrl" class="model-input w-full" placeholder="输入OpenAI Base URL" value="https://api.openai.com/v1">
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- 百度文心一言 -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
-                            <div class="flex items-center mb-3">
-                                <input type="radio" id="model-baidu" name="selectedModel" value="baidu" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                                <label for="model-baidu" class="ml-2 block text-sm font-medium text-gray-700">
-                                    百度文心一言
-                                </label>
+                            
+                            <!-- 百度文心一言 -->
+                            <div class="model-card" data-model="baidu">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-baidu" name="selectedModel" value="baidu">
+                                    <label for="model-baidu" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-search text-red-600"></i>
+                                        百度文心一言
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="baiduApiKey" class="model-input-label">
+                                            <i class="fa fa-key"></i>
+                                            API Key
+                                        </label>
+                                        <input type="text" id="baiduApiKey" class="model-input w-full" placeholder="输入百度API Key">
+                                    </div>
+                                    <div>
+                                        <label for="baiduSecretKey" class="model-input-label">
+                                            <i class="fa fa-lock"></i>
+                                            Secret Key
+                                        </label>
+                                        <input type="text" id="baiduSecretKey" class="model-input w-full" placeholder="输入百度Secret Key">
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label for="baiduApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
-                                <input type="text" id="baiduApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入百度API Key">
-                                <label for="baiduSecretKey" class="block text-xs text-gray-500 mb-1 mt-2">Secret Key</label>
-                                <input type="text" id="baiduSecretKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入百度Secret Key">
+                            
+                            <!-- 阿里通义千问 -->
+                            <div class="model-card" data-model="alibaba">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-alibaba" name="selectedModel" value="alibaba">
+                                    <label for="model-alibaba" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-cloud text-orange-600"></i>
+                                        阿里通义千问
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="alibabaApiKey" class="model-input-label">
+                                            <i class="fa fa-key"></i>
+                                            API Key
+                                        </label>
+                                        <input type="text" id="alibabaApiKey" class="model-input w-full" placeholder="输入阿里API Key">
+                                    </div>
+                                    <div>
+                                        <label for="alibabaBaseUrl" class="model-input-label">
+                                            <i class="fa fa-link"></i>
+                                            Base URL (可选)
+                                        </label>
+                                        <input type="text" id="alibabaBaseUrl" class="model-input w-full" placeholder="输入阿里Base URL">
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- 阿里通义千问 -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
-                            <div class="flex items-center mb-3">
-                                <input type="radio" id="model-alibaba" name="selectedModel" value="alibaba" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                                <label for="model-alibaba" class="ml-2 block text-sm font-medium text-gray-700">
-                                    阿里通义千问
-                                </label>
+                            
+                            <!-- DeepSeek -->
+                            <div class="model-card" data-model="deepseek">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-deepseek" name="selectedModel" value="deepseek">
+                                    <label for="model-deepseek" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-magic text-purple-600"></i>
+                                        DeepSeek
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="deepseekApiKey" class="model-input-label">
+                                            <i class="fa fa-key"></i>
+                                            API Key
+                                        </label>
+                                        <input type="text" id="deepseekApiKey" class="model-input w-full" placeholder="输入DeepSeek API Key">
+                                    </div>
+                                    <div>
+                                        <label for="deepseekBaseUrl" class="model-input-label">
+                                            <i class="fa fa-link"></i>
+                                            Base URL (可选)
+                                        </label>
+                                        <input type="text" id="deepseekBaseUrl" class="model-input w-full" placeholder="输入DeepSeek Base URL" value="https://api.deepseek.com/v1">
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label for="alibabaApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
-                                <input type="text" id="alibabaApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入阿里API Key">
-                                <label for="alibabaBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
-                                <input type="text" id="alibabaBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入阿里Base URL">
+                            
+                            <!-- Google Gemini -->
+                            <div class="model-card" data-model="gemini">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-gemini" name="selectedModel" value="gemini">
+                                    <label for="model-gemini" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-star text-yellow-600"></i>
+                                        Google Gemini
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="geminiApiKey" class="model-input-label">
+                                            <i class="fa fa-key"></i>
+                                            API Key
+                                        </label>
+                                        <input type="text" id="geminiApiKey" class="model-input w-full" placeholder="输入Google Gemini API Key">
+                                    </div>
+                                    <div>
+                                        <label for="geminiModelName" class="model-input-label">
+                                            <i class="fa fa-cube"></i>
+                                            模型名称
+                                        </label>
+                                        <select id="geminiModelName" class="model-input w-full">
+                                            <option value="gemini-2.5-flash">gemini-2.5-flash (推荐)</option>
+                                            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                                            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                                            <option value="gemini-2.0-flash-001">gemini-2.0-flash-001</option>
+                                            <option value="gemini-flash-latest">gemini-flash-latest</option>
+                                            <option value="gemini-pro-latest">gemini-pro-latest</option>
+                                            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="geminiBaseUrl" class="model-input-label">
+                                            <i class="fa fa-link"></i>
+                                            Base URL (可选)
+                                        </label>
+                                        <input type="text" id="geminiBaseUrl" class="model-input w-full" placeholder="输入Gemini Base URL" value="https://generativelanguage.googleapis.com/v1beta">
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- DeepSeek -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
-                            <div class="flex items-center mb-3">
-                                <input type="radio" id="model-deepseek" name="selectedModel" value="deepseek" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                                <label for="model-deepseek" class="ml-2 block text-sm font-medium text-gray-700">
-                                    DeepSeek
-                                </label>
-                            </div>
-                            <div>
-                                <label for="deepseekApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
-                                <input type="text" id="deepseekApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入DeepSeek API Key">
-                                <label for="deepseekBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
-                                <input type="text" id="deepseekBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入DeepSeek Base URL" value="https://api.deepseek.com/v1">
-                            </div>
-                        </div>
-                        
-                        <!-- Google Gemini -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors shadow-sm">
-                            <div class="flex items-center mb-3">
-                                <input type="radio" id="model-gemini" name="selectedModel" value="gemini" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                                <label for="model-gemini" class="ml-2 block text-sm font-medium text-gray-700">
-                                    Google Gemini
-                                </label>
-                            </div>
-                            <div>
-                                <label for="geminiApiKey" class="block text-xs text-gray-500 mb-1">API Key</label>
-                                <input type="text" id="geminiApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入Google Gemini API Key">
-                                <label for="geminiBaseUrl" class="block text-xs text-gray-500 mb-1 mt-2">Base URL (可选)</label>
-                                <input type="text" id="geminiBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="输入Gemini Base URL" value="https://generativelanguage.googleapis.com/v1">
+                            
+                            <!-- Claude (OneAPI) -->
+                            <div class="model-card md:col-span-2" data-model="claude">
+                                <div class="flex items-center mb-4">
+                                    <input type="radio" id="model-claude" name="selectedModel" value="claude">
+                                    <label for="model-claude" class="ml-3 model-name flex items-center gap-2">
+                                        <i class="fa fa-robot text-pink-600"></i>
+                                        Claude (OneAPI)
+                                    </label>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label for="claudeApiKey" class="model-input-label">
+                                            <i class="fa fa-key"></i>
+                                            API Key
+                                        </label>
+                                        <input type="text" id="claudeApiKey" class="model-input w-full" placeholder="输入Claude API Key">
+                                    </div>
+                                    <div>
+                                        <label for="claudeModelName" class="model-input-label">
+                                            <i class="fa fa-cube"></i>
+                                            模型名称
+                                        </label>
+                                        <select id="claudeModelName" class="model-input w-full">
+                                            <option value="claude-sonnet-4-6">claude-sonnet-4-6 (推荐)</option>
+                                            <option value="claude-opus-4-6">claude-opus-4-6</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="claudeBaseUrl" class="model-input-label">
+                                            <i class="fa fa-link"></i>
+                                            Base URL
+                                        </label>
+                                        <input type="text" id="claudeBaseUrl" class="model-input w-full" placeholder="输入Claude Base URL" value="https://oneapi.hk/v1">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- 通用配置 -->
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">
-                        <i class="fa fa-cog mr-1 text-blue-600"></i>
-                        通用配置
-                    </label>
-                    <div class="space-y-4">
-                        <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
-                            <label for="modelTemperature" class="block text-xs text-gray-500 mb-1">温度值 (0-1，越高越随机)</label>
-                            <input type="number" id="modelTemperature" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="1" step="0.1" value="0.7">
+                    
+                    <!-- 通用配置 -->
+                    <div class="mb-6">
+                        <div class="section-title">
+                            <i class="fa fa-sliders-h"></i>
+                            通用配置
                         </div>
-                        <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
-                            <label for="modelMaxTokens" class="block text-xs text-gray-500 mb-1">最大Token数</label>
-                            <input type="number" id="modelMaxTokens" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="100" max="4000" value="1000">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="model-card">
+                                <label for="modelTemperature" class="model-input-label">
+                                    <i class="fa fa-thermometer-half"></i>
+                                    温度值 (0-1，越高越随机)
+                                </label>
+                                <input type="number" id="modelTemperature" class="model-input w-full" min="0" max="1" step="0.1" value="0.7">
+                            </div>
+                            <div class="model-card">
+                                <label for="modelMaxTokens" class="model-input-label">
+                                    <i class="fa fa-font"></i>
+                                    最大Token数
+                                </label>
+                                <input type="number" id="modelMaxTokens" class="model-input w-full" min="100" max="4000" value="1000">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- 弹窗底部按钮 -->
-            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 bg-gray-50">
-                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+            <div class="modal-footer flex justify-end gap-4">
+                <button class="btn-cancel cancel-config-btn">
+                    <i class="fa fa-times mr-2"></i>
                     取消
                 </button>
-                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center shadow-sm">
+                <button class="btn-save save-config-btn">
                     <i class="fa fa-save mr-2"></i>
                     保存配置
                 </button>
@@ -688,12 +952,12 @@
                         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
                             <thead>
                                 <tr class="bg-gray-50">
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">头像</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名称</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户UID</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户简介</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cookie状态</th>
-                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">头像</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">用户名称</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">用户UID</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">用户简介</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Cookie状态</th>
+                                    <th class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="userList" class="divide-y divide-gray-200">
@@ -1012,9 +1276,9 @@
     
     <!-- 发布雪球帖弹窗 -->
     <div id="publishPostModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh; display: flex; flex-direction: column;">
             <!-- 弹窗头部 -->
-            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-indigo-800">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-indigo-800 flex-shrink-0">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-edit mr-2"></i>
                     发布雪球帖
@@ -1024,8 +1288,8 @@
                 </button>
             </div>
             
-            <!-- 弹窗内容 -->
-            <div class="p-6">
+            <!-- 弹窗内容（可滚动） -->
+            <div class="flex-1 overflow-y-auto p-6">
                 <!-- 发布类型选择 -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -1178,12 +1442,12 @@
             </div>
             
             <!-- 状态显示区域 -->
-            <div id="statusDisplay" class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center">
+            <div id="statusDisplay" class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center flex-shrink-0">
                 <span class="text-sm text-gray-700">就绪</span>
             </div>
             
             <!-- 弹窗底部按钮 -->
-            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 flex-shrink-0">
                 <button id="cancelPublishBtn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                     取消
                 </button>
@@ -1463,6 +1727,20 @@
                 alibaba: {
                     apiKey: '',
                     baseUrl: ''
+                },
+                deepseek: {
+                    apiKey: '',
+                    baseUrl: ''
+                },
+                gemini: {
+                    apiKey: '',
+                    modelName: 'gemini-2.5-flash',
+                    baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
+                },
+                claude: {
+                    apiKey: '',
+                    modelName: 'claude-sonnet-4-6',
+                    baseUrl: 'https://oneapi.hk/v1'
                 }
             },
             xueQiuCookie: '',
@@ -1483,8 +1761,14 @@
         const baiduSecretKeyInput = document.getElementById('baiduSecretKey');
         const alibabaApiKeyInput = document.getElementById('alibabaApiKey');
         const alibabaBaseUrlInput = document.getElementById('alibabaBaseUrl');
+        const deepseekApiKeyInput = document.getElementById('deepseekApiKey');
+        const deepseekBaseUrlInput = document.getElementById('deepseekBaseUrl');
         const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const geminiModelNameInput = document.getElementById('geminiModelName');
         const geminiBaseUrlInput = document.getElementById('geminiBaseUrl');
+        const claudeApiKeyInput = document.getElementById('claudeApiKey');
+        const claudeModelNameInput = document.getElementById('claudeModelName');
+        const claudeBaseUrlInput = document.getElementById('claudeBaseUrl');
         const xueQiuCookieInput = document.getElementById('xueQiuCookie');
         const dailyLimitInput = document.getElementById('dailyLimit');
         const delayMinInput = document.getElementById('delayMin');
@@ -1575,27 +1859,54 @@
         async function init() {
             setupEventListeners();
             await loadConfigFromServer();
+            await loadSystemPromptList();
             // 加载默认配置到Footer
             loadDefaultConfigToFooter();
             // 初始化关注者评论按钮
             resetFollowingButton();
+            // 初始化模型卡片点击事件
+            initModelCardClicks();
         }
         
         // 加载默认配置到Footer
         function loadDefaultConfigToFooter() {
-            const config = JSON.parse(localStorage.getItem('snowball_comment_config')) || {};
             const selectedModel = config.selectedModel || 'ark';
             document.getElementById('defaultModel').textContent = selectedModel;
-            fetch(`${API_BASE_URL}/system-prompts`)
-                .then(r => r.json())
-                .then(result => {
-                    if (result.success && result.data) {
-                        systemPrompts = result.data;
-                        const defaultPrompt = result.data.find(p => p.isDefault);
-                        document.getElementById('defaultPrompt').textContent = defaultPrompt ? defaultPrompt.title : '';
-                    }
-                })
-                .catch(err => console.error('加载提示词失败:', err));
+            
+            const modelIcon = document.getElementById('defaultModelIcon');
+            const modelConfig = {
+                'ark': 'static/logo/bytedance.png',
+                'openai': 'static/logo/openai.png',
+                'baidu': 'static/logo/baidu.png',
+                'alibaba': 'static/logo/alicloud.png',
+                'deepseek': 'static/logo/deepseek.png',
+                'gemini': 'static/logo/google.png',
+                'claude': 'static/logo/oneapi.png'
+            };
+            
+            modelIcon.src = modelConfig[selectedModel] || modelConfig['ark'];
+            loadDefaultPromptToFooter();
+            loadDefaultUserToFooter();
+        }
+        
+        // 加载默认提示词到Footer
+        function loadDefaultPromptToFooter() {
+            if (systemPrompts && systemPrompts.length > 0) {
+                const defaultPrompt = systemPrompts.find(p => p.isDefault);
+                const defaultPromptElement = document.getElementById('defaultPrompt');
+                if (defaultPromptElement) {
+                    defaultPromptElement.textContent = defaultPrompt ? defaultPrompt.title : '无系统默认提示词';
+                }
+            } else {
+                const defaultPromptElement = document.getElementById('defaultPrompt');
+                if (defaultPromptElement) {
+                    defaultPromptElement.textContent = '无系统默认提示词';
+                }
+            }
+        }
+        
+        // 加载默认用户到Footer
+        function loadDefaultUserToFooter() {
             fetch(`${API_BASE_URL}/get-default-user`)
                 .then(r => r.json())
                 .then(result => {
@@ -1609,6 +1920,16 @@
         
         // 设置事件监听
         function setupEventListeners() {
+            // 模型选择 radio 按钮事件
+            selectedModelRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (radio.checked) {
+                        config.selectedModel = radio.value;
+                        updateModelCardSelection(radio.value);
+                    }
+                });
+            });
+            
             // 菜单点击
             if (menuModelConfig) menuModelConfig.addEventListener('click', openModelConfigModal);
             if (menuCommentConfig) menuCommentConfig.addEventListener('click', openCommentConfigModal);
@@ -1907,7 +2228,16 @@
                 console.log('检查cookie有效性响应结果:', checkResult);
                 
                 if (checkResult.success) {
-                    addLog('cookie有效性检查完成', 'success');
+                    const validCount = checkResult.valid_count || 0;
+                    const totalCount = checkResult.total_count || 0;
+                    const validUsers = checkResult.valid_users || [];
+                    
+                    if (validCount > 0) {
+                        const userNames = validUsers.map(u => `${u.name}(${u.uid})`).join('、');
+                        addLog(`cookie有效性检查完成，共 ${totalCount} 个用户，${validCount} 个有效：${userNames}`, 'success');
+                    } else {
+                        addLog(`cookie有效性检查完成，共 ${totalCount} 个用户，无有效用户`, 'error');
+                    }
                     
                     // 然后获取更新后的用户列表
                     console.log('开始刷新用户列表，API地址:', `${API_BASE_URL}/get-users`);
@@ -1926,6 +2256,7 @@
                         console.log('用户列表加载成功，用户数量:', result.users.length);
                         renderUserList(result.users);
                         addLog('用户列表刷新成功', 'success');
+                        loadDefaultUserToFooter(); // 更新 footer 显示
                     } else {
                         console.error('加载用户列表失败，服务器返回错误:', result.message);
                         addLog(`加载用户列表失败: ${result.message}`, 'error');
@@ -1959,7 +2290,7 @@
                             </div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="font-medium text-gray-900">${user.name || '未知'}</div>
+                            <div class="text-sm font-medium text-gray-900">${user.name || '未知'}</div>
                             ${user.isDefault ? '<div class="text-xs text-blue-600">当前默认用户</div>' : ''}
                         </td>
                         <td class="py-3 px-4">
@@ -2014,6 +2345,7 @@
                 if (result.success) {
                     addLog('默认用户设置成功', 'success');
                     openUserConfigModal(); // 重新加载用户列表
+                    loadDefaultUserToFooter(); // 更新 footer 显示
                 } else {
                     addLog('默认用户设置失败: ' + result.message, 'error');
                 }
@@ -2035,6 +2367,7 @@
                     if (result.success) {
                         addLog('用户删除成功', 'success');
                         openUserConfigModal(); // 重新加载用户列表
+                        loadDefaultUserToFooter(); // 更新 footer 显示
                     } else {
                         addLog('用户删除失败: ' + result.message, 'error');
                     }
@@ -2070,6 +2403,7 @@
                     addLog(userId ? '用户更新成功' : '用户添加成功', 'success');
                     closeEditUserModal();
                     openUserConfigModal(); // 重新加载用户列表
+                    loadDefaultUserToFooter(); // 更新 footer 显示
                 } else {
                     addLog((userId ? '用户更新' : '用户添加') + '失败: ' + result.message, 'error');
                 }
@@ -2084,6 +2418,7 @@
                 
                 if (result.success && result.exists) {
                     const serverConfig = result.data;
+                    console.log('loadConfigFromServer - serverConfig:', JSON.stringify(serverConfig, null, 2));
                     
                     // 加载选中的模型
                     if (serverConfig.selectedModel) config.selectedModel = serverConfig.selectedModel;
@@ -2095,12 +2430,42 @@
                             openai: serverConfig.models.openai || { apiKey: '', baseUrl: 'https://api.openai.com/v1' },
                             baidu: serverConfig.models.baidu || { apiKey: '', secretKey: '' },
                             alibaba: serverConfig.models.alibaba || { apiKey: '', baseUrl: '' },
-                            gemini: serverConfig.models.gemini || { apiKey: '', baseUrl: 'https://generativelanguage.googleapis.com/v1' }
+                            deepseek: serverConfig.models.deepseek || { apiKey: '', baseUrl: '' },
+                            gemini: serverConfig.models.gemini || { apiKey: '', baseUrl: 'https://generativelanguage.googleapis.com/v1' },
+                            claude: serverConfig.models.claude || { apiKey: '', baseUrl: 'https://oneapi.hk/v1' }
                         };
                     }
                     
-                    // 兼容旧配置格式
-                    if (serverConfig.arkApiKey) config.models.ark.apiKey = serverConfig.arkApiKey;
+                    // 兼容旧配置格式 - 从旧格式迁移到新格式
+                    if (serverConfig.arkApiKey) {
+                        if (!config.models.ark) config.models.ark = { apiKey: '' };
+                        config.models.ark.apiKey = serverConfig.arkApiKey;
+                    }
+                    if (serverConfig.openaiApiKey) {
+                        if (!config.models.openai) config.models.openai = { apiKey: '', baseUrl: 'https://api.openai.com/v1' };
+                        config.models.openai.apiKey = serverConfig.openaiApiKey;
+                        if (serverConfig.openaiBaseUrl) config.models.openai.baseUrl = serverConfig.openaiBaseUrl;
+                    }
+                    if (serverConfig.baiduApiKey) {
+                        if (!config.models.baidu) config.models.baidu = { apiKey: '', secretKey: '' };
+                        config.models.baidu.apiKey = serverConfig.baiduApiKey;
+                        if (serverConfig.baiduSecretKey) config.models.baidu.secretKey = serverConfig.baiduSecretKey;
+                    }
+                    if (serverConfig.alibabaApiKey) {
+                        if (!config.models.alibaba) config.models.alibaba = { apiKey: '', baseUrl: '' };
+                        config.models.alibaba.apiKey = serverConfig.alibabaApiKey;
+                        if (serverConfig.alibabaBaseUrl) config.models.alibaba.baseUrl = serverConfig.alibabaBaseUrl;
+                    }
+                    if (serverConfig.deepseekApiKey) {
+                        if (!config.models.deepseek) config.models.deepseek = { apiKey: '', baseUrl: '' };
+                        config.models.deepseek.apiKey = serverConfig.deepseekApiKey;
+                        if (serverConfig.deepseekBaseUrl) config.models.deepseek.baseUrl = serverConfig.deepseekBaseUrl;
+                    }
+                    if (serverConfig.geminiApiKey) {
+                        if (!config.models.gemini) config.models.gemini = { apiKey: '', baseUrl: 'https://generativelanguage.googleapis.com/v1' };
+                        config.models.gemini.apiKey = serverConfig.geminiApiKey;
+                        if (serverConfig.geminiBaseUrl) config.models.gemini.baseUrl = serverConfig.geminiBaseUrl;
+                    }
                     
                     if (serverConfig.xueQiuCookie) config.xueQiuCookie = serverConfig.xueQiuCookie;
                     if (serverConfig.dailyLimit) config.dailyLimit = serverConfig.dailyLimit;
@@ -2108,6 +2473,7 @@
                     if (serverConfig.delayMax) config.delayMax = serverConfig.delayMax;
                     if (serverConfig.testMode !== undefined) config.testMode = serverConfig.testMode;
                     
+                    console.log('loadConfigFromServer - 合并后的 config:', JSON.stringify(config, null, 2));
                     addLog('已从服务器加载配置', 'success');
                 } else {
                     addLog('服务器上没有保存的配置', 'info');
@@ -2135,8 +2501,14 @@
             config.models.baidu.secretKey = baiduSecretKeyInput.value;
             config.models.alibaba.apiKey = alibabaApiKeyInput.value;
             config.models.alibaba.baseUrl = alibabaBaseUrlInput.value;
+            config.models.deepseek.apiKey = deepseekApiKeyInput.value;
+            config.models.deepseek.baseUrl = deepseekBaseUrlInput.value;
             config.models.gemini.apiKey = geminiApiKeyInput.value;
+            config.models.gemini.modelName = geminiModelNameInput.value;
             config.models.gemini.baseUrl = geminiBaseUrlInput.value;
+            config.models.claude.apiKey = claudeApiKeyInput.value;
+            config.models.claude.modelName = claudeModelNameInput.value;
+            config.models.claude.baseUrl = claudeBaseUrlInput.value;
             
             if (xueQiuCookieInput) {
                 config.xueQiuCookie = xueQiuCookieInput.value;
@@ -2157,6 +2529,8 @@
                 if (result.success) {
                     addLog('配置保存成功', 'success');
                     closeAllModals();
+                    // 更新Footer显示
+                    loadDefaultConfigToFooter();
                 } else {
                     addLog(`保存失败: ${result.message}`, 'error');
                 }
@@ -2174,6 +2548,9 @@
                 }
             });
             
+            // 更新模型卡片选中状态
+            updateModelCardSelection(config.selectedModel);
+            
             // 更新模型配置
             arkApiKeyInput.value = config.models.ark.apiKey;
             openaiApiKeyInput.value = config.models.openai.apiKey;
@@ -2182,8 +2559,14 @@
             baiduSecretKeyInput.value = config.models.baidu.secretKey;
             alibabaApiKeyInput.value = config.models.alibaba.apiKey;
             alibabaBaseUrlInput.value = config.models.alibaba.baseUrl;
+            deepseekApiKeyInput.value = config.models.deepseek.apiKey;
+            deepseekBaseUrlInput.value = config.models.deepseek.baseUrl;
             geminiApiKeyInput.value = config.models.gemini.apiKey;
+            geminiModelNameInput.value = config.models.gemini.modelName || 'gemini-2.5-flash';
             geminiBaseUrlInput.value = config.models.gemini.baseUrl;
+            claudeApiKeyInput.value = config.models.claude.apiKey;
+            claudeModelNameInput.value = config.models.claude.modelName || 'claude-sonnet-4-6';
+            claudeBaseUrlInput.value = config.models.claude.baseUrl;
             
             if (xueQiuCookieInput) {
                 xueQiuCookieInput.value = config.xueQiuCookie;
@@ -2192,6 +2575,34 @@
             delayMinInput.value = config.delayMin;
             delayMaxInput.value = config.delayMax;
             testModeCheckbox.checked = config.testMode;
+        }
+        
+        // 更新模型卡片选中状态
+        function updateModelCardSelection(selectedModel) {
+            const modelCards = document.querySelectorAll('.model-card[data-model]');
+            modelCards.forEach(card => {
+                if (card.dataset.model === selectedModel) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+        }
+        
+        // 初始化模型卡片点击事件
+        function initModelCardClicks() {
+            const modelCards = document.querySelectorAll('.model-card[data-model]');
+            modelCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const model = card.dataset.model;
+                    const radio = document.getElementById(`model-${model}`);
+                    if (radio) {
+                        radio.checked = true;
+                        config.selectedModel = model;
+                        updateModelCardSelection(model);
+                    }
+                });
+            });
         }
         
         // 检查并显示关注列表（带确认弹窗）
@@ -2319,24 +2730,36 @@
         
         // 开始热门帖评论
         async function startHotCommenting() {
+            console.log('startHotCommenting - 完整配置:', JSON.stringify(config, null, 2));
             // 根据选中的模型检查对应的API Key
             let apiKey = '';
             const selectedModel = config.selectedModel || 'ark';
+            console.log('startHotCommenting - selectedModel:', selectedModel);
+            console.log('startHotCommenting - config.models:', config.models);
             
+            // 兼容新旧配置格式
             if (selectedModel === 'ark') {
-                apiKey = config.models.ark.apiKey;
+                apiKey = config.models?.ark?.apiKey || config.arkApiKey || '';
             } else if (selectedModel === 'openai') {
-                apiKey = config.models.openai.apiKey;
+                apiKey = config.models?.openai?.apiKey || config.openaiApiKey || '';
             } else if (selectedModel === 'baidu') {
-                apiKey = config.models.baidu.apiKey;
+                apiKey = config.models?.baidu?.apiKey || config.baiduApiKey || '';
             } else if (selectedModel === 'alibaba') {
-                apiKey = config.models.alibaba.apiKey;
+                apiKey = config.models?.alibaba?.apiKey || config.alibabaApiKey || '';
+            } else if (selectedModel === 'deepseek') {
+                apiKey = config.models?.deepseek?.apiKey || config.deepseekApiKey || '';
             } else if (selectedModel === 'gemini') {
-                apiKey = config.models.gemini.apiKey;
+                apiKey = config.models?.gemini?.apiKey || config.geminiApiKey || '';
+            } else if (selectedModel === 'claude') {
+                apiKey = config.models?.claude?.apiKey || '';
             }
+            
+            console.log('startHotCommenting - apiKey:', apiKey ? '已设置' : '未设置');
+            console.log('startHotCommenting - xueQiuCookie:', config.xueQiuCookie ? '已设置' : '未设置');
             
             if (!apiKey || !config.xueQiuCookie) {
                 addLog('错误: 请先完成系统配置', 'error');
+                console.log('startHotCommenting - 检查失败，打开配置窗口');
                 openModelConfigModal();
                 return;
             }
@@ -2410,20 +2833,29 @@
             let apiKey = '';
             const selectedModel = config.selectedModel || 'ark';
             
+            // 兼容新旧配置格式
             if (selectedModel === 'ark') {
-                apiKey = config.models.ark.apiKey;
+                apiKey = config.models?.ark?.apiKey || config.arkApiKey || '';
             } else if (selectedModel === 'openai') {
-                apiKey = config.models.openai.apiKey;
+                apiKey = config.models?.openai?.apiKey || config.openaiApiKey || '';
             } else if (selectedModel === 'baidu') {
-                apiKey = config.models.baidu.apiKey;
+                apiKey = config.models?.baidu?.apiKey || config.baiduApiKey || '';
             } else if (selectedModel === 'alibaba') {
-                apiKey = config.models.alibaba.apiKey;
+                apiKey = config.models?.alibaba?.apiKey || config.alibabaApiKey || '';
+            } else if (selectedModel === 'deepseek') {
+                apiKey = config.models?.deepseek?.apiKey || config.deepseekApiKey || '';
             } else if (selectedModel === 'gemini') {
-                apiKey = config.models.gemini.apiKey;
+                apiKey = config.models?.gemini?.apiKey || config.geminiApiKey || '';
+            } else if (selectedModel === 'claude') {
+                apiKey = config.models?.claude?.apiKey || '';
             }
+            
+            console.log('startHotCommenting - apiKey:', apiKey ? '已设置' : '未设置');
+            console.log('startHotCommenting - xueQiuCookie:', config.xueQiuCookie ? '已设置' : '未设置');
             
             if (!apiKey || !config.xueQiuCookie) {
                 addLog('错误: 请先完成系统配置', 'error');
+                console.log('startHotCommenting - 检查失败，打开配置窗口');
                 openModelConfigModal();
                 return;
             }
@@ -2845,20 +3277,29 @@
             let apiKey = '';
             const selectedModel = config.selectedModel || 'ark';
             
+            // 兼容新旧配置格式
             if (selectedModel === 'ark') {
-                apiKey = config.models.ark.apiKey;
+                apiKey = config.models?.ark?.apiKey || config.arkApiKey || '';
             } else if (selectedModel === 'openai') {
-                apiKey = config.models.openai.apiKey;
+                apiKey = config.models?.openai?.apiKey || config.openaiApiKey || '';
             } else if (selectedModel === 'baidu') {
-                apiKey = config.models.baidu.apiKey;
+                apiKey = config.models?.baidu?.apiKey || config.baiduApiKey || '';
             } else if (selectedModel === 'alibaba') {
-                apiKey = config.models.alibaba.apiKey;
+                apiKey = config.models?.alibaba?.apiKey || config.alibabaApiKey || '';
+            } else if (selectedModel === 'deepseek') {
+                apiKey = config.models?.deepseek?.apiKey || config.deepseekApiKey || '';
             } else if (selectedModel === 'gemini') {
-                apiKey = config.models.gemini.apiKey;
+                apiKey = config.models?.gemini?.apiKey || config.geminiApiKey || '';
+            } else if (selectedModel === 'claude') {
+                apiKey = config.models?.claude?.apiKey || '';
             }
+            
+            console.log('startHotCommenting - apiKey:', apiKey ? '已设置' : '未设置');
+            console.log('startHotCommenting - xueQiuCookie:', config.xueQiuCookie ? '已设置' : '未设置');
             
             if (!apiKey || !config.xueQiuCookie) {
                 addLog('错误: 请先完成系统配置', 'error');
+                console.log('startHotCommenting - 检查失败，打开配置窗口');
                 openModelConfigModal();
                 return;
             }
@@ -3024,23 +3465,33 @@
             // 确保配置已加载
             await loadConfigFromServer();
             
+            console.log('openPublishPostModal - config:', JSON.stringify(config, null, 2));
+            
             // 检查配置
             let apiKey = '';
             const selectedModel = config.selectedModel || 'ark';
             
+            // 兼容新旧配置格式
             if (selectedModel === 'ark') {
-                apiKey = config.models.ark.apiKey;
+                apiKey = config.models?.ark?.apiKey || config.arkApiKey || '';
             } else if (selectedModel === 'openai') {
-                apiKey = config.models.openai.apiKey;
+                apiKey = config.models?.openai?.apiKey || config.openaiApiKey || '';
             } else if (selectedModel === 'baidu') {
-                apiKey = config.models.baidu.apiKey;
+                apiKey = config.models?.baidu?.apiKey || config.baiduApiKey || '';
             } else if (selectedModel === 'alibaba') {
-                apiKey = config.models.alibaba.apiKey;
+                apiKey = config.models?.alibaba?.apiKey || config.alibabaApiKey || '';
+            } else if (selectedModel === 'deepseek') {
+                apiKey = config.models?.deepseek?.apiKey || config.deepseekApiKey || '';
             } else if (selectedModel === 'gemini') {
-                apiKey = config.models.gemini.apiKey;
+                apiKey = config.models?.gemini?.apiKey || config.geminiApiKey || '';
+            } else if (selectedModel === 'claude') {
+                apiKey = config.models?.claude?.apiKey || '';
             }
             
+            console.log('openPublishPostModal - selectedModel:', selectedModel, 'apiKey:', apiKey ? '***' : 'empty', 'xueQiuCookie:', config.xueQiuCookie ? '***' : 'empty');
+            
             if (!apiKey || !config.xueQiuCookie) {
+                console.error('openPublishPostModal - 配置检查失败');
                 addLog('错误: 请先完成系统配置', 'error');
                 openModelConfigModal();
                 return;
@@ -4205,6 +4656,10 @@
             renderSystemPromptList();
             closeAddSystemPromptModal();
             addLog(editingSystemPromptId !== null ? '系统提示词更新成功' : '系统提示词添加成功', 'success');
+            loadDefaultPromptToFooter(); // 更新 footer 显示
+            
+            // 自动保存到服务器
+            saveSystemPromptConfigToServer();
         }
         
         // 编辑系统提示词
@@ -4218,6 +4673,10 @@
                 systemPrompts.splice(index, 1);
                 renderSystemPromptList();
                 addLog('系统提示词删除成功', 'success');
+                loadDefaultPromptToFooter(); // 更新 footer 显示
+                
+                // 自动保存到服务器
+                saveSystemPromptConfigToServer();
             }
         }
         
@@ -4228,7 +4687,10 @@
             });
             renderSystemPromptList();
             updateNoDefaultPromptIndicator();
-            addLog('默认系统提示词设置成功', 'success');
+            loadDefaultPromptToFooter(); // 更新 footer 显示
+            
+            // 自动保存到服务器
+            saveSystemPromptConfigToServer();
         }
         
         // 设置不默认提示词
@@ -4238,7 +4700,37 @@
             });
             renderSystemPromptList();
             updateNoDefaultPromptIndicator();
-            addLog('已取消默认提示词，将使用两阶段生成模式', 'success');
+            loadDefaultPromptToFooter(); // 更新 footer 显示
+            
+            // 自动保存到服务器
+            saveSystemPromptConfigToServer();
+        }
+        
+        // 保存系统提示词配置到服务器（内部函数）
+        function saveSystemPromptConfigToServer() {
+            fetch(`${API_BASE_URL}/save-system-prompts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompts: systemPrompts })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const defaultPrompt = systemPrompts.find(p => p.isDefault);
+                    if (defaultPrompt) {
+                        addLog(`系统提示词配置保存成功，当前默认提示词：${defaultPrompt.title}`, 'success');
+                    } else {
+                        addLog('系统提示词配置保存成功，系统没有默认提示词', 'success');
+                    }
+                } else {
+                    addLog(`保存系统提示词配置失败: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`保存系统提示词配置请求失败: ${error.message}`, 'error');
+            });
         }
         
         // 更新"不设置默认提示词"选项的显示状态
@@ -4258,7 +4750,7 @@
             }
         }
         
-        // 保存系统提示词配置到服务器
+        // 保存系统提示词配置到服务器（按钮点击）
         function saveSystemPromptConfig() {
             fetch(`${API_BASE_URL}/save-system-prompts`, {
                 method: 'POST',
@@ -4270,8 +4762,14 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    addLog('系统提示词配置保存成功', 'success');
+                    const defaultPrompt = systemPrompts.find(p => p.isDefault);
+                    if (defaultPrompt) {
+                        addLog(`系统提示词配置保存成功，当前默认提示词：${defaultPrompt.title}`, 'success');
+                    } else {
+                        addLog('系统提示词配置保存成功，系统没有默认提示词', 'success');
+                    }
                     closeSystemPromptConfigModal();
+                    loadDefaultPromptToFooter(); // 更新 footer 显示
                 } else {
                     addLog(`保存系统提示词配置失败: ${result.message}`, 'error');
                 }
@@ -4684,8 +5182,8 @@
     
     <!-- 系统提示词配置弹窗 -->
     <div id="systemPromptConfigModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800">
+        <div class="modal-content" style="max-width: 800px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-800 flex-shrink-0">
                 <h3 class="text-lg font-semibold text-white flex items-center">
                     <i class="fa fa-comment mr-2"></i>
                     系统提示词配置
@@ -4694,8 +5192,8 @@
                     <i class="fa fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex-shrink-0">
+                <div class="flex justify-between items-center">
                     <div>
                         <h4 class="text-lg font-semibold text-gray-700">现有提示词</h4>
                         <p class="text-sm text-gray-500 mt-1">选择一个提示词作为默认提示词，或选择不设置默认提示词</p>
@@ -4704,7 +5202,8 @@
                         <i class="fa fa-plus mr-2"></i>添加提示词
                     </button>
                 </div>
-                
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4">
                 <!-- 不设置默认提示词选项 -->
                 <div id="noDefaultPromptOption" class="bg-white rounded-lg p-4 border border-gray-200 mb-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm" onclick="setNoDefaultPrompt()">
                     <div class="flex items-center justify-between">
@@ -4727,7 +5226,7 @@
                     <!-- 提示词列表将通过JavaScript动态生成 -->
                 </div>
             </div>
-            <div class="modal-footer px-6 py-4 border-t border-gray-100 flex justify-end space-x-4">
+            <div class="modal-footer px-6 py-4 border-t border-gray-100 flex justify-end space-x-4 flex-shrink-0">
                 <button id="saveSystemPromptConfig" class="btn btn-primary">
                     <i class="fa fa-save mr-2"></i>保存配置
                 </button>

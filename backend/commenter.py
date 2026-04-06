@@ -5,11 +5,13 @@ import threading
 import json
 from datetime import datetime
 from article_utils import get_article_full_attributes
+from model_adapter import call_model
 
 class XueQiuCommenter:
-    def __init__(self, ark_api_key, xueqiu_cookie, log_callback=None):
+    def __init__(self, ark_api_key, xueqiu_cookie, log_callback=None, model_type='ark'):
         self.ark_api_key = ark_api_key
         self.xueqiu_cookie = xueqiu_cookie
+        self.model_type = model_type
         self.processed_articles = set()
         self.current_max_id = None
         self.current_page = 1
@@ -55,28 +57,12 @@ class XueQiuCommenter:
         return self.stats.copy()
     
     def generate_comment(self, title, text):
-        """使用火山引擎API生成评论"""
-        url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.ark_api_key}"
-        }
+        """使用统一模型适配器生成评论"""
         prompt = f"你是资深投资者，写1-2句理性雪球评论，专业简洁。文章：{title} 内容：{text[:500]} 评论："
-        payload = {
-            "model": "doubao-seed-2-0-pro-260215",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0.7
-        }
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=30.0)
-            response.raise_for_status()
-            result = response.json()
-            return result['choices'][0]['message']['content'].strip()
+            self.add_log('info', f'正在使用 {self.model_type} 模型生成评论...')
+            content, _ = call_model(self.model_type, self.ark_api_key, prompt, 'comment')
+            return content.strip()
         except Exception as e:
             self.add_log('error', f'生成评论失败: {str(e)}')
             return "分析到位，学习了"

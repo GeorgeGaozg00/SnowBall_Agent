@@ -3,6 +3,7 @@ from flask_cors import CORS
 from commenter import XueQiuCommenter
 from following_fetcher import FollowingListFetcher
 from following_commenter import process_following_comments
+from model_adapter import call_model, call_ark_api_with_logs
 import threading
 import time
 import os
@@ -10,7 +11,7 @@ import json
 import uuid
 import requests
 
-app = Flask(__name__, static_folder='..')
+app = Flask(__name__, static_folder='..', static_url_path='')
 CORS(app)  # 启用CORS，允许跨域请求
 
 # 提供前端页面
@@ -55,6 +56,7 @@ def check_all_cookies():
     print("启动时检查所有用户的cookie有效性...")
     users_data = load_users()
     users = users_data.get("users", [])
+    valid_users = []
     
     for user in users:
         cookie = user.get("cookie")
@@ -69,6 +71,10 @@ def check_all_cookies():
                 user["avatar"] = user_info.get("avatar", user.get("avatar", ""))
                 user["bio"] = user_info.get("bio", user.get("bio", ""))
                 user["cookieValid"] = True
+                valid_users.append({
+                    "name": user.get("name", "未知"),
+                    "uid": user.get("uid", "")
+                })
                 print(f"用户 {user.get('name', '未知')} 的cookie有效，已更新用户信息")
             else:
                 # 如果cookie无效，仅标记为无效
@@ -78,6 +84,11 @@ def check_all_cookies():
     # 保存更新后的用户配置
     save_users(users_data)
     print("所有用户的cookie有效性检查完成")
+    return {
+        "valid_count": len(valid_users),
+        "total_count": len(users),
+        "valid_users": valid_users
+    }
 
 def get_user_info(cookie):
     """根据Cookie获取用户信息"""
@@ -209,61 +220,63 @@ def get_user_info(cookie):
                             except Exception as e:
                                 print(f"访问API失败: {e}")
                         
-                        # 尝试使用获取关注列表的API，然后从返回数据中提取当前用户信息
-                        print("尝试使用关注列表API获取用户信息")
-                        url = "https://xueqiu.com/friendships/friends.json"
+                        # 尝试使用用户时间线API获取用户信息
+                        print("尝试使用用户时间线API获取用户信息")
+                        url = "https://xueqiu.com/statuses/user_timeline.json"
                         params = {
-                            "uid": uid,
-                            "page": 1,
-                            "size": 1
+                            "user_id": uid,
+                            "count": 1
                         }
                         
                         try:
                             response = requests.get(url, headers=headers, params=params, timeout=10)
-                            print(f"关注列表API响应状态码: {response.status_code}")
+                            print(f"用户时间线API响应状态码: {response.status_code}")
                             
                             if response.status_code == 200:
                                 data = response.json()
+                                print(f"用户时间线API响应数据: {json.dumps(data, ensure_ascii=False)[:500]}")
                                 # 检查响应中是否包含用户信息
-                                if "user" in data:
-                                    user = data.get("user", {})
-                                    name = user.get("screen_name", f"用户{uid[:4]}")
-                                    profile_image_url = user.get("profile_image_url", "")
-                                    photo_domain = user.get('photo_domain', 'http://xavatar.imedao.com/')
-                                    
-                                    # 拼接完整头像URL
-                                    if profile_image_url:
-                                        # 取第一个头像URL（通常是最大的那个）
-                                        first_image = profile_image_url.split(',')[0] if ',' in profile_image_url else profile_image_url
-                                        if first_image.startswith('http'):
-                                            avatar = first_image
+                                if "statuses" in data and len(data["statuses"]) > 0:
+                                    status = data["statuses"][0]
+                                    if "user" in status:
+                                        user = status.get("user", {})
+                                        name = user.get("screen_name", f"用户{uid[:4]}")
+                                        profile_image_url = user.get("profile_image_url", "")
+                                        photo_domain = user.get('photo_domain', 'http://xavatar.imedao.com/')
+                                        
+                                        # 拼接完整头像URL
+                                        if profile_image_url:
+                                            # 取第一个头像URL（通常是最大的那个）
+                                            first_image = profile_image_url.split(',')[0] if ',' in profile_image_url else profile_image_url
+                                            if first_image.startswith('http'):
+                                                avatar = first_image
+                                            else:
+                                                # 确保使用正确的头像域名
+                                                if not photo_domain.endswith('/'):
+                                                    photo_domain += '/'
+                                                # 确保 photo_domain 有协议
+                                                if photo_domain.startswith('//'):
+                                                    photo_domain = 'http:' + photo_domain
+                                                # 确保使用 community 路径
+                                                if not first_image.startswith('community') and 'community' not in photo_domain:
+                                                    photo_domain = 'http://xavatar.imedao.com/community/'
+                                                avatar = f"{photo_domain}{first_image}"
                                         else:
-                                            # 确保使用正确的头像域名
-                                            if not photo_domain.endswith('/'):
-                                                photo_domain += '/'
-                                            # 确保 photo_domain 有协议
-                                            if photo_domain.startswith('//'):
-                                                photo_domain = 'http:' + photo_domain
-                                            # 确保使用 community 路径
-                                            if not first_image.startswith('community') and 'community' not in photo_domain:
-                                                photo_domain = 'http://xavatar.imedao.com/community/'
-                                            avatar = f"{photo_domain}{first_image}"
-                                    else:
-                                        avatar = f"https://ui-avatars.com/api/?name={name}&background=random"
-                                    
-                                    bio = user.get("description", "")
-                                    
-                                    print(f"从关注列表API获取到的用户信息: 名称={name}, 头像={avatar}, 简介={bio}")
-                                    
-                                    return {
-                                        "uid": uid,
-                                        "name": name,
-                                        "avatar": avatar,
-                                        "bio": bio,
-                                        "cookieValid": True
-                                    }
+                                            avatar = f"https://ui-avatars.com/api/?name={name}&background=random"
+                                        
+                                        bio = user.get("description", "")
+                                        
+                                        print(f"从用户时间线API获取到的用户信息: 名称={name}, 头像={avatar}, 简介={bio}")
+                                        
+                                        return {
+                                            "uid": uid,
+                                            "name": name,
+                                            "avatar": avatar,
+                                            "bio": bio,
+                                            "cookieValid": True
+                                        }
                         except Exception as e:
-                            print(f"访问关注列表API失败: {e}")
+                            print(f"访问用户时间线API失败: {e}")
                         
                         # 如果所有API都失败，尝试访问用户主页
                         user_homepage_url = f"https://xueqiu.com/u/{uid}"
@@ -359,10 +372,13 @@ check_all_cookies()
 def check_all_cookies_api():
     """检查所有用户的cookie有效性"""
     try:
-        check_all_cookies()
+        result = check_all_cookies()
         return jsonify({
             "success": True,
-            "message": "所有用户的cookie有效性检查完成"
+            "message": "所有用户的cookie有效性检查完成",
+            "valid_count": result.get("valid_count", 0),
+            "total_count": result.get("total_count", 0),
+            "valid_users": result.get("valid_users", [])
         })
     except Exception as e:
         print(f"检查cookie有效性失败: {str(e)}")
@@ -733,22 +749,35 @@ def start_commenting():
                 "message": "请求体不能为空"
             }), 400
         
-        # 提取 API Key（支持新旧格式）
-        ark_api_key = None
-        if config.get('arkApiKey'):
-            # 旧格式
-            ark_api_key = config['arkApiKey']
-        elif config.get('models'):
-            # 新格式
-            selected_model = config.get('selectedModel', 'ark')
-            if selected_model == 'ark' and config['models'].get('ark'):
-                ark_api_key = config['models']['ark'].get('apiKey')
+        # 提取模型信息
+        selected_model = config.get('selectedModel', 'ark')
+        models_config = config.get('models', {})
         
-        if not ark_api_key:
-            print("错误: 缺少火山引擎API Key")
+        # 提取 API Key
+        api_key = None
+        if selected_model == 'ark' and models_config.get('ark'):
+            api_key = models_config['ark'].get('apiKey')
+        elif selected_model == 'openai' and models_config.get('openai'):
+            api_key = models_config['openai'].get('apiKey')
+        elif selected_model == 'baidu' and models_config.get('baidu'):
+            api_key = models_config['baidu'].get('apiKey')
+        elif selected_model == 'alibaba' and models_config.get('alibaba'):
+            api_key = models_config['alibaba'].get('apiKey')
+        elif selected_model == 'deepseek' and models_config.get('deepseek'):
+            api_key = models_config['deepseek'].get('apiKey')
+        elif selected_model == 'gemini' and models_config.get('gemini'):
+            api_key = models_config['gemini'].get('apiKey')
+        elif selected_model == 'claude' and models_config.get('claude'):
+            api_key = models_config['claude'].get('apiKey')
+        elif config.get('arkApiKey'):
+            api_key = config.get('arkApiKey')
+            selected_model = 'ark'
+        
+        if not api_key:
+            print("错误: 缺少AI API Key")
             return jsonify({
                 "success": False,
-                "message": "缺少火山引擎API Key"
+                "message": "缺少AI API Key"
             }), 400
         
         # 获取默认用户的cookie
@@ -787,9 +816,10 @@ def start_commenting():
             # 创建新的评论器实例
             print("创建新的评论器实例")
             commenter_instance = XueQiuCommenter(
-                ark_api_key=ark_api_key,
+                ark_api_key=api_key,
                 xueqiu_cookie=xueqiu_cookie,
-                log_callback=log_callback
+                log_callback=log_callback,
+                model_type=selected_model
             )
             
             # 启动评论任务
@@ -801,6 +831,7 @@ def start_commenting():
             
             # 打印任务启动信息，便于调试
             print(f"启动评论任务: {task_type}, 每日限制: {daily_limit}, 延迟: {delay_min}-{delay_max}秒, 测试模式: {test_mode}")
+            print(f"使用模型: {selected_model}")
             
             task_thread = threading.Thread(
                 target=commenter_instance.run_task,
@@ -1267,6 +1298,8 @@ def generate_prompt():
             api_key = models['deepseek'].get('apiKey')
         elif selected_model == 'gemini' and models.get('gemini'):
             api_key = models['gemini'].get('apiKey')
+        elif selected_model == 'claude' and models.get('claude'):
+            api_key = models['claude'].get('apiKey')
         
         if not api_key:
             return jsonify({
@@ -1275,6 +1308,7 @@ def generate_prompt():
             }), 400
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第一轮】正在生成雪球风格的详细提示词...")
+        print(f"[{time.strftime('%H:%M:%S')}] 使用模型: {selected_model}")
         
         first_round_prompt = f"""你是一位资深的雪球网内容创作者，擅长撰写投资类文章。
 
@@ -1295,24 +1329,16 @@ def generate_prompt():
 
 生成的详细提示词："""
         
-        # 第一轮调用
-        if selected_model == 'ark':
-            detailed_prompt, _ = call_ark_api(api_key, first_round_prompt, 'discussion')
-        elif selected_model == 'openai':
-            detailed_prompt, _ = call_openai_api(api_key, first_round_prompt, 'discussion', models.get('openai', {}).get('baseUrl'))
-        elif selected_model == 'baidu':
-            detailed_prompt, _ = call_baidu_api(api_key, models.get('baidu', {}).get('secretKey'), first_round_prompt, 'discussion')
-        elif selected_model == 'alibaba':
-            detailed_prompt, _ = call_alibaba_api(api_key, first_round_prompt, 'discussion', models.get('alibaba', {}).get('baseUrl'))
-        elif selected_model == 'deepseek':
-            detailed_prompt, _ = call_openai_api(api_key, first_round_prompt, 'discussion', models.get('deepseek', {}).get('baseUrl'))
-        elif selected_model == 'gemini':
-            detailed_prompt, _ = call_gemini_api(api_key, first_round_prompt, 'discussion', models.get('gemini', {}).get('baseUrl'))
-        else:
-            return jsonify({
-                "success": False,
-                "message": f"不支持的模型: {selected_model}"
-            }), 400
+        # 第一轮调用 - 使用统一模型适配器
+        detailed_prompt, _ = call_model(
+            selected_model, 
+            api_key, 
+            first_round_prompt, 
+            'discussion',
+            secret_key=models.get(selected_model, {}).get('secretKey'),
+            base_url=models.get(selected_model, {}).get('baseUrl'),
+            model_name=models.get(selected_model, {}).get('modelName')
+        )
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第一轮】详细提示词生成成功")
         print(f"[{time.strftime('%H:%M:%S')}] 生成的提示词预览: {detailed_prompt[:100]}...")
@@ -1359,6 +1385,8 @@ def generate_content():
             api_key = models['deepseek'].get('apiKey')
         elif selected_model == 'gemini' and models.get('gemini'):
             api_key = models['gemini'].get('apiKey')
+        elif selected_model == 'claude' and models.get('claude'):
+            api_key = models['claude'].get('apiKey')
         
         if not api_key:
             return jsonify({
@@ -1367,6 +1395,7 @@ def generate_content():
             }), 400
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第二轮】正在根据详细提示词生成正式文章...")
+        print(f"[{time.strftime('%H:%M:%S')}] 内容类型: {post_type}, 使用模型: {selected_model}")
         
         if post_type == 'article':
             second_round_prompt = f"""请根据以下详细提示词，写一篇雪球网风格的投资分析文章：
@@ -1402,21 +1431,22 @@ def generate_content():
 
 直接返回讨论内容即可，不要加标题。"""
         
-        # 第二轮调用
-        if selected_model == 'ark':
-            content, title = call_ark_api(api_key, second_round_prompt, post_type)
-        elif selected_model == 'openai':
-            content, title = call_openai_api(api_key, second_round_prompt, post_type, models.get('openai', {}).get('baseUrl'))
-        elif selected_model == 'baidu':
-            content, title = call_baidu_api(api_key, models.get('baidu', {}).get('secretKey'), second_round_prompt, post_type)
-        elif selected_model == 'alibaba':
-            content, title = call_alibaba_api(api_key, second_round_prompt, post_type, models.get('alibaba', {}).get('baseUrl'))
-        elif selected_model == 'deepseek':
-            content, title = call_openai_api(api_key, second_round_prompt, post_type, models.get('deepseek', {}).get('baseUrl'))
-        elif selected_model == 'gemini':
-            content, title = call_gemini_api(api_key, second_round_prompt, post_type, models.get('gemini', {}).get('baseUrl'))
+        # 第二轮调用 - 使用统一模型适配器
+        content, title = call_model(
+            selected_model, 
+            api_key, 
+            second_round_prompt, 
+            post_type,
+            secret_key=models.get(selected_model, {}).get('secretKey'),
+            base_url=models.get(selected_model, {}).get('baseUrl'),
+            model_name=models.get(selected_model, {}).get('modelName')
+        )
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第二轮】正式文章生成成功")
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 开始转换markdown格式到HTML...")
+        content = text_to_html(content)
+        print(f"[{time.strftime('%H:%M:%S')}] markdown格式转换完成")
         
         return jsonify({
             "success": True,
@@ -1499,6 +1529,9 @@ def text_to_html(text):
     """将纯文本转换为HTML格式"""
     import re
     
+    # 先清理文本：移除首尾的空白和多余的星号
+    text = text.strip()
+    
     # 先处理Markdown标题格式
     # 处理六级标题 ###### text
     text = re.sub(r'^######\s+(.+)$', r'<h6>\1</h6>', text, flags=re.MULTILINE)
@@ -1516,8 +1549,8 @@ def text_to_html(text):
     # 处理Markdown格式的粗体和斜体
     # 处理粗体 **text**
     text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
-    # 处理斜体 *text*
-    text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+    # 处理斜体 *text*（确保不与粗体冲突）
+    text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
     
     # 处理列表
     lines = text.split('\n')
@@ -1569,302 +1602,6 @@ def text_to_html(text):
         result_lines.append(f'</{list_type}>')
     
     return '\n'.join(result_lines)
-
-# AI模型调用函数
-def call_ark_api_with_logs(api_key, prompt, task_name='分析文章'):
-    """调用火山引擎API（带详细日志）- 与 call_ark_api 完全一致"""
-    import requests
-    
-    print(f"\n[{time.strftime('%H:%M:%S')}] ========== Ark API 调用开始 ==========")
-    print(f"[{time.strftime('%H:%M:%S')}] 任务: {task_name}")
-    print(f"[{time.strftime('%H:%M:%S')}] API URL: https://ark.cn-beijing.volces.com/api/v3/chat/completions")
-    
-    url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-    
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "doubao-seed-2-0-pro-260215",
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.8,
-        "max_tokens": 4000
-    }
-    
-    print(f"[{time.strftime('%H:%M:%S')}] 请求参数:")
-    print(f"  - model: {data['model']}")
-    print(f"  - temperature: {data['temperature']}")
-    print(f"  - max_tokens: {data['max_tokens']}")
-    print(f"  - messages长度: {len(data['messages'])}")
-    print(f"  - timeout: 120 秒")
-    print(f"  - proxies: {{'http': None, 'https': None}}")
-    print(f"[{time.strftime('%H:%M:%S')}] 提示词内容（前500字符）: {prompt[:500]}...")
-    print(f"[{time.strftime('%H:%M:%S')}] 提示词总长度: {len(prompt)} 字符")
-    
-    try:
-        print(f"[{time.strftime('%H:%M:%S')}] 正在发送请求...")
-        proxies_config = {'http': None, 'https': None}
-        response = requests.post(url, headers=headers, json=data, timeout=120, proxies=proxies_config)
-        print(f"[{time.strftime('%H:%M:%S')}] 响应状态码: {response.status_code}")
-        
-        result = response.json()
-        print(f"[{time.strftime('%H:%M:%S')}] 响应内容（前500字符）: {str(result)[:500]}...")
-        
-        if 'choices' not in result:
-            error_msg = result.get('error', {}).get('message', '未知错误')
-            print(f"[{time.strftime('%H:%M:%S')}] API调用失败: {error_msg}")
-            raise Exception(f"API调用失败: {error_msg}")
-        
-        content = result['choices'][0]['message']['content']
-        print(f"[{time.strftime('%H:%M:%S')}] 返回内容长度: {len(content)} 字符")
-        print(f"[{time.strftime('%H:%M:%S')}] 返回内容（前500字符）: {content[:500]}...")
-        print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用成功 ==========\n")
-        
-        return content.strip()
-        
-    except requests.exceptions.Timeout:
-        print(f"[{time.strftime('%H:%M:%S')}] API调用超时")
-        print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用失败（超时） ==========\n")
-        raise Exception("API调用超时")
-    except Exception as e:
-        print(f"[{time.strftime('%H:%M:%S')}] API调用异常: {str(e)}")
-        print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用失败 ==========\n")
-        raise
-
-def call_ark_api(api_key, prompt, post_type):
-    """调用火山引擎API"""
-    import requests
-    
-    url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-    
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "doubao-seed-2-0-pro-260215",
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.8,
-        "max_tokens": 2000 if post_type == 'article' else 500
-    }
-    
-    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
-    result = response.json()
-    
-    if 'choices' not in result:
-        raise Exception(f"API调用失败: {result.get('error', {}).get('message', '未知错误')}")
-    
-    content = result['choices'][0]['message']['content']
-    
-    # 提取标题（如果是长文）
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    # 将纯文本转换为HTML格式
-    content = text_to_html(content)
-    
-    return content, title
-
-def call_openai_api(api_key, prompt, post_type, base_url='https://api.openai.com/v1'):
-    """调用OpenAI API"""
-    import requests
-    
-    url = f"{base_url}/chat/completions"
-    
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "gpt-3.5-turbo",
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.8,
-        "max_tokens": 2000 if post_type == 'article' else 500
-    }
-    
-    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
-    result = response.json()
-    
-    if 'choices' not in result:
-        raise Exception(f"API调用失败: {result.get('error', {}).get('message', '未知错误')}")
-    
-    content = result['choices'][0]['message']['content']
-    
-    # 提取标题（如果是长文）
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    # 将纯文本转换为HTML格式
-    content = text_to_html(content)
-    
-    return content, title
-
-def call_baidu_api(api_key, secret_key, prompt, post_type):
-    """调用百度文心一言API"""
-    import requests
-    
-    # 获取access token
-    token_url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
-    token_response = requests.post(token_url, proxies={'http': None, 'https': None})
-    access_token = token_response.json().get('access_token')
-    
-    if not access_token:
-        raise Exception("获取百度access token失败")
-    
-    # 调用API
-    url = f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={access_token}"
-    
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
-    }
-    
-    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
-    result = response.json()
-    
-    if 'result' not in result:
-        raise Exception(f"API调用失败: {result.get('error_msg', '未知错误')}")
-    
-    content = result['result']
-    
-    # 提取标题（如果是长文）
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    # 将纯文本转换为HTML格式
-    content = text_to_html(content)
-    
-    return content, title
-
-def call_alibaba_api(api_key, prompt, post_type, base_url=''):
-    """调用阿里通义千问API"""
-    import requests
-    
-    if not base_url:
-        base_url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
-    
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "qwen-turbo",
-        "input": {
-            "messages": [
-                {"role": "user", "content": prompt}
-            ]
-        },
-        "parameters": {
-            "max_tokens": 2000 if post_type == 'article' else 500,
-            "temperature": 0.8
-        }
-    }
-    
-    response = requests.post(base_url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
-    result = response.json()
-    
-    if 'output' not in result:
-        raise Exception(f"API调用失败: {result.get('message', '未知错误')}")
-    
-    content = result['output']['text']
-    
-    # 提取标题（如果是长文）
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    # 将纯文本转换为HTML格式
-    content = text_to_html(content)
-    
-    return content, title
-
-def call_gemini_api(api_key, prompt, post_type, base_url='https://generativelanguage.googleapis.com/v1'):
-    """调用Google Gemini API"""
-    import requests
-    
-    # Gemini API使用不同的格式
-    url = f"{base_url}/models/gemini-pro:generateContent?key={api_key}"
-    
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
-        ],
-        "generationConfig": {
-            "temperature": 0.8,
-            "maxOutputTokens": 2000 if post_type == 'article' else 500
-        }
-    }
-    
-    response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
-    result = response.json()
-    
-    if 'candidates' not in result:
-        error_msg = result.get('error', {}).get('message', '未知错误')
-        raise Exception(f"API调用失败: {error_msg}")
-    
-    content = result['candidates'][0]['content']['parts'][0]['text']
-    
-    # 提取标题（如果是长文）
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    # 将纯文本转换为HTML格式
-    content = text_to_html(content)
-    
-    return content, title
 
 # HTML转Markdown函数
 def html_to_markdown(html_content):
@@ -2786,6 +2523,8 @@ def get_user_articles():
 def analyze_user_articles():
     """使用AI分析用户文章"""
     try:
+        from model_adapter import call_model
+        
         data = request.get_json()
         articles = data.get('articles', [])
         
@@ -2799,7 +2538,9 @@ def analyze_user_articles():
             config_data = json.load(f)
         
         selected_model = config_data.get('selectedModel', 'gemini')
+        models_config = config_data.get('models', {})
         print(f"[{time.strftime('%H:%M:%S')}] 使用模型: {selected_model} 进行分析")
+        print(f"[{time.strftime('%H:%M:%S')}] 模型配置: {models_config.get(selected_model, {})}")
         
         articles_text_list = []
         for i, art in enumerate(articles, 1):
@@ -2880,77 +2621,21 @@ def analyze_user_articles():
 **报告生成时间**：自动填充
 **分析文章数量**：{len(articles)}篇"""
 
-        if 'gemini' in str(selected_model).lower():
-            api_key = config_data.get('models', {}).get('gemini', {}).get('apiKey')
-            if not api_key:
-                print(f"[{time.strftime('%H:%M:%S')}] 未配置Gemini API密钥")
-                return jsonify({"success": False, "message": "未配置Gemini API密钥"}), 400
-            
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
-            
-            print(f"[{time.strftime('%H:%M:%S')}] 正在调用Gemini API进行分析...")
-            response = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=120)
-            
-            if response.status_code == 200:
-                result = response.json()
-                analysis = result['candidates'][0]['content']['parts'][0]['text']
-                print(f"[{time.strftime('%H:%M:%S')}] Gemini分析完成，结果长度: {len(analysis)} 字符")
-                analysis = text_to_html(analysis)
-                print(f"[{time.strftime('%H:%M:%S')}] 已转换为HTML格式")
-                return jsonify({"success": True, "analysis": analysis})
-            else:
-                print(f"[{time.strftime('%H:%M:%S')}] Gemini API错误: {response.text}")
-                return jsonify({"success": False, "message": f"Gemini API错误: {response.text}"}), 500
-                
-        elif selected_model == 'ark':
-            api_key = config_data.get('models', {}).get('ark', {}).get('apiKey')
-            if not api_key:
-                print(f"[{time.strftime('%H:%M:%S')}] 未配置Ark API密钥")
-                return jsonify({"success": False, "message": "未配置Ark API密钥"}), 400
-            
-            print(f"[{time.strftime('%H:%M:%S')}] 正在调用Ark(豆包)API进行分析...")
-            try:
-                analysis = call_ark_api_with_logs(api_key, prompt, task_name='分析用户文章')
-                print(f"[{time.strftime('%H:%M:%S')}] Ark分析完成，结果长度: {len(analysis)} 字符")
-                analysis = text_to_html(analysis)
-                print(f"[{time.strftime('%H:%M:%S')}] 已转换为HTML格式")
-                return jsonify({"success": True, "analysis": analysis})
-            except Exception as e:
-                print(f"[{time.strftime('%H:%M:%S')}] Ark API错误: {str(e)}")
-                return jsonify({"success": False, "message": f"Ark API错误: {str(e)}"}), 500
-                
-        elif selected_model == 'baidu':
-            api_key = config_data.get('models', {}).get('baidu', {}).get('apiKey')
-            secret_key = config_data.get('models', {}).get('baidu', {}).get('secretKey')
-            if not api_key or not secret_key:
-                print(f"[{time.strftime('%H:%M:%S')}] 未配置百度文心API密钥")
-                return jsonify({"success": False, "message": "未配置百度文心API密钥"}), 400
-            
-            print(f"[{time.strftime('%H:%M:%S')}] 正在调用百度文心API进行分析...")
-            try:
-                token_url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
-                token_response = requests.get(token_url, proxies={'http': None, 'https': None})
-                access_token = token_response.json().get("access_token")
-                
-                url = f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={access_token}"
-                headers = {"Content-Type": "application/json"}
-                data = {"messages": [{"role": "user", "content": prompt}]}
-                response = requests.post(url, headers=headers, json=data, timeout=120, proxies={'http': None, 'https': None})
-                result = response.json()
-                
-                if 'result' not in result:
-                    raise Exception(f"API调用失败: {result.get('error_msg', '未知错误')}")
-                
-                analysis_html = result['result']
-                print(f"[{time.strftime('%H:%M:%S')}] 百度文心分析完成，结果长度: {len(analysis_html)} 字符")
-                return jsonify({"success": True, "analysis": analysis_html})
-            except Exception as e:
-                print(f"[{time.strftime('%H:%M:%S')}] 百度文心API错误: {str(e)}")
-                return jsonify({"success": False, "message": f"百度文心API错误: {str(e)}"}), 500
-        else:
-            print(f"[{time.strftime('%H:%M:%S')}] 不支持的模型: {selected_model}")
-            return jsonify({"success": False, "message": f"不支持的模型: {selected_model}，支持 gemini/ark/baidu"}), 400
+        print(f"[{time.strftime('%H:%M:%S')}] 正在调用模型进行分析...")
+        analysis, _ = call_model(
+            selected_model,
+            models_config.get(selected_model, {}).get('apiKey'),
+            prompt,
+            'analysis',
+            secret_key=models_config.get(selected_model, {}).get('secretKey'),
+            base_url=models_config.get(selected_model, {}).get('baseUrl'),
+            model_name=models_config.get(selected_model, {}).get('modelName')
+        )
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 分析完成，结果长度: {len(analysis)} 字符")
+        analysis = text_to_html(analysis)
+        print(f"[{time.strftime('%H:%M:%S')}] 已转换为HTML格式")
+        return jsonify({"success": True, "analysis": analysis})
             
     except Exception as e:
         import traceback

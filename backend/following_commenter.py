@@ -10,6 +10,7 @@ import requests
 import random
 import os
 from article_utils import get_article_full_attributes
+from model_adapter import call_model
 
 CONFIG_FILE = 'config.json'
 FOLLOWING_LIST_FILE = 'following_list.json'
@@ -107,35 +108,24 @@ def get_user_posts(user_uid, cookie_str, max_posts=10):
     return all_posts[:max_posts]
 
 
-def generate_comment_with_ai(article_title, article_content, api_key):
+def generate_comment_with_ai(article_title, article_content, api_key, selected_model='ark', base_url=None, secret_key=None, model_name=None):
     """使用AI API生成评论，使用文章标题和内容"""
-    api_url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
     
     # 构建提示词，包含文章标题和内容
     content_preview = article_content[:500] if article_content else ""
     prompt = f"你是资深投资者，写1-2句理性雪球评论，专业简洁。文章标题：{article_title} 内容：{content_preview} 评论："
     
-    payload = {
-        "model": "doubao-seed-2-0-pro-260215",
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        "temperature": 0.7
-    }
-    
     try:
-        response = requests.post(api_url, headers=headers, json=payload, timeout=30.0)
-        response.raise_for_status()
-        result = response.json()
-        comment = result['choices'][0]['message']['content'].strip()
-        return comment
+        content, _ = call_model(
+            model_type=selected_model,
+            api_key=api_key,
+            prompt=prompt,
+            post_type='comment',
+            base_url=base_url,
+            secret_key=secret_key,
+            model_name=model_name
+        )
+        return content.strip()
     except Exception as e:
         print(f"  生成评论失败: {str(e)}")
         return "分析到位，学习了"
@@ -301,19 +291,30 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
     selected_model = config.get('selectedModel', 'ark')
     models = config.get('models', {})
     
-    # 根据选中的模型获取API Key
+    # 根据选中的模型获取API Key、base_url、secret_key和model_name
+    api_key = None
+    base_url = None
+    secret_key = None
+    model_name = None
+    
     if selected_model == 'ark':
         api_key = models.get('ark', {}).get('apiKey')
     elif selected_model == 'openai':
         api_key = models.get('openai', {}).get('apiKey')
+        base_url = models.get('openai', {}).get('baseUrl')
     elif selected_model == 'baidu':
         api_key = models.get('baidu', {}).get('apiKey')
+        secret_key = models.get('baidu', {}).get('secretKey')
     elif selected_model == 'alibaba':
         api_key = models.get('alibaba', {}).get('apiKey')
+        base_url = models.get('alibaba', {}).get('baseUrl')
     elif selected_model == 'deepseek':
         api_key = models.get('deepseek', {}).get('apiKey')
+        base_url = models.get('deepseek', {}).get('baseUrl')
     elif selected_model == 'gemini':
         api_key = models.get('gemini', {}).get('apiKey')
+        base_url = models.get('gemini', {}).get('baseUrl')
+        model_name = models.get('gemini', {}).get('modelName')
     else:
         api_key = None
     
@@ -440,7 +441,15 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
                 article_content = article_info['内容']
                 
                 add_log("  生成评论...")
-                comment = generate_comment_with_ai(article_title, article_content, api_key)
+                comment = generate_comment_with_ai(
+                    article_title, 
+                    article_content, 
+                    api_key, 
+                    selected_model=selected_model, 
+                    base_url=base_url, 
+                    secret_key=secret_key,
+                    model_name=model_name
+                )
                 add_log(f"  评论: {comment}")
                 
                 # 发布评论
