@@ -61,8 +61,20 @@ class XueQiuCommenter:
         prompt = f"你是资深投资者，写1-2句理性雪球评论，专业简洁。文章：{title} 内容：{text[:500]} 评论："
         try:
             self.add_log('info', f'正在使用 {self.model_type} 模型生成评论...')
-            content, _ = call_model(self.model_type, self.ark_api_key, prompt, 'comment')
-            return content.strip()
+            content, _ = call_model(
+                self.model_type, 
+                self.ark_api_key, 
+                prompt, 
+                'comment',
+                operation_type='评论器评论',
+                default_prompt=prompt
+            )
+            content = content.strip()
+            # 检查返回的内容是否为空
+            if not content:
+                self.add_log('warning', '模型返回空内容，使用默认评论')
+                return "分析到位，学习了"
+            return content
         except Exception as e:
             self.add_log('error', f'生成评论失败: {str(e)}')
             return "分析到位，学习了"
@@ -92,13 +104,49 @@ class XueQiuCommenter:
     
     def fetch_hot_articles(self):
         """抓取雪球热门文章，使用多个API端点"""
-        headers = {
-            "Cookie": self.xueqiu_cookie,
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
-            "Accept": "application/json",
-            "Referer": "https://xueqiu.com",
-            "X-Requested-With": "XMLHttpRequest"
+        session = requests.Session()
+        
+        # 步骤1：访问首页建立会话
+        home_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
         }
+        if self.xueqiu_cookie:
+            home_headers["Cookie"] = self.xueqiu_cookie
+        
+        session.get("https://xueqiu.com/", headers=home_headers, timeout=10)
+        time.sleep(0.5)
+        
+        # 步骤2：访问热门页面
+        hot_page_headers = home_headers.copy()
+        hot_page_headers["Referer"] = "https://xueqiu.com/"
+        session.get("https://xueqiu.com/hot", headers=hot_page_headers, timeout=10)
+        time.sleep(0.5)
+        
+        # 步骤3：获取API数据
+        api_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://xueqiu.com/hot",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://xueqiu.com",
+            "Sec-Ch-Ua": '"Chromium";v="120", "Google Chrome";v="120", "Not A Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"macOS"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        }
+        if self.xueqiu_cookie:
+            api_headers["Cookie"] = self.xueqiu_cookie
         
         # 使用多个API端点来获取更多文章
         apis = [
@@ -131,13 +179,16 @@ class XueQiuCommenter:
                 params["max_id"] = self.current_max_id
             
             try:
-                resp = requests.get(url, headers=headers, params=params, timeout=10.0)
-                resp.raise_for_status()
+                resp = session.get(url, headers=api_headers, params=params, timeout=10.0)
                 
                 # 打印响应内容以便调试
                 self.add_log('info', f'API响应状态码: {resp.status_code}')
                 
-                data = resp.json()
+                if resp.text.strip().startswith('{'):
+                    data = resp.json()
+                else:
+                    self.add_log('error', f'响应不是JSON: {resp.text[:200]}')
+                    continue
                 
                 # 保存响应到文件
                 with open(f"{api['name'].replace(' ', '_')}_articles.json", "w", encoding="utf-8") as f:
@@ -172,12 +223,10 @@ class XueQiuCommenter:
                             user = article.get("user", {})
                             user_id = str(user.get("id", ""))
                             
-                            all_articles.append({
-                                "id": article_id,
-                                "title": article.get("title"),
-                                "text": article.get("description", ""),
-                                "user_id": user_id
-                            })
+                            # 保留完整的文章数据，用于 get_article_full_attributes
+                            article_copy = article.copy()
+                            article_copy["user_id"] = user_id
+                            all_articles.append(article_copy)
                 elif "list" in data:
                     # 公共时间线API格式
                     items = data.get("list", [])
@@ -197,12 +246,10 @@ class XueQiuCommenter:
                                 # 提取作者UID
                                 user_id = str(article_data.get("user_id", ""))
                                 
-                                all_articles.append({
-                                    "id": article_id,
-                                    "title": article_data.get("title", article_data.get("text", "无标题")),
-                                    "text": article_data.get("description", article_data.get("text", "")),
-                                    "user_id": user_id
-                                })
+                                # 保留完整的文章数据
+                                article_copy = article_data.copy()
+                                article_copy["user_id"] = user_id
+                                all_articles.append(article_copy)
                             except Exception as e:
                                 self.add_log('error', f'解析文章数据失败: {str(e)}')
                                 pass
@@ -300,13 +347,47 @@ class XueQiuCommenter:
     
     def fetch_recommend_articles(self):
         """抓取雪球推荐文章，使用推荐流API"""
-        headers = {
-            "Cookie": self.xueqiu_cookie,
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
-            "Accept": "application/json",
-            "Referer": "https://xueqiu.com",
-            "X-Requested-With": "XMLHttpRequest"
+        session = requests.Session()
+        
+        # 步骤1：访问首页建立会话
+        home_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
         }
+        if self.xueqiu_cookie:
+            home_headers["Cookie"] = self.xueqiu_cookie
+        
+        session.get("https://xueqiu.com/", headers=home_headers, timeout=10)
+        time.sleep(0.5)
+        
+        # 步骤2：访问首页获取推荐
+        session.get("https://xueqiu.com/", headers=home_headers, timeout=10)
+        time.sleep(0.5)
+        
+        # 步骤3：获取API数据
+        api_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://xueqiu.com/",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://xueqiu.com",
+            "Sec-Ch-Ua": '"Chromium";v="120", "Google Chrome";v="120", "Not A Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"macOS"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        }
+        if self.xueqiu_cookie:
+            api_headers["Cookie"] = self.xueqiu_cookie
         
         # 使用推荐流API
         apis = [
@@ -330,10 +411,10 @@ class XueQiuCommenter:
             params = api['params']
             
             try:
-                resp = requests.get(url, headers=headers, params=params, timeout=10.0)
+                resp = session.get(url, headers=api_headers, params=params, timeout=10.0)
                 self.add_log('info', f'API响应状态码: {resp.status_code}')
                 
-                if resp.status_code == 200:
+                if resp.text.strip().startswith('{'):
                     data = resp.json()
                     
                     # 保存响应到文件
@@ -362,16 +443,10 @@ class XueQiuCommenter:
                             user = item.get("user", {})
                             user_id = str(user.get("id", ""))
                             
-                            # 提取文章信息
-                            title = item.get("title", item.get("text", "无标题"))[:100]
-                            text = item.get("text", item.get("description", ""))
-                            
-                            all_articles.append({
-                                "id": article_id,
-                                "title": title,
-                                "text": text,
-                                "user_id": user_id
-                            })
+                            # 保留完整的文章数据
+                            article_copy = item.copy()
+                            article_copy["user_id"] = user_id
+                            all_articles.append(article_copy)
                     elif "list" in data:
                         # 公开推荐流API格式
                         items = data.get("list", [])
@@ -397,23 +472,17 @@ class XueQiuCommenter:
                                     # 提取作者UID
                                     user_id = str(article_data.get("user_id", ""))
                                     
-                                    # 提取文章信息
-                                    title = article_data.get("title", article_data.get("text", "无标题"))[:100]
-                                    text = article_data.get("description", article_data.get("text", ""))
-                                    
-                                    all_articles.append({
-                                        "id": article_id,
-                                        "title": title,
-                                        "text": text,
-                                        "user_id": user_id
-                                    })
+                                    # 保留完整的文章数据
+                                    article_copy = article_data.copy()
+                                    article_copy["user_id"] = user_id
+                                    all_articles.append(article_copy)
                                 except Exception as e:
                                     self.add_log('error', f'解析文章数据失败: {str(e)}')
                                     pass
                     else:
                         self.add_log('warning', f'未知的响应结构: {list(data.keys())}')
                 else:
-                    self.add_log('error', f'API请求失败，状态码: {resp.status_code}')
+                    self.add_log('error', f'响应不是JSON')
             except Exception as e:
                 self.add_log('error', f'抓取文章失败: {str(e)}')
         

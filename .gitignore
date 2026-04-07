@@ -1,33 +1,37 @@
-# 配置文件（包含敏感信息）
-backend/config.json
-
-# 数据文件
-backend/following_list.json
-backend/*_articles.json
+# Logs
+logs/
+*.log
 data/
 
-# 测试生成的文件
+# Temporary files
+backend/temp/
+*.pyc
+__pycache__/
+
+# Configuration files with sensitive data
+backend/config/users.json
+backend/config/defaultConfig.json
+backend/config/personas.json
+backend/config/system_prompts.json
+
+# Temporary JSON files in backend/
+backend/*_articles.json
+backend/*page.html
+backend/test_topic.py
+
+# Test temporary files
 test/*.json
 test/*.html
-backend/*.html
-backend/test_*.py
 
-# Python 缓存
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-
-# IDE 配置
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# 系统文件
+# OS
 .DS_Store
 Thumbs.db
 
-# 日志文件
-*.log
+# Test results
+test/test_results.json

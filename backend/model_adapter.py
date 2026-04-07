@@ -7,6 +7,60 @@
 import time
 import requests
 import re
+import os
+import json
+from datetime import datetime
+
+LOGS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOGS_DIR, 'model_operations.json')
+
+def log_model_operation(operation_type, model_type, prompt, response_content, duration_seconds, 
+                         default_prompt=None, temperature=None, max_tokens=None, extra_info=None):
+    """
+    记录模型操作日志
+    
+    Args:
+        operation_type: 操作类型（如：生成文章、评论、分析文章等）
+        model_type: 模型类型
+        prompt: 提交的提示词
+        response_content: 模型返回的内容
+        duration_seconds: 调用时长（秒）
+        default_prompt: 默认提示词（可选）
+        temperature: 温度值（可选）
+        max_tokens: 最大token数（可选）
+        extra_info: 额外信息（可选，字典格式）
+    """
+    try:
+        log_entry = {
+            "id": str(int(time.time() * 1000000)),
+            "timestamp": datetime.now().isoformat(),
+            "operation_type": operation_type,
+            "model_type": model_type,
+            "prompt_length": len(prompt),
+            "response_length": len(response_content),
+            "duration_seconds": round(duration_seconds, 3),
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "default_prompt": default_prompt,
+            "extra_info": extra_info or {}
+        }
+        
+        logs = []
+        if os.path.exists(LOG_FILE):
+            try:
+                with open(LOG_FILE, 'r', encoding='utf-8') as f:
+                    logs = json.load(f)
+            except:
+                logs = []
+        
+        logs.insert(0, log_entry)
+        
+        with open(LOG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(logs, f, ensure_ascii=False, indent=2)
+            
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 记录模型操作日志失败: {e}")
 
 # 模型配置
 MODEL_CONFIGS = {
@@ -443,7 +497,7 @@ def call_ark_api_with_logs(api_key, prompt, task_name='分析文章'):
         print(f"[{time.strftime('%H:%M:%S')}] ========== Ark API 调用失败 ==========\n")
         raise
 
-def call_model(model_type, api_key, prompt, post_type='discussion', extra_config=None, secret_key=None, base_url=None, model_name=None):
+def call_model(model_type, api_key, prompt, post_type='discussion', extra_config=None, secret_key=None, base_url=None, model_name=None, max_tokens=None, temperature=None, operation_type=None, default_prompt=None):
     """
     统一模型调用接口
     
@@ -456,10 +510,15 @@ def call_model(model_type, api_key, prompt, post_type='discussion', extra_config
         secret_key: 百度API的secret_key
         base_url: 自定义API基础URL
         model_name: 自定义模型名称（如 gemini-2.5-flash）
+        max_tokens: 自定义最大token数
+        temperature: 自定义温度值
+        operation_type: 操作类型（用于日志记录）
+        default_prompt: 默认提示词（用于日志记录）
     
     Returns:
         (content, title): 返回内容和标题（如果是article类型）
     """
+    start_time = time.time()
     print(f"[{time.strftime('%H:%M:%S')}] ========== 调用模型: {model_type} ==========")
     print(f"[{time.strftime('%H:%M:%S')}] 内容类型: {post_type}")
     print(f"[{time.strftime('%H:%M:%S')}] 提交的提示词长度: {len(prompt)} 字符")
@@ -467,12 +526,23 @@ def call_model(model_type, api_key, prompt, post_type='discussion', extra_config
     print(f"[{time.strftime('%H:%M:%S')}] base_url: {base_url or '使用默认'}")
     if model_name:
         print(f"[{time.strftime('%H:%M:%S')}] model_name: {model_name}")
+    if max_tokens:
+        print(f"[{time.strftime('%H:%M:%S')}] max_tokens: {max_tokens}")
+    if temperature:
+        print(f"[{time.strftime('%H:%M:%S')}] temperature: {temperature}")
     
     config = MODEL_CONFIGS.get(model_type, MODEL_CONFIGS['ark']).copy()
     if model_name:
         config['model_name'] = model_name
     if extra_config:
         config.update(extra_config)
+    if max_tokens:
+        config['max_tokens_article'] = max_tokens
+        config['max_tokens_comment'] = max_tokens
+        config['max_tokens_discussion'] = max_tokens
+        config['max_tokens_analysis'] = max_tokens
+    if temperature:
+        config['temperature'] = temperature
     
     if model_type == 'ark':
         print(f"[{time.strftime('%H:%M:%S')}] 执行 _call_ark")
@@ -492,16 +562,35 @@ def call_model(model_type, api_key, prompt, post_type='discussion', extra_config
     elif model_type == 'gemini':
         print(f"[{time.strftime('%H:%M:%S')}] 执行 _call_gemini")
         result = _call_gemini(config, api_key, prompt, post_type, base_url)
+    elif model_type == 'claude':
+        print(f"[{time.strftime('%H:%M:%S')}] 执行 _call_openai (claude)")
+        result = _call_openai(config, api_key, prompt, post_type, base_url)
     else:
         print(f"[{time.strftime('%H:%M:%S')}] 未知模型类型，默认使用 _call_ark")
         result = _call_ark(config, api_key, prompt, post_type)
     
     content, title = result
+    duration = time.time() - start_time
     print(f"[{time.strftime('%H:%M:%S')}] 模型返回内容长度: {len(content)} 字符")
     print(f"[{time.strftime('%H:%M:%S')}] 模型返回内容前200字符: {content[:200]}...")
+    print(f"[{time.strftime('%H:%M:%S')}] 调用时长: {duration:.2f} 秒")
     if title:
         print(f"[{time.strftime('%H:%M:%S')}] 标题: {title}")
     print(f"[{time.strftime('%H:%M:%S')}] ========== 模型调用完成: {model_type} ==========\n")
+    
+    if operation_type:
+        log_model_operation(
+            operation_type=operation_type,
+            model_type=model_type,
+            prompt=prompt,
+            response_content=content,
+            duration_seconds=duration,
+            default_prompt=default_prompt,
+            temperature=temperature or config.get('temperature'),
+            max_tokens=max_tokens,
+            extra_info={"post_type": post_type, "title": title}
+        )
+    
     return result
 
 def get_model_config(model_type):

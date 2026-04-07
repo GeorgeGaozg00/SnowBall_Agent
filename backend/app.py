@@ -4,12 +4,20 @@ from commenter import XueQiuCommenter
 from following_fetcher import FollowingListFetcher
 from following_commenter import process_following_comments
 from model_adapter import call_model, call_ark_api_with_logs
+from topic_fetcher import get_topic_articles
+from reward_fetcher import get_reward_articles
 import threading
 import time
 import os
 import json
 import uuid
 import requests
+
+# 全局禁用代理
+os.environ['HTTP_PROXY'] = ''
+os.environ['HTTPS_PROXY'] = ''
+os.environ['http_proxy'] = ''
+os.environ['https_proxy'] = ''
 
 app = Flask(__name__, static_folder='..', static_url_path='')
 CORS(app)  # 启用CORS，允许跨域请求
@@ -35,10 +43,32 @@ following_comments_status = {
     'failedAttempts': 0
 }
 
+# 话题评论相关全局变量
+topic_comments_instance = None
+topic_comments_lock = threading.Lock()
+topic_comments_logs = []
+topic_comments_status = {
+    'isRunning': False,
+    'processedArticles': 0,
+    'successComments': 0,
+    'failedAttempts': 0
+}
+
+# 悬赏评论相关全局变量
+reward_comments_instance = None
+reward_comments_lock = threading.Lock()
+reward_comments_logs = []
+reward_comments_status = {
+    'isRunning': False,
+    'processedArticles': 0,
+    'successComments': 0,
+    'failedAttempts': 0
+}
+
 # 用户管理相关函数
 def load_users():
     """加载用户配置"""
-    users_file = 'users.json'
+    users_file = os.path.join(os.path.dirname(__file__), 'config', 'users.json')
     if os.path.exists(users_file):
         with open(users_file, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -46,7 +76,7 @@ def load_users():
 
 def save_users(users_data):
     """保存用户配置"""
-    users_file = 'users.json'
+    users_file = os.path.join(os.path.dirname(__file__), 'config', 'users.json')
     with open(users_file, 'w', encoding='utf-8') as f:
         json.dump(users_data, f, ensure_ascii=False, indent=2)
 
@@ -722,6 +752,106 @@ class FollowingCommenterTask:
         """检查是否已停止"""
         return self._stop_event.is_set()
 
+class TopicCommenterTask:
+    """话题评论任务管理器"""
+    def __init__(self):
+        self.is_running = False
+        self._stop_event = threading.Event()
+        self._thread = None
+    
+    def start(self, article_ids, selected_model, models_config, articles, log_callback):
+        """启动任务"""
+        self.is_running = True
+        self._stop_event.clear()
+        
+        def process_task():
+            try:
+                result = process_topic_comments(
+                    article_ids=article_ids,
+                    selected_model=selected_model,
+                    models_config=models_config,
+                    articles=articles,
+                    log_callback=log_callback,
+                    stop_event=self._stop_event
+                )
+                topic_comments_status['processedArticles'] = result['totalArticles']
+                topic_comments_status['successComments'] = result['successCount']
+                topic_comments_status['failedAttempts'] = result['failedCount']
+            except Exception as e:
+                error_log = {
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'处理失败: {str(e)}',
+                    'type': 'error'
+                }
+                topic_comments_logs.append(error_log)
+            finally:
+                self.is_running = False
+                topic_comments_status['isRunning'] = False
+        
+        self._thread = threading.Thread(target=process_task)
+        self._thread.daemon = True
+        self._thread.start()
+    
+    def stop(self):
+        """停止任务"""
+        self._stop_event.set()
+        self.is_running = False
+        topic_comments_status['isRunning'] = False
+    
+    def is_stopped(self):
+        """检查是否已停止"""
+        return self._stop_event.is_set()
+
+class RewardCommenterTask:
+    """悬赏评论任务管理器"""
+    def __init__(self):
+        self.is_running = False
+        self._stop_event = threading.Event()
+        self._thread = None
+    
+    def start(self, article_ids, selected_model, models_config, articles, log_callback):
+        """启动任务"""
+        self.is_running = True
+        self._stop_event.clear()
+        
+        def process_task():
+            try:
+                result = process_reward_comments(
+                    article_ids=article_ids,
+                    selected_model=selected_model,
+                    models_config=models_config,
+                    articles=articles,
+                    log_callback=log_callback,
+                    stop_event=self._stop_event
+                )
+                reward_comments_status['processedArticles'] = result['totalArticles']
+                reward_comments_status['successComments'] = result['successCount']
+                reward_comments_status['failedAttempts'] = result['failedCount']
+            except Exception as e:
+                error_log = {
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'处理失败: {str(e)}',
+                    'type': 'error'
+                }
+                reward_comments_logs.append(error_log)
+            finally:
+                self.is_running = False
+                reward_comments_status['isRunning'] = False
+        
+        self._thread = threading.Thread(target=process_task)
+        self._thread.daemon = True
+        self._thread.start()
+    
+    def stop(self):
+        """停止任务"""
+        self._stop_event.set()
+        self.is_running = False
+        reward_comments_status['isRunning'] = False
+    
+    def is_stopped(self):
+        """检查是否已停止"""
+        return self._stop_event.is_set()
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """健康检查接口"""
@@ -896,21 +1026,52 @@ def stop_commenting():
 def get_run_status():
     """获取运行状态和日志"""
     global commenter_instance, following_commenter_instance, following_comments_logs, following_comments_status
+    global topic_comments_instance, topic_comments_logs, topic_comments_status
+    global reward_comments_instance, reward_comments_logs, reward_comments_status
     
     try:
-        # 检查热门帖/推荐帖评论任务状态（优先检查正在运行的任务）
+        # 检查话题评论任务状态（最高优先级）
+        topic_commenter = None
+        with topic_comments_lock:
+            topic_commenter = topic_comments_instance
+        
+        if topic_commenter and topic_commenter.is_running:
+            return jsonify({
+                "success": True,
+                "isRunning": True,
+                "taskType": "topic",
+                "data": topic_comments_status,
+                "logs": topic_comments_logs[-50:],
+                "message": "获取运行状态成功"
+            })
+        
+        # 检查悬赏评论任务状态
+        reward_commenter = None
+        with reward_comments_lock:
+            reward_commenter = reward_comments_instance
+        
+        if reward_commenter and reward_commenter.is_running:
+            return jsonify({
+                "success": True,
+                "isRunning": True,
+                "taskType": "reward",
+                "data": reward_comments_status,
+                "logs": reward_comments_logs[-50:],
+                "message": "获取运行状态成功"
+            })
+        
+        # 检查热门帖/推荐帖评论任务状态
         commenter = None
         with commenter_lock:
             commenter = commenter_instance
         
-        # 如果热门帖/推荐帖任务正在运行，返回其状态
         if commenter and commenter.is_running:
             return jsonify({
                 "success": True,
                 "isRunning": True,
                 "taskType": "commenting",
                 "data": commenter.get_stats(),
-                "logs": commenter.get_logs()[-20:],  # 返回最近20条日志
+                "logs": commenter.get_logs()[-50:],
                 "message": "获取运行状态成功"
             })
         
@@ -919,40 +1080,61 @@ def get_run_status():
         with following_commenter_lock:
             following_commenter = following_commenter_instance
         
-        # 如果关注者评论任务正在运行，返回其状态
         if following_commenter and following_commenter.is_running:
             return jsonify({
                 "success": True,
                 "isRunning": True,
                 "taskType": "following",
                 "data": following_comments_status,
-                "logs": following_comments_logs[-20:],  # 返回最近20条日志
+                "logs": following_comments_logs[-50:],
                 "message": "获取运行状态成功"
             })
         
-        # 如果关注者评论任务存在但已停止，仍然返回其状态（用于显示最终结果）
+        # 检查已停止的任务（话题评论）
+        if topic_commenter:
+            return jsonify({
+                "success": True,
+                "isRunning": False,
+                "taskType": "topic",
+                "data": topic_comments_status,
+                "logs": topic_comments_logs[-50:],
+                "message": "获取运行状态成功"
+            })
+        
+        # 检查已停止的任务（悬赏评论）
+        if reward_commenter:
+            return jsonify({
+                "success": True,
+                "isRunning": False,
+                "taskType": "reward",
+                "data": reward_comments_status,
+                "logs": reward_comments_logs[-50:],
+                "message": "获取运行状态成功"
+            })
+        
+        # 检查已停止的任务（关注者评论）
         if following_commenter:
             return jsonify({
                 "success": True,
                 "isRunning": False,
                 "taskType": "following",
                 "data": following_comments_status,
-                "logs": following_comments_logs[-20:],  # 返回最近20条日志
+                "logs": following_comments_logs[-50:],
                 "message": "获取运行状态成功"
             })
         
-        # 如果热门帖/推荐帖任务存在但已停止，仍然返回其状态
+        # 检查已停止的任务（热门帖/推荐帖）
         if commenter:
             return jsonify({
                 "success": True,
                 "isRunning": False,
                 "taskType": "commenting",
                 "data": commenter.get_stats(),
-                "logs": commenter.get_logs()[-20:],  # 返回最近20条日志
+                "logs": commenter.get_logs()[-50:],
                 "message": "获取运行状态成功"
             })
         
-        # 如果没有运行中的任务，也没有评论器实例，返回空状态
+        # 如果没有任务，返回空状态
         return jsonify({
             "success": True,
             "isRunning": False,
@@ -1011,7 +1193,7 @@ def get_following_list():
         following_text = fetcher.get_following_list_text(user_id)
         
         # 保存到本地文件
-        following_file = os.path.join(os.path.dirname(__file__), 'following_list.json')
+        following_file = os.path.join(os.path.dirname(__file__), 'config', 'following_list.json')
         with open(following_file, 'w', encoding='utf-8') as f:
             json.dump({
                 'userId': user_id,
@@ -1041,7 +1223,7 @@ def get_following_list():
 def check_following_cache():
     """检查本地缓存的关注列表"""
     try:
-        following_file = os.path.join(os.path.dirname(__file__), 'following_list.json')
+        following_file = os.path.join(os.path.dirname(__file__), 'config', 'following_list.json')
         
         if os.path.exists(following_file):
             with open(following_file, 'r', encoding='utf-8') as f:
@@ -1109,7 +1291,7 @@ def get_following_list_api():
         following_list = fetcher.get_following_list_formatted(user_id)
         
         # 保存到本地文件
-        following_file = os.path.join(os.path.dirname(__file__), 'following_list.json')
+        following_file = os.path.join(os.path.dirname(__file__), 'config', 'following_list.json')
         with open(following_file, 'w', encoding='utf-8') as f:
             json.dump({
                 'userId': user_id,
@@ -1135,30 +1317,147 @@ def get_following_list_api():
             "message": f"获取关注列表失败: {str(e)}"
         }), 500
 
-@app.route('/api/config', methods=['GET'])
-def load_config():
-    """加载配置文件"""
+@app.route('/api/following-config', methods=['GET'])
+def get_following_config():
+    """获取关注列表配置"""
     try:
-        config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+        following_file = os.path.join(os.path.dirname(__file__), 'config', 'following_list.json')
         
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config_data = json.load(f)
+        if os.path.exists(following_file):
+            with open(following_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
             
             return jsonify({
                 "success": True,
-                "exists": True,
-                "data": config_data,
-                "message": "配置加载成功"
+                "data": data,
+                "message": "获取关注列表配置成功"
             })
         else:
             return jsonify({
                 "success": True,
-                "exists": False,
-                "data": {},
-                "message": "配置文件不存在，将使用默认配置"
+                "data": {
+                    "followingList": [],
+                    "updatedAt": ""
+                },
+                "message": "暂无关注列表数据"
             })
             
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取关注列表配置失败: {str(e)}"
+        }), 500
+
+@app.route('/api/following-config', methods=['POST'])
+def save_following_config():
+    """保存关注列表配置"""
+    try:
+        data = request.json
+        
+        following_file = os.path.join(os.path.dirname(__file__), 'config', 'following_list.json')
+        
+        with open(following_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                "followingList": data.get("followingList", []),
+                "updatedAt": time.strftime('%Y-%m-%d %H:%M:%S')
+            }, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "message": "保存关注列表配置成功"
+        })
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"保存关注列表配置失败: {str(e)}"
+        }), 500
+
+@app.route('/api/toggle-important', methods=['POST'])
+def toggle_important():
+    """切换用户的重点关注状态"""
+    try:
+        data = request.json
+        user_uid = data.get("uid")
+        
+        if not user_uid:
+            return jsonify({
+                "success": False,
+                "message": "用户UID不能为空"
+            }), 400
+        
+        following_file = os.path.join(os.path.dirname(__file__), 'config', 'following_list.json')
+        
+        if os.path.exists(following_file):
+            with open(following_file, 'r', encoding='utf-8') as f:
+                following_data = json.load(f)
+        else:
+            following_data = {
+                "followingList": [],
+                "updatedAt": ""
+            }
+        
+        following_list = following_data.get("followingList", [])
+        
+        user_found = False
+        for user in following_list:
+            if str(user.get("uid")) == str(user_uid):
+                user["isImportant"] = not user.get("isImportant", False)
+                user_found = True
+                break
+        
+        if not user_found:
+            return jsonify({
+                "success": False,
+                "message": "未找到该用户"
+            }), 404
+        
+        following_data["updatedAt"] = time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        with open(following_file, 'w', encoding='utf-8') as f:
+            json.dump(following_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "uid": user_uid,
+                "isImportant": user.get("isImportant", False)
+            },
+            "message": "切换重点关注状态成功"
+        })
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"切换重点关注状态失败: {str(e)}"
+        }), 500
+
+def load_config():
+    """加载配置文件（内部使用，返回原始数据）"""
+    try:
+        config_file = os.path.join(os.path.dirname(__file__), 'config', 'defaultConfig.json')
+        
+        if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            return {}
+            
+    except Exception as e:
+        print(f"加载配置失败: {str(e)}")
+        return {}
+
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    """获取配置（API端点）"""
+    try:
+        config_data = load_config()
+        return jsonify({
+            "success": True,
+            "exists": bool(config_data),
+            "data": config_data,
+            "message": "配置加载成功"
+        })
     except Exception as e:
         return jsonify({
             "success": False,
@@ -1177,7 +1476,7 @@ def save_config():
                 "message": "配置数据不能为空"
             }), 400
         
-        config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+        config_file = os.path.join(os.path.dirname(__file__), 'config', 'defaultConfig.json')
         
         with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -1268,6 +1567,31 @@ def start_following_comments():
             "message": f"启动关注者评论任务失败: {str(e)}"
         }), 500
 
+@app.route('/api/stop-following-comments', methods=['POST'])
+def stop_following_comments():
+    """停止关注者评论任务"""
+    global following_commenter_instance
+    
+    try:
+        with following_commenter_lock:
+            if following_commenter_instance:
+                following_commenter_instance.stop()
+                following_comments_status['isRunning'] = False
+                return jsonify({
+                    "success": True,
+                    "message": "关注者评论任务已停止"
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "没有运行中的关注者评论任务"
+                }), 400
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"停止关注者评论任务失败: {str(e)}"
+        }), 500
+
 @app.route('/api/generate-prompt', methods=['POST'])
 def generate_prompt():
     """生成详细提示词（第一轮）"""
@@ -1337,7 +1661,11 @@ def generate_prompt():
             'discussion',
             secret_key=models.get(selected_model, {}).get('secretKey'),
             base_url=models.get(selected_model, {}).get('baseUrl'),
-            model_name=models.get(selected_model, {}).get('modelName')
+            model_name=models.get(selected_model, {}).get('modelName'),
+            max_tokens=models.get(selected_model, {}).get('maxTokens'),
+            temperature=models.get(selected_model, {}).get('temperature'),
+            operation_type='生成详细提示词',
+            default_prompt=prompt
         )
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第一轮】详细提示词生成成功")
@@ -1439,7 +1767,11 @@ def generate_content():
             post_type,
             secret_key=models.get(selected_model, {}).get('secretKey'),
             base_url=models.get(selected_model, {}).get('baseUrl'),
-            model_name=models.get(selected_model, {}).get('modelName')
+            model_name=models.get(selected_model, {}).get('modelName'),
+            max_tokens=models.get(selected_model, {}).get('maxTokens'),
+            temperature=models.get(selected_model, {}).get('temperature'),
+            operation_type='生成内容',
+            default_prompt=detailed_prompt
         )
         
         print(f"[{time.strftime('%H:%M:%S')}] 【第二轮】正式文章生成成功")
@@ -1922,7 +2254,7 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
 
 # 人设配置管理
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PERSONAS_FILE = os.path.join(BASE_DIR, 'personas.json')
+PERSONAS_FILE = os.path.join(BASE_DIR, 'config', 'personas.json')
 
 # 预制人设信息
 DEFAULT_PERSONAS = [
@@ -2178,7 +2510,7 @@ def save_personas_api():
         }), 500
 
 # 系统提示词配置
-SYSTEM_PROMPTS_FILE = os.path.join(os.path.dirname(__file__), 'system_prompts.json')
+SYSTEM_PROMPTS_FILE = os.path.join(os.path.dirname(__file__), 'config', 'system_prompts.json')
 
 def load_system_prompts():
     """加载系统提示词配置"""
@@ -2519,6 +2851,143 @@ def get_user_articles():
         print(f"[{time.strftime('%H:%M:%S')}] 获取用户文章失败: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route('/api/get-user-column-articles', methods=['POST'])
+def get_user_column_articles():
+    """获取指定用户的专栏文章列表"""
+    try:
+        data = request.get_json()
+        uid = data.get('uid')
+        count = data.get('count', 30)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 开始获取用户专栏文章，UID: {uid}, 数量: {count}")
+        
+        if not uid:
+            return jsonify({"success": False, "message": "缺少用户UID"}), 400
+        
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        if not default_user_id:
+            return jsonify({"success": False, "message": "没有设置默认用户"}), 400
+        
+        default_user = next((u for u in users_data.get("users", []) if u.get("id") == default_user_id), None)
+        if not default_user or not default_user.get("cookie"):
+            return jsonify({"success": False, "message": "默认用户未配置Cookie"}), 400
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 使用默认用户: {default_user.get('nickname')} 的Cookie")
+        
+        xueqiu_cookie = default_user.get("cookie")
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://xueqiu.com/",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest",
+            "Cookie": xueqiu_cookie
+        }
+        
+        session = requests.Session()
+        print(f"[{time.strftime('%H:%M:%S')}] 正在访问雪球首页建立会话...")
+        session.get("https://xueqiu.com/", headers=headers)
+        
+        all_articles = []
+        column_articles = []
+        page = 1
+        page_size = 20
+        max_pages = 50
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 开始深度搜索专栏文章，目标: {count}篇...")
+        
+        while page <= max_pages:
+            api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={uid}&page={page}&type=edit"
+            print(f"[{time.strftime('%H:%M:%S')}] 正在请求第{page}页文章...")
+            response = session.get(api_url, headers=headers)
+            
+            if response.status_code != 200:
+                print(f"[{time.strftime('%H:%M:%S')}] API请求失败，状态码: {response.status_code}")
+                break
+            
+            data = response.json()
+            articles = data.get("statuses", [])
+            
+            if not articles:
+                print(f"[{time.strftime('%H:%M:%S')}] 第{page}页没有更多文章了")
+                break
+                
+            all_articles.extend(articles)
+            
+            found_this_page = 0
+            for art in articles:
+                if art.get("is_column", False):
+                    column_articles.append(art)
+                    found_this_page += 1
+            
+            print(f"[{time.strftime('%H:%M:%S')}] 第{page}页获取 {len(articles)} 篇文章，找到 {found_this_page} 篇专栏文章，累计 {len(column_articles)} 篇专栏")
+            
+            if len(column_articles) >= count:
+                print(f"[{time.strftime('%H:%M:%S')}] 已找到足够的 {len(column_articles)} 篇专栏文章，停止搜索")
+                break
+                
+            if len(articles) < page_size:
+                print(f"[{time.strftime('%H:%M:%S')}] 第{page}页文章数量不足 {page_size} 篇，已到最后一页")
+                break
+                
+            page += 1
+            time.sleep(0.3)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 搜索结束，共获取 {len(all_articles)} 篇文章，筛选出 {len(column_articles)} 篇专栏文章")
+        
+        column_articles = column_articles[:count]
+        print(f"[{time.strftime('%H:%M:%S')}] 最终使用 {len(column_articles)} 篇专栏文章")
+        
+        result = []
+        for art in column_articles:
+            created_at = art.get("created_at")
+            created_time = ""
+            if created_at:
+                from datetime import datetime
+                created_time = datetime.fromtimestamp(created_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            
+            content = art.get("text", "") or art.get("description", "")
+            
+            offer = art.get("offer")
+            reward_info = {"type": "none", "amount": 0}
+            if offer and isinstance(offer, dict):
+                reward_info = {
+                    "type": "offer",
+                    "amount": round(offer.get("amount", 0) / 100, 2),
+                    "state": offer.get("state", "")
+                }
+            elif art.get("can_reward", False):
+                reward_info = {
+                    "type": "reward",
+                    "amount": round(art.get("reward_amount", 0) / 100, 2),
+                    "count": art.get("reward_count", 0)
+                }
+            
+            result.append({
+                "id": art.get("id"),
+                "title": art.get("title") or "无标题",
+                "content": content[:500] + "..." if len(content) > 500 else content,
+                "fullContent": content,
+                "like_count": art.get("like_count", 0),
+                "reply_count": art.get("reply_count", 0),
+                "retweet_count": art.get("retweet_count", 0),
+                "view_count": art.get("view_count", 0),
+                "fav_count": art.get("fav_count", 0),
+                "is_column": True,
+                "created_at": created_time,
+                "reward": reward_info
+            })
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 成功返回 {len(result)} 篇专栏文章数据")
+        return jsonify({"success": True, "articles": result, "count": len(result)})
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 获取用户专栏文章失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @app.route('/api/analyze-user-articles', methods=['POST'])
 def analyze_user_articles():
     """使用AI分析用户文章"""
@@ -2533,7 +3002,7 @@ def analyze_user_articles():
         if not articles:
             return jsonify({"success": False, "message": "没有文章数据"}), 400
         
-        config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+        config_file = os.path.join(os.path.dirname(__file__), 'config', 'defaultConfig.json')
         with open(config_file, 'r', encoding='utf-8') as f:
             config_data = json.load(f)
         
@@ -2629,7 +3098,11 @@ def analyze_user_articles():
             'analysis',
             secret_key=models_config.get(selected_model, {}).get('secretKey'),
             base_url=models_config.get(selected_model, {}).get('baseUrl'),
-            model_name=models_config.get(selected_model, {}).get('modelName')
+            model_name=models_config.get(selected_model, {}).get('modelName'),
+            max_tokens=models_config.get(selected_model, {}).get('maxTokens'),
+            temperature=models_config.get(selected_model, {}).get('temperature'),
+            operation_type='分析用户文章',
+            default_prompt=prompt
         )
         
         print(f"[{time.strftime('%H:%M:%S')}] 分析完成，结果长度: {len(analysis)} 字符")
@@ -2857,6 +3330,1780 @@ def get_hot_spots():
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+
+INVESTMENT_NOTES_FILE = os.path.join(BASE_DIR, '..', 'data', 'investment_notes.json')
+
+def load_investment_notes():
+    """加载投资笔记"""
+    try:
+        if os.path.exists(INVESTMENT_NOTES_FILE):
+            with open(INVESTMENT_NOTES_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {"investmentNotes": {}}
+    except Exception as e:
+        print(f"加载投资笔记失败: {e}")
+        return {"investmentNotes": {}}
+
+def save_investment_notes(data):
+    """保存投资笔记"""
+    try:
+        with open(INVESTMENT_NOTES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"保存投资笔记失败: {e}")
+        return False
+
+def get_article_stats(article_id, cookie):
+    """获取文章的详细属性和统计数据"""
+    try:
+        import requests
+        import time
+        
+        session = requests.Session()
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 正在模拟浏览器流程建立会话...")
+        
+        # 步骤1：访问首页建立会话
+        home_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        }
+        if cookie:
+            home_headers["Cookie"] = cookie
+        
+        session.get("https://xueqiu.com/", headers=home_headers, timeout=10)
+        time.sleep(0.5)
+        
+        # 步骤2：访问文章页面
+        article_page_headers = home_headers.copy()
+        article_page_headers["Referer"] = "https://xueqiu.com/"
+        article_page_url = f"https://xueqiu.com/1/{article_id}"
+        session.get(article_page_url, headers=article_page_headers, timeout=10)
+        time.sleep(0.5)
+        
+        # 步骤3：获取文章详情API
+        api_headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": article_page_url,
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://xueqiu.com",
+            "Sec-Ch-Ua": '"Chromium";v="120", "Google Chrome";v="120", "Not A Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"macOS"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        }
+        if cookie:
+            api_headers["Cookie"] = cookie
+        
+        api_url = f"https://xueqiu.com/statuses/show.json?id={article_id}"
+        print(f"[{time.strftime('%H:%M:%S')}] 获取文章ID {article_id} 的统计数据，API: {api_url}")
+        response = session.get(api_url, headers=api_headers, timeout=10)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] API响应状态码: {response.status_code}")
+        print(f"[{time.strftime('%H:%M:%S')}] API响应内容: {repr(response.text[:500])}")
+        
+        stats = {
+            "viewCount": 0,
+            "likeCount": 0,
+            "favCount": 0,
+            "replyCount": 0,
+            "retweetCount": 0,
+            "hasReward": False,
+            "rewardAmount": 0,
+            "rewardCount": 0,
+            "rewardExpired": False,
+            "rewardRemaining": 0,
+            "rewardState": ""
+        }
+        
+        if response.status_code == 200:
+            try:
+                # 检查是否是JSON响应
+                if response.text.strip().startswith('{'):
+                    data = response.json()
+                    print(f"[{time.strftime('%H:%M:%S')}] API返回数据: {json.dumps(data, ensure_ascii=False)[:800]}")
+                    
+                    if 'id' in data:
+                        status = data
+                        
+                        stats['viewCount'] = status.get('view_count', 0)
+                        stats['likeCount'] = status.get('like_count', 0)
+                        stats['favCount'] = status.get('fav_count', 0)
+                        stats['replyCount'] = status.get('reply_count', 0)
+                        stats['retweetCount'] = status.get('retweet_count', 0)
+                        
+                        offer = status.get("offer")
+                        if offer and isinstance(offer, dict):
+                            stats['hasReward'] = True
+                            stats['rewardAmount'] = round(offer.get("amount", 0) / 100, 2)
+                            stats['rewardRemaining'] = round(offer.get("balance", 0) / 100, 2)
+                            stats['rewardState'] = offer.get("state", "")
+                            stats['rewardExpired'] = offer.get("state", "") != "NORMAL"
+                            stats['rewardCount'] = offer.get("count", 0)
+                        elif status.get("reward", False) or status.get("can_reward", False):
+                            stats['hasReward'] = True
+                            stats['rewardAmount'] = round(status.get("reward_amount", 0) / 100, 2)
+                            stats['rewardRemaining'] = stats['rewardAmount']
+                            stats['rewardCount'] = status.get("reward_count", 0)
+                            stats['rewardExpired'] = False
+                else:
+                    print(f"[{time.strftime('%H:%M:%S')}] 响应不是JSON，可能是HTML")
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}] JSON解析失败: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 返回统计数据: {stats}")
+        return stats
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 获取文章统计数据失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "viewCount": 0,
+            "likeCount": 0,
+            "favCount": 0,
+            "replyCount": 0,
+            "retweetCount": 0,
+            "hasReward": False,
+            "rewardAmount": 0,
+            "rewardCount": 0,
+            "rewardExpired": False,
+            "rewardRemaining": 0,
+            "rewardState": ""
+        }
+
+@app.route('/api/investment-notes/list', methods=['GET'])
+def get_investment_notes():
+    """获取指定用户的投资笔记列表"""
+    try:
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        
+        if not default_user_id:
+            return jsonify({
+                "success": False,
+                "message": "请先配置用户并设置默认用户"
+            }), 400
+        
+        notes_data = load_investment_notes()
+        user_notes = notes_data.get("investmentNotes", {}).get(default_user_id, [])
+        
+        user_notes.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
+        
+        return jsonify({
+            "success": True,
+            "data": user_notes
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取投资笔记列表失败: {str(e)}"
+        }), 500
+
+@app.route('/api/investment-notes/stats', methods=['POST'])
+def get_note_stats():
+    """获取笔记的统计数据（阅读量、收藏量、点赞数）"""
+    try:
+        data = request.json
+        article_id = data.get('articleId')
+        
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        
+        if not default_user_id:
+            return jsonify({
+                "success": False,
+                "message": "请先配置用户并设置默认用户"
+            }), 400
+        
+        default_user = next((u for u in users_data.get("users", []) if u.get("id") == default_user_id), None)
+        if not default_user or not default_user.get("cookie"):
+            return jsonify({
+                "success": False,
+                "message": "默认用户cookie未配置"
+            }), 400
+        
+        cookie = default_user.get("cookie")
+        xueqiu_user_id = default_user.get("uid")
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 用户信息: UUID={default_user_id}, 雪球UID={xueqiu_user_id}")
+        
+        import requests
+        
+        session = requests.Session()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://xueqiu.com/",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest",
+            "Cookie": cookie
+        }
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 正在访问雪球首页建立会话...")
+        session.get("https://xueqiu.com/", headers=headers)
+        
+        stats = {
+            "viewCount": 0,
+            "likeCount": 0,
+            "favCount": 0,
+            "replyCount": 0,
+            "retweetCount": 0,
+            "hasReward": False,
+            "rewardAmount": 0,
+            "rewardCount": 0,
+            "rewardExpired": False
+        }
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 通过用户时间线API查找文章ID {article_id}...")
+        
+        page = 1
+        max_pages = 20
+        found = False
+        
+        while page <= max_pages and not found:
+            api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={xueqiu_user_id}&page={page}&type=edit"
+            print(f"[{time.strftime('%H:%M:%S')}] 请求第{page}页...")
+            response = session.get(api_url, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                articles = data.get("statuses", [])
+                
+                print(f"[{time.strftime('%H:%M:%S')}] 第{page}页获取到 {len(articles)} 篇文章")
+                
+                if not articles:
+                    print(f"[{time.strftime('%H:%M:%S')}] 第{page}页没有文章了，停止搜索")
+                    break
+                
+                for i, art in enumerate(articles):
+                    art_id = art.get("id")
+                    print(f"[{time.strftime('%H:%M:%S')}]   文章{i+1}: ID={art_id}, title={art.get('title', '无标题')[:30]}")
+                    
+                    if str(art_id) == str(article_id):
+                        print(f"[{time.strftime('%H:%M:%S')}] 找到文章了!")
+                        
+                        stats['viewCount'] = art.get('view_count', 0)
+                        stats['likeCount'] = art.get('like_count', 0)
+                        stats['favCount'] = art.get('fav_count', 0)
+                        stats['replyCount'] = art.get('reply_count', 0)
+                        stats['retweetCount'] = art.get('retweet_count', 0)
+                        
+                        print(f"[{time.strftime('%H:%M')}] 文章统计: view={stats['viewCount']}, like={stats['likeCount']}, fav={stats['favCount']}, reply={stats['replyCount']}, retweet={stats['retweetCount']}")
+                        
+                        offer = art.get("offer")
+                        if offer and isinstance(offer, dict):
+                            stats['hasReward'] = True
+                            stats['rewardAmount'] = round(offer.get("amount", 0) / 100, 2)
+                            stats['rewardExpired'] = offer.get("state", "") == "expired"
+                        elif art.get("reward", False) or art.get("can_reward", False):
+                            stats['hasReward'] = True
+                            stats['rewardAmount'] = round(art.get("reward_amount", 0) / 100, 2)
+                            stats['rewardCount'] = art.get("reward_count", 0)
+                            stats['rewardExpired'] = False
+                        
+                        found = True
+                        break
+                
+                if not found:
+                    page += 1
+                    time.sleep(0.3)
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] API请求失败，状态码: {response.status_code}")
+                break
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 返回统计数据: {stats}")
+        return jsonify({
+            "success": True,
+            "data": stats
+        })
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 获取笔记统计数据失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "message": f"获取笔记统计数据失败: {str(e)}"
+        }), 500
+
+@app.route('/api/investment-notes/save', methods=['POST'])
+def save_investment_note():
+    """保存投资笔记"""
+    try:
+        data = request.json
+        note = data.get('note')
+        
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        
+        if not default_user_id:
+            return jsonify({
+                "success": False,
+                "message": "请先配置用户并设置默认用户"
+            }), 400
+        
+        notes_data = load_investment_notes()
+        
+        if "investmentNotes" not in notes_data:
+            notes_data["investmentNotes"] = {}
+        
+        if default_user_id not in notes_data["investmentNotes"]:
+            notes_data["investmentNotes"][default_user_id] = []
+        
+        note['id'] = note.get('id', str(uuid.uuid4()))
+        note['createdAt'] = note.get('createdAt', time.strftime('%Y-%m-%d %H:%M:%S'))
+        note['updatedAt'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        existing_notes = notes_data["investmentNotes"][default_user_id]
+        
+        updated = False
+        for i, existing_note in enumerate(existing_notes):
+            if existing_note.get('id') == note.get('id'):
+                existing_notes[i] = note
+                updated = True
+                break
+        
+        if not updated:
+            existing_notes.append(note)
+        
+        if save_investment_notes(notes_data):
+            return jsonify({
+                "success": True,
+                "message": "保存成功",
+                "data": note
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "保存失败"
+            }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"保存投资笔记失败: {str(e)}"
+        }), 500
+
+@app.route('/api/investment-notes/generate', methods=['POST'])
+def generate_today_note():
+    """生成今日投资笔记"""
+    try:
+        print(f"[{time.strftime('%H:%M:%S')}] ========== 开始生成今日投资笔记 ==========")
+        data = request.json
+        
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        print(f"[{time.strftime('%H:%M:%S')}] 默认用户ID: {default_user_id}")
+        
+        if not default_user_id:
+            return jsonify({
+                "success": False,
+                "message": "请先配置用户并设置默认用户"
+            }), 400
+        
+        default_user = next((u for u in users_data.get("users", []) if u.get("id") == default_user_id), None)
+        if not default_user or not default_user.get("cookie"):
+            return jsonify({
+                "success": False,
+                "message": "默认用户cookie未配置"
+            }), 400
+        
+        notes_data = load_investment_notes()
+        user_notes = notes_data.get("investmentNotes", {}).get(default_user_id, [])
+        print(f"[{time.strftime('%H:%M:%S')}] 找到 {len(user_notes)} 篇历史笔记")
+        
+        from datetime import datetime, timedelta
+        
+        today = datetime.now()
+        five_days_ago = today - timedelta(days=5)
+        print(f"[{time.strftime('%H:%M:%S')}] 今天: {today.strftime('%Y-%m-%d')}, 5天前: {five_days_ago.strftime('%Y-%m-%d')}")
+        
+        recent_notes = []
+        for idx, note in enumerate(user_notes):
+            try:
+                created_at = note.get('createdAt', '')
+                print(f"[{time.strftime('%H:%M:%S')}] 处理笔记 {idx+1}: created_at={created_at}")
+                
+                note_date = None
+                # 尝试多种日期格式
+                date_formats = [
+                    '%Y-%m-%d %H:%M:%S',
+                    '%Y-%m-%dT%H:%M:%S',
+                    '%Y-%m-%d %H:%M',
+                    '%Y-%m-%d'
+                ]
+                
+                for fmt in date_formats:
+                    try:
+                        note_date = datetime.strptime(created_at, fmt)
+                        print(f"[{time.strftime('%H:%M:%S')}]   成功解析日期: {note_date}, 格式: {fmt}")
+                        break
+                    except ValueError:
+                        continue
+                
+                if note_date:
+                    if note_date >= five_days_ago:
+                        recent_notes.append({
+                            'id': note.get('id', ''),
+                            'title': note.get('title', ''),
+                            'content': note.get('content', '')
+                        })
+                        print(f"[{time.strftime('%H:%M:%S')}]   ✅ 加入最近笔记")
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}]   ❌ 日期太旧，跳过")
+                else:
+                    print(f"[{time.strftime('%H:%M:%S')}]   ⚠️ 日期解析失败，跳过")
+                    
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}]   ❌ 处理笔记异常: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 找到 {len(recent_notes)} 篇近5天的笔记")
+        
+        config = load_config()
+        models = config.get('models', {})
+        selected_model = config.get('selectedModel', 'ark')
+        print(f"[{time.strftime('%H:%M:%S')}] 选择的模型: {selected_model}")
+        
+        prompts = load_system_prompts()
+        default_prompt = next((p for p in prompts if p.get('isDefault')), None)
+        system_prompt_content = default_prompt.get('content', '') if default_prompt else ''
+        print(f"[{time.strftime('%H:%M:%S')}] 系统提示词长度: {len(system_prompt_content)}")
+        
+        if len(recent_notes) == 0:
+            print(f"[{time.strftime('%H:%M:%S')}] 没有最近笔记，使用默认提示词")
+            user_prompt = "请写一篇今日投资笔记，主题围绕当前市场行情和投资思考。"
+        else:
+            print(f"[{time.strftime('%H:%M:%S')}] 使用最近的 {len(recent_notes)} 篇笔记作为参考")
+            user_prompt = f"""请根据以下近5天的历史投资笔记，生成一篇新的今日投资笔记。
+            
+历史笔记：
+{json.dumps(recent_notes, ensure_ascii=False, indent=2)}
+
+请保持与历史笔记一致的风格和语气，生成一篇有深度、有见解的今日投资笔记。"""
+        
+        full_prompt = f"{system_prompt_content}\n\n{user_prompt}" if system_prompt_content else user_prompt
+        print(f"[{time.strftime('%H:%M:%S')}] 完整提示词长度: {len(full_prompt)}")
+        
+        api_key = models.get(selected_model, {}).get('apiKey')
+        secret_key = models.get(selected_model, {}).get('secretKey')
+        base_url = models.get(selected_model, {}).get('baseUrl')
+        model_name = models.get(selected_model, {}).get('modelName')
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 正在调用模型生成内容...")
+        generated_content, _ = call_model(
+            selected_model, 
+            api_key, 
+            full_prompt, 
+            'article',
+            secret_key=secret_key,
+            base_url=base_url,
+            model_name=model_name,
+            max_tokens=models.get(selected_model, {}).get('maxTokens'),
+            temperature=models.get(selected_model, {}).get('temperature'),
+            operation_type='生成今日投资笔记',
+            default_prompt=system_prompt_content
+        )
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 模型返回内容长度: {len(generated_content) if generated_content else 0}")
+        
+        if not generated_content or len(generated_content.strip()) == 0:
+            print(f"[{time.strftime('%H:%M:%S')}] 生成内容为空，返回错误")
+            return jsonify({
+                "success": False,
+                "message": "生成内容为空"
+            }), 400
+        
+        import re
+        def remove_markdown(text):
+            text = re.sub(r'^#+\s', '', text, flags=re.MULTILINE)
+            text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+            text = re.sub(r'\*(.*?)\*', r'\1', text)
+            text = re.sub(r'__(.*?)__', r'\1', text)
+            text = re.sub(r'_(.*?)_', r'\1', text)
+            text = re.sub(r'`(.*?)`', r'\1', text)
+            text = re.sub(r'```[\s\S]*?```', '', text)
+            text = re.sub(r'^\s*[-*+]\s', '', text, flags=re.MULTILINE)
+            text = re.sub(r'^\s*\d+\.\s', '', text, flags=re.MULTILINE)
+            text = re.sub(r'^\s*>\s', '', text, flags=re.MULTILINE)
+            text = re.sub(r'---+', '', text)
+            text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+            text = re.sub(r'\n{3,}', '\n\n', text)
+            return text.strip()
+        
+        cleaned_content = remove_markdown(generated_content)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] ========== 投资笔记生成成功 ==========")
+        print(f"[{time.strftime('%H:%M:%S')}] 清理后内容长度: {len(cleaned_content)}")
+        print(f"[{time.strftime('%H:%M:%S')}] 使用历史笔记数量: {len(recent_notes)}")
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "content": cleaned_content,
+                "title": f"{datetime.now().strftime('%Y年%m月%d日')}投资笔记",
+                "recentNotesCount": len(recent_notes)
+            }
+        })
+    except Exception as e:
+        print(f"生成今日投资笔记异常: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "message": f"生成今日投资笔记失败: {str(e)}"
+        }), 500
+
+# ==================== 话题配置相关API ====================
+@app.route('/api/topics', methods=['GET'])
+def get_topics():
+    """获取话题列表"""
+    try:
+        topics_file = os.path.join(os.path.dirname(__file__), 'topics.json')
+        
+        if os.path.exists(topics_file):
+            with open(topics_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            return jsonify({
+                "success": True,
+                "data": data,
+                "message": "获取话题列表成功"
+            })
+        else:
+            return jsonify({
+                "success": True,
+                "data": {
+                    "topics": [],
+                    "updatedAt": ""
+                },
+                "message": "暂无话题数据"
+            })
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取话题列表失败: {str(e)}"
+        }), 500
+
+@app.route('/api/topics', methods=['POST'])
+def save_topics():
+    """保存话题列表"""
+    try:
+        data = request.json
+        topics = data.get("topics", [])
+        
+        topics_file = os.path.join(os.path.dirname(__file__), 'topics.json')
+        
+        topics_data = {
+            "topics": topics,
+            "updatedAt": time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        with open(topics_file, 'w', encoding='utf-8') as f:
+            json.dump(topics_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "data": topics_data,
+            "message": "保存话题列表成功"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"保存话题列表失败: {str(e)}"
+        }), 500
+
+@app.route('/api/topic', methods=['POST'])
+def add_topic():
+    """添加单个话题"""
+    try:
+        data = request.json
+        topic_name = data.get("name", "").strip()
+        topic_description = data.get("description", "").strip()
+        
+        if not topic_name:
+            return jsonify({
+                "success": False,
+                "message": "话题名称不能为空"
+            }), 400
+        
+        topics_file = os.path.join(os.path.dirname(__file__), 'topics.json')
+        
+        if os.path.exists(topics_file):
+            with open(topics_file, 'r', encoding='utf-8') as f:
+                topics_data = json.load(f)
+        else:
+            topics_data = {
+                "topics": [],
+                "updatedAt": ""
+            }
+        
+        topic_id = str(uuid.uuid4())
+        new_topic = {
+            "id": topic_id,
+            "name": topic_name,
+            "description": topic_description,
+            "createdAt": time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        topics_data["topics"].append(new_topic)
+        topics_data["updatedAt"] = time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        with open(topics_file, 'w', encoding='utf-8') as f:
+            json.dump(topics_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "data": new_topic,
+            "message": "添加话题成功"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"添加话题失败: {str(e)}"
+        }), 500
+
+@app.route('/api/topic/<topic_id>', methods=['PUT'])
+def update_topic(topic_id):
+    """更新话题"""
+    try:
+        data = request.json
+        topic_name = data.get("name", "").strip()
+        topic_description = data.get("description", "").strip()
+        
+        if not topic_name:
+            return jsonify({
+                "success": False,
+                "message": "话题名称不能为空"
+            }), 400
+        
+        topics_file = os.path.join(os.path.dirname(__file__), 'topics.json')
+        
+        if not os.path.exists(topics_file):
+            return jsonify({
+                "success": False,
+                "message": "话题数据文件不存在"
+            }), 404
+        
+        with open(topics_file, 'r', encoding='utf-8') as f:
+            topics_data = json.load(f)
+        
+        topic_found = False
+        for topic in topics_data["topics"]:
+            if topic.get("id") == topic_id:
+                topic["name"] = topic_name
+                topic["description"] = topic_description
+                topic["updatedAt"] = time.strftime('%Y-%m-%d %H:%M:%S')
+                topic_found = True
+                break
+        
+        if not topic_found:
+            return jsonify({
+                "success": False,
+                "message": "未找到该话题"
+            }), 404
+        
+        topics_data["updatedAt"] = time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        with open(topics_file, 'w', encoding='utf-8') as f:
+            json.dump(topics_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "data": topic,
+            "message": "更新话题成功"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"更新话题失败: {str(e)}"
+        }), 500
+
+@app.route('/api/topic/<topic_id>', methods=['DELETE'])
+def delete_topic(topic_id):
+    """删除话题"""
+    try:
+        topics_file = os.path.join(os.path.dirname(__file__), 'topics.json')
+        
+        if not os.path.exists(topics_file):
+            return jsonify({
+                "success": False,
+                "message": "话题数据文件不存在"
+            }), 404
+        
+        with open(topics_file, 'r', encoding='utf-8') as f:
+            topics_data = json.load(f)
+        
+        original_length = len(topics_data["topics"])
+        topics_data["topics"] = [
+            topic for topic in topics_data["topics"]
+            if topic.get("id") != topic_id
+        ]
+        
+        if len(topics_data["topics"]) == original_length:
+            return jsonify({
+                "success": False,
+                "message": "未找到该话题"
+            }), 404
+        
+        topics_data["updatedAt"] = time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        with open(topics_file, 'w', encoding='utf-8') as f:
+            json.dump(topics_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "message": "删除话题成功"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"删除话题失败: {str(e)}"
+        }), 500
+
+def process_topic_comments(article_ids, selected_model, models_config, articles, log_callback, stop_event):
+    """处理话题评论任务"""
+    try:
+        timestamp = time.strftime('%H:%M:%S')
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{timestamp}] ========== 话题评论任务开始 ==========',
+            'type': 'info'
+        })
+        
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{timestamp}] 配置信息: 文章数量={len(article_ids)}, 模型类型={selected_model}',
+            'type': 'info'
+        })
+        
+        # 获取默认用户的cookie和配置
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        users = users_data.get("users", [])
+        
+        cookie = None
+        for user in users:
+            if user.get("id") == default_user_id and user.get("cookie"):
+                cookie = user.get("cookie")
+                break
+        
+        if not cookie:
+            return {'totalArticles': 0, 'successCount': 0, 'failedCount': 0}
+        
+        # 获取API Key
+        api_key = None
+        if selected_model == 'ark' and models_config.get('ark'):
+            api_key = models_config['ark'].get('apiKey')
+        elif selected_model == 'openai' and models_config.get('openai'):
+            api_key = models_config['openai'].get('apiKey')
+        elif selected_model == 'baidu' and models_config.get('baidu'):
+            api_key = models_config['baidu'].get('apiKey')
+        elif selected_model == 'alibaba' and models_config.get('alibaba'):
+            api_key = models_config['alibaba'].get('apiKey')
+        elif selected_model == 'deepseek' and models_config.get('deepseek'):
+            api_key = models_config['deepseek'].get('apiKey')
+        elif selected_model == 'gemini' and models_config.get('gemini'):
+            api_key = models_config['gemini'].get('apiKey')
+        elif selected_model == 'claude' and models_config.get('claude'):
+            api_key = models_config['claude'].get('apiKey')
+        
+        if not api_key:
+            return {'totalArticles': 0, 'successCount': 0, 'failedCount': 0}
+        
+        # 加载默认模型提示词
+        prompts_file = os.path.join(os.path.dirname(__file__), 'config', 'system_prompts.json')
+        default_prompt = "你是一位资深雪球投资者，请针对这篇文章写一段专业、理性、有见解的评论，100-200字。"
+        
+        if os.path.exists(prompts_file):
+            try:
+                with open(prompts_file, 'r', encoding='utf-8') as f:
+                    prompts = json.load(f)
+                    if prompts and len(prompts) > 0:
+                        default_prompt = prompts[0].get('prompt', default_prompt)
+            except Exception as e:
+                print(f"加载提示词失败: {str(e)}")
+        
+        # 建立文章ID到内容的映射
+        article_map = {}
+        for art in articles:
+            article_map[art.get('id')] = art
+        
+        # 开始处理评论
+        results = []
+        success_count = 0
+        failed_count = 0
+        
+        for idx, article_id in enumerate(article_ids):
+            if stop_event.is_set():
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{time.strftime("%H:%M:%S")}] 任务已停止',
+                    'type': 'info'
+                })
+                break
+            
+            try:
+                timestamp = time.strftime('%H:%M:%S')
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] ---------- 文章 {idx+1}/{len(article_ids)} ----------',
+                    'type': 'info'
+                })
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 正在处理文章ID: {article_id}',
+                    'type': 'info'
+                })
+                
+                # 直接使用已获取的文章内容
+                article_title = ""
+                article_text = ""
+                article_info = None
+                
+                if article_id in article_map:
+                    article = article_map[article_id]
+                    article_title = article.get('title', '')
+                    article_text = article.get('text', '')
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] 使用已保存的文章内容: {article_title[:50]}...',
+                        'type': 'info'
+                    })
+                    
+                    # 获取文章完整属性并输出日志
+                    try:
+                        from article_utils import get_article_full_attributes
+                        article_info = get_article_full_attributes(article)
+                        
+                        article_attrs = article_info.get("属性", {})
+                        reward_info = article_info.get("打赏/悬赏信息", {})
+                        
+                        # 记录文章标题
+                        log_callback({
+                            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'message': f'[{timestamp}] 文章标题: {article_info.get("标题", "无标题")[:50]}...',
+                            'type': 'info'
+                        })
+                        
+                        # 记录所有文章属性作为一行日志，使用鲜艳颜色
+                        attrs_str = f"点赞: {article_attrs.get('点赞数', 0)} | 评论: {article_attrs.get('评论数', 0)} | 转发: {article_attrs.get('转发数', 0)} | 阅读: {article_attrs.get('阅读数', 0)} | 收藏: {article_attrs.get('收藏数', 0)} | 专栏: {article_attrs.get('是否专栏', '否')} | 原创: {article_attrs.get('是否原创声明', '否')} | 时间: {article_attrs.get('创建时间', '未知')} | 打赏: {reward_info.get('类型', '无')}"
+                        
+                        log_callback({
+                            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'message': f'[{timestamp}] 📊 文章属性: {attrs_str}',
+                            'type': 'info',
+                            'isAttributeLog': True,
+                            'articleId': article_id
+                        })
+                    except Exception as e:
+                        log_callback({
+                            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'message': f'[{timestamp}] 获取文章属性失败: {e}',
+                            'type': 'warning'
+                        })
+                
+                # 生成评论
+                prompt = f"{default_prompt}\n\n文章标题: {article_title}\n文章内容: {article_text[:500]}\n\n评论:"
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 正在调用模型生成评论...',
+                    'type': 'info'
+                })
+                
+                comment_content, _ = call_model(
+                    selected_model, 
+                    api_key, 
+                    prompt, 
+                    'comment',
+                    secret_key=models_config.get(selected_model, {}).get('secretKey'),
+                    base_url=models_config.get(selected_model, {}).get('baseUrl'),
+                    model_name=models_config.get(selected_model, {}).get('modelName'),
+                    max_tokens=models_config.get(selected_model, {}).get('maxTokens'),
+                    temperature=models_config.get(selected_model, {}).get('temperature'),
+                    operation_type='话题评论',
+                    default_prompt=default_prompt
+                )
+                
+                comment_content = comment_content.strip()
+                # 检查返回的内容是否为空
+                if not comment_content:
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] 模型返回空内容，使用默认评论',
+                        'type': 'warning'
+                    })
+                    comment_content = "分析到位，学习了"
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 生成的评论内容: {comment_content[:80]}...',
+                    'type': 'info'
+                })
+                
+                # 发布评论
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 正在发布评论到雪球...',
+                    'type': 'info'
+                })
+                comment_result = post_topic_comment(article_id, comment_content, cookie)
+                
+                if comment_result['success']:
+                    success_count += 1
+                    results.append({
+                        "articleId": article_id,
+                        "success": True,
+                        "comment": comment_content,
+                        "message": comment_result['message']
+                    })
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] ✅ 文章 {article_id}: 评论成功 - {comment_content}',
+                        'type': 'success'
+                    })
+                else:
+                    failed_count += 1
+                    results.append({
+                        "articleId": article_id,
+                        "success": False,
+                        "comment": comment_content,
+                        "message": comment_result['message']
+                    })
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] ❌ 文章 {article_id}: 评论失败 - {comment_result["message"]}',
+                        'type': 'error'
+                    })
+                
+                if idx < len(article_ids) - 1:
+                    time.sleep(2)  # 避免请求过快
+                
+            except Exception as e:
+                failed_count += 1
+                results.append({
+                    "articleId": article_id,
+                    "success": False,
+                    "message": f"处理失败: {str(e)}"
+                })
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{time.strftime("%H:%M:%S")}] ❌ 处理文章 {article_id} 异常: {str(e)}',
+                    'type': 'error'
+                })
+                import traceback
+                traceback.print_exc()
+        
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{time.strftime("%H:%M:%S")}] ========== 话题评论任务完成 ==========',
+            'type': 'info'
+        })
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{time.strftime("%H:%M:%S")}] 总计: 成功 {success_count} 篇，失败 {failed_count} 篇',
+            'type': 'info'
+        })
+        
+        return {
+            'totalArticles': len(article_ids),
+            'successCount': success_count,
+            'failedCount': failed_count,
+            'results': results
+        }
+        
+    except Exception as e:
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'话题评论任务异常: {str(e)}',
+            'type': 'error'
+        })
+        import traceback
+        traceback.print_exc()
+        return {'totalArticles': 0, 'successCount': 0, 'failedCount': 0}
+
+def process_reward_comments(article_ids, selected_model, models_config, articles, log_callback, stop_event):
+    """处理悬赏评论任务"""
+    try:
+        timestamp = time.strftime('%H:%M:%S')
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{timestamp}] ========== 悬赏评论任务开始 ==========',
+            'type': 'info'
+        })
+        
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{timestamp}] 配置信息: 文章数量={len(article_ids)}, 模型类型={selected_model}',
+            'type': 'info'
+        })
+        
+        # 获取默认用户的cookie和配置
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        users = users_data.get("users", [])
+        
+        cookie = None
+        for user in users:
+            if user.get("id") == default_user_id and user.get("cookie"):
+                cookie = user.get("cookie")
+                break
+        
+        if not cookie:
+            return {'totalArticles': 0, 'successCount': 0, 'failedCount': 0}
+        
+        # 获取API Key
+        api_key = None
+        if selected_model == 'ark' and models_config.get('ark'):
+            api_key = models_config['ark'].get('apiKey')
+        elif selected_model == 'openai' and models_config.get('openai'):
+            api_key = models_config['openai'].get('apiKey')
+        elif selected_model == 'baidu' and models_config.get('baidu'):
+            api_key = models_config['baidu'].get('apiKey')
+        elif selected_model == 'alibaba' and models_config.get('alibaba'):
+            api_key = models_config['alibaba'].get('apiKey')
+        elif selected_model == 'deepseek' and models_config.get('deepseek'):
+            api_key = models_config['deepseek'].get('apiKey')
+        elif selected_model == 'gemini' and models_config.get('gemini'):
+            api_key = models_config['gemini'].get('apiKey')
+        elif selected_model == 'claude' and models_config.get('claude'):
+            api_key = models_config['claude'].get('apiKey')
+        
+        if not api_key:
+            return {'totalArticles': 0, 'successCount': 0, 'failedCount': 0}
+        
+        # 加载默认模型提示词
+        prompts_file = os.path.join(os.path.dirname(__file__), 'config', 'system_prompts.json')
+        default_prompt = "你是一位资深雪球投资者，请针对这篇悬赏问答文章写一段专业、理性、有见解的评论，100-200字。"
+        
+        if os.path.exists(prompts_file):
+            try:
+                with open(prompts_file, 'r', encoding='utf-8') as f:
+                    prompts = json.load(f)
+                    if prompts and len(prompts) > 0:
+                        default_prompt = prompts[0].get('prompt', default_prompt)
+            except Exception as e:
+                print(f"加载提示词失败: {str(e)}")
+        
+        # 建立文章ID到内容的映射
+        article_map = {}
+        for art in articles:
+            article_map[art.get('id')] = art
+        
+        # 开始处理评论
+        results = []
+        success_count = 0
+        failed_count = 0
+        
+        for idx, article_id in enumerate(article_ids):
+            if stop_event.is_set():
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{time.strftime("%H:%M:%S")}] 任务已停止',
+                    'type': 'info'
+                })
+                break
+            
+            try:
+                timestamp = time.strftime('%H:%M:%S')
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] ---------- 文章 {idx+1}/{len(article_ids)} ----------',
+                    'type': 'info'
+                })
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 正在处理文章ID: {article_id}',
+                    'type': 'info'
+                })
+                
+                # 直接使用已获取的文章内容
+                article_title = ""
+                article_text = ""
+                article_info = None
+                
+                if article_id in article_map:
+                    article = article_map[article_id]
+                    article_title = article.get('title', '')
+                    article_text = article.get('text', '')
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] 使用已保存的文章内容: {article_title[:50]}...',
+                        'type': 'info'
+                    })
+                    
+                    # 获取文章完整属性并输出日志
+                    try:
+                        from article_utils import get_article_full_attributes
+                        article_info = get_article_full_attributes(article)
+                        
+                        article_attrs = article_info.get("属性", {})
+                        reward_info = article_info.get("打赏/悬赏信息", {})
+                        
+                        # 记录文章标题
+                        log_callback({
+                            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'message': f'[{timestamp}] 文章标题: {article_info.get("标题", "无标题")[:50]}...',
+                            'type': 'info'
+                        })
+                        
+                        # 记录所有文章属性作为一行日志，使用鲜艳颜色
+                        attrs_str = f"点赞: {article_attrs.get('点赞数', 0)} | 评论: {article_attrs.get('评论数', 0)} | 转发: {article_attrs.get('转发数', 0)} | 阅读: {article_attrs.get('阅读数', 0)} | 收藏: {article_attrs.get('收藏数', 0)} | 专栏: {article_attrs.get('是否专栏', '否')} | 原创: {article_attrs.get('是否原创声明', '否')} | 时间: {article_attrs.get('创建时间', '未知')} | 打赏: {reward_info.get('类型', '无')}"
+                        
+                        log_callback({
+                            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'message': f'[{timestamp}] 📊 文章属性: {attrs_str}',
+                            'type': 'info',
+                            'isAttributeLog': True,
+                            'articleId': article_id
+                        })
+                    except Exception as e:
+                        log_callback({
+                            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'message': f'[{timestamp}] 获取文章属性失败: {e}',
+                            'type': 'warning'
+                        })
+                
+                # 生成评论
+                prompt = f"{default_prompt}\n\n文章标题: {article_title}\n文章内容: {article_text[:500]}\n\n评论:"
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 正在调用模型生成评论...',
+                    'type': 'info'
+                })
+                
+                comment_content, _ = call_model(
+                    selected_model, 
+                    api_key, 
+                    prompt, 
+                    'comment',
+                    secret_key=models_config.get(selected_model, {}).get('secretKey'),
+                    base_url=models_config.get(selected_model, {}).get('baseUrl'),
+                    model_name=models_config.get(selected_model, {}).get('modelName'),
+                    max_tokens=models_config.get(selected_model, {}).get('maxTokens'),
+                    temperature=models_config.get(selected_model, {}).get('temperature'),
+                    operation_type='悬赏评论',
+                    default_prompt=default_prompt
+                )
+                
+                comment_content = comment_content.strip()
+                # 检查返回的内容是否为空
+                if not comment_content:
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] 模型返回空内容，使用默认评论',
+                        'type': 'warning'
+                    })
+                    comment_content = "分析到位，学习了"
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 生成的评论内容: {comment_content[:80]}...',
+                    'type': 'info'
+                })
+                
+                # 发布评论
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{timestamp}] 正在发布评论到雪球...',
+                    'type': 'info'
+                })
+                comment_result = post_topic_comment(article_id, comment_content, cookie)
+                
+                if comment_result['success']:
+                    success_count += 1
+                    results.append({
+                        "articleId": article_id,
+                        "success": True,
+                        "comment": comment_content,
+                        "message": comment_result['message']
+                    })
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] ✅ 文章 {article_id}: 评论成功 - {comment_content}',
+                        'type': 'success'
+                    })
+                else:
+                    failed_count += 1
+                    results.append({
+                        "articleId": article_id,
+                        "success": False,
+                        "comment": comment_content,
+                        "message": comment_result['message']
+                    })
+                    log_callback({
+                        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'message': f'[{timestamp}] ❌ 文章 {article_id}: 评论失败 - {comment_result["message"]}',
+                        'type': 'error'
+                    })
+                
+                if idx < len(article_ids) - 1:
+                    time.sleep(2)  # 避免请求过快
+                
+            except Exception as e:
+                failed_count += 1
+                results.append({
+                    "articleId": article_id,
+                    "success": False,
+                    "message": f"处理失败: {str(e)}"
+                })
+                log_callback({
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': f'[{time.strftime("%H:%M:%S")}] ❌ 处理文章 {article_id} 异常: {str(e)}',
+                    'type': 'error'
+                })
+                import traceback
+                traceback.print_exc()
+        
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{time.strftime("%H:%M:%S")}] ========== 悬赏评论任务完成 ==========',
+            'type': 'info'
+        })
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'[{time.strftime("%H:%M:%S")}] 总计: 成功 {success_count} 篇，失败 {failed_count} 篇',
+            'type': 'info'
+        })
+        
+        return {
+            'totalArticles': len(article_ids),
+            'successCount': success_count,
+            'failedCount': failed_count,
+            'results': results
+        }
+        
+    except Exception as e:
+        log_callback({
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'message': f'悬赏评论任务异常: {str(e)}',
+            'type': 'error'
+        })
+        import traceback
+        traceback.print_exc()
+        return {'totalArticles': 0, 'successCount': 0, 'failedCount': 0}
+
+# ==================== 话题文章搜索相关API ====================
+@app.route('/api/search-topic-articles', methods=['POST'])
+def search_topic_articles():
+    """搜索话题下的文章"""
+    try:
+        data = request.json
+        topic_names = data.get("topics", [])
+        max_count = data.get("maxCount", 100)
+        
+        if not topic_names or len(topic_names) == 0:
+            return jsonify({
+                "success": False,
+                "message": "请至少选择一个话题"
+            }), 400
+        
+        # 获取默认用户的cookie
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        users = users_data.get("users", [])
+        
+        cookie = None
+        for user in users:
+            if user.get("id") == default_user_id and user.get("cookie"):
+                cookie = user.get("cookie")
+                break
+        
+        if not cookie:
+            return jsonify({
+                "success": False,
+                "message": "请先配置默认用户"
+            }), 400
+        
+        print(f"开始搜索话题文章，话题: {topic_names}, 数量: {max_count}")
+        
+        articles = get_topic_articles(topic_names, cookie, max_count)
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "articles": articles,
+                "count": len(articles)
+            },
+            "message": f"搜索成功，共找到 {len(articles)} 篇文章"
+        })
+        
+    except Exception as e:
+        print(f"搜索话题文章异常: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "message": f"搜索失败: {str(e)}"
+        }), 500
+
+# ==================== 话题文章评论相关API ====================
+def post_topic_comment(article_id, comment_content, cookie):
+    """发布话题文章评论"""
+    print(f"[{time.strftime('%H:%M:%S')}] ========== 开始发布评论 ==========")
+    print(f"[{time.strftime('%H:%M:%S')}] 文章ID: {article_id}")
+    print(f"[{time.strftime('%H:%M:%S')}] 评论内容: {comment_content[:100]}...")
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+        "Referer": "https://xueqiu.com/",
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Cookie": cookie
+    }
+    
+    session = requests.Session()
+    
+    try:
+        # 1. 文本审核
+        print(f"[{time.strftime('%H:%M:%S')}] 步骤1: 文本审核...")
+        text_check_url = "https://xueqiu.com/statuses/text_check.json"
+        text_check_data = {
+            "text": f"<p>{comment_content}</p>",
+            "type": "3"
+        }
+        text_check_response = session.post(text_check_url, headers=headers, data=text_check_data, timeout=10)
+        print(f"[{time.strftime('%H:%M:%S')}] 文本审核响应状态码: {text_check_response.status_code}")
+        if text_check_response.status_code != 200:
+            print(f"[{time.strftime('%H:%M:%S')}] 文本审核失败")
+            return {"success": False, "message": "文本审核失败"}
+        
+        time.sleep(0.5)
+        
+        # 2. 获取会话token
+        print(f"[{time.strftime('%H:%M:%S')}] 步骤2: 获取会话token...")
+        token_url = "https://xueqiu.com/provider/session/token.json"
+        token_params = {
+            "api_path": "/statuses/reply.json",
+            "_": int(time.time() * 1000)
+        }
+        token_response = session.get(token_url, headers=headers, params=token_params, timeout=10)
+        print(f"[{time.strftime('%H:%M:%S')}] 获取token响应状态码: {token_response.status_code}")
+        if token_response.status_code != 200:
+            print(f"[{time.strftime('%H:%M:%S')}] 获取token失败")
+            return {"success": False, "message": "获取token失败"}
+        
+        token_data = token_response.json()
+        session_token = token_data.get("session_token", "")
+        if session_token:
+            print(f"[{time.strftime('%H:%M:%S')}] 获取到的session_token: {session_token[:20]}...")
+        else:
+            print(f"[{time.strftime('%H:%M:%S')}] 获取到的session_token: (空)")
+        if not session_token:
+            print(f"[{time.strftime('%H:%M:%S')}] 未获取到session_token")
+            return {"success": False, "message": "未获取到session_token"}
+        
+        time.sleep(0.5)
+        
+        # 3. 发布评论
+        print(f"[{time.strftime('%H:%M:%S')}] 步骤3: 发布评论...")
+        reply_url = "https://xueqiu.com/statuses/reply.json"
+        reply_data = {
+            "comment": f"<p>{comment_content}</p>",
+            "forward": "1",
+            "id": article_id,
+            "post_source": "htl",
+            "post_position": "pc_home_feedcard",
+            "session_token": session_token
+        }
+        print(f"[{time.strftime('%H:%M:%S')}] 准备发布评论，请求数据: {reply_data}")
+        reply_response = session.post(reply_url, headers=headers, data=reply_data, timeout=10)
+        print(f"[{time.strftime('%H:%M:%S')}] 发布评论响应状态码: {reply_response.status_code}")
+        
+        if reply_response.status_code == 200:
+            reply_data_result = reply_response.json()
+            print(f"[{time.strftime('%H:%M:%S')}] 发布评论响应内容: {reply_data_result}")
+            if "id" in reply_data_result:
+                print(f"[{time.strftime('%H:%M:%S')}] ========== 评论发布成功，评论ID: {reply_data_result.get('id')} ==========")
+                return {"success": True, "message": "评论发布成功", "comment_id": reply_data_result.get('id')}
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] 评论发布失败: 响应格式异常")
+                return {"success": False, "message": "评论发布失败: 响应格式异常"}
+        else:
+            print(f"[{time.strftime('%H:%M:%S')}] 评论发布请求失败，状态码: {reply_response.status_code}")
+            return {"success": False, "message": f"评论发布请求失败，状态码: {reply_response.status_code}"}
+            
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 发布评论异常: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": f"发布评论请求失败: {str(e)}"}
+
+@app.route('/api/start-topic-comments', methods=['POST'])
+def start_topic_comments():
+    """启动话题评论任务"""
+    global topic_comments_instance
+    
+    try:
+        with topic_comments_lock:
+            if topic_comments_instance and topic_comments_instance.is_running:
+                return jsonify({
+                    "success": False,
+                    "message": "已有话题评论任务在运行"
+                }), 400
+            
+            data = request.json
+            article_ids = data.get("articleIds", [])
+            selected_model = data.get("selectedModel", "ark")
+            models_config = data.get("models", {})
+            articles = data.get("articles", [])
+            
+            if not article_ids or len(article_ids) == 0:
+                return jsonify({
+                    "success": False,
+                    "message": "请至少选择一篇文章"
+                }), 400
+            
+            # 清空日志和状态
+            topic_comments_logs.clear()
+            topic_comments_status.update({
+                'isRunning': True,
+                'processedArticles': 0,
+                'successComments': 0,
+                'failedAttempts': 0
+            })
+            
+            # 定义日志回调函数
+            def log_callback(log_entry):
+                topic_comments_logs.append(log_entry)
+                topic_comments_status['processedArticles'] = len(topic_comments_logs)
+            
+            # 创建任务实例并启动
+            topic_comments_instance = TopicCommenterTask()
+            topic_comments_instance.start(
+                article_ids=article_ids,
+                selected_model=selected_model,
+                models_config=models_config,
+                articles=articles,
+                log_callback=log_callback
+            )
+            
+            return jsonify({
+                "success": True,
+                "message": "话题评论任务已启动"
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"启动话题评论任务失败: {str(e)}"
+        }), 500
+
+@app.route('/api/stop-topic-comments', methods=['POST'])
+def stop_topic_comments():
+    """停止话题评论任务"""
+    global topic_comments_instance
+    
+    try:
+        with topic_comments_lock:
+            if topic_comments_instance:
+                topic_comments_instance.stop()
+                return jsonify({
+                    "success": True,
+                    "message": "话题评论任务已停止"
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "没有运行中的话题评论任务"
+                }), 400
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"停止话题评论任务失败: {str(e)}"
+        }), 500
+
+@app.route('/api/topic-comments-status', methods=['GET'])
+def get_topic_comments_status():
+    """获取话题评论任务状态"""
+    try:
+        return jsonify({
+            "success": True,
+            "data": topic_comments_status
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取状态失败: {str(e)}"
+        }), 500
+
+@app.route('/api/topic-comments-logs', methods=['GET'])
+def get_topic_comments_logs():
+    """获取话题评论任务日志"""
+    try:
+        return jsonify({
+            "success": True,
+            "data": topic_comments_logs
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取日志失败: {str(e)}"
+        }), 500
+
+@app.route('/api/comment-topic-articles', methods=['POST'])
+def comment_topic_articles():
+    """对话题文章发表评论（保留旧接口）"""
+    return jsonify({
+        "success": False,
+        "message": "请使用新的接口 /api/start-topic-comments"
+    }), 400
+
+# ==================== 悬赏问答文章相关API ====================
+@app.route('/api/fetch-reward-articles', methods=['POST'])
+def fetch_reward_articles():
+    """获取悬赏问答文章"""
+    try:
+        data = request.json
+        max_count = data.get("maxCount", 50)
+        
+        # 获取默认用户的cookie
+        users_data = load_users()
+        default_user_id = users_data.get("defaultUserId")
+        users = users_data.get("users", [])
+        
+        cookie = None
+        for user in users:
+            if user.get("id") == default_user_id and user.get("cookie"):
+                cookie = user.get("cookie")
+                break
+        
+        if not cookie:
+            return jsonify({
+                "success": False,
+                "message": "请先配置默认用户"
+            }), 400
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 开始获取悬赏问答文章，数量: {max_count}")
+        
+        articles = get_reward_articles(cookie, max_count)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 为每篇文章获取详细的悬赏信息...")
+        
+        # 为每篇文章获取详细的悬赏信息
+        for idx, article in enumerate(articles):
+            try:
+                article_id = article.get('id')
+                # 检查文章ID是否是有效数字
+                if isinstance(article_id, str) and article_id.startswith('reward_html_'):
+                    print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: ID={article_id} 是HTML解析的假ID，跳过获取详细信息")
+                    article['rewardExpired'] = True
+                    article['canComment'] = False
+                    article['rewardAmount'] = article.get('reward_amount', 0)
+                    article['rewardRemaining'] = 0
+                    article['rewardAnswerCount'] = 0
+                    continue
+                
+                print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 获取 ID={article_id} 的详细信息...")
+                stats = get_article_stats(article_id, cookie)
+                
+                # 更新文章信息 - 使用API返回的真实数据
+                article['rewardExpired'] = stats.get('rewardExpired', False)
+                article['canComment'] = not stats.get('rewardExpired', True)
+                article['rewardAmount'] = stats.get('rewardAmount', article.get('reward_amount', 0))
+                article['rewardCount'] = stats.get('rewardCount', article.get('reward_count', 0))
+                article['viewCount'] = stats.get('viewCount', 0)
+                article['likeCount'] = stats.get('likeCount', 0)
+                article['replyCount'] = stats.get('replyCount', 0)
+                
+                # 使用API返回的真实剩余金额
+                article['rewardRemaining'] = stats.get('rewardRemaining', article.get('rewardAmount', 0))
+                article['rewardAnswerCount'] = article.get('rewardCount', 0)
+                article['rewardState'] = stats.get('rewardState', '')
+                
+                status_text = "进行中" if not article['rewardExpired'] else "已结束"
+                print(f"[{time.strftime('%H:%M:%S')}]   文章 {idx+1}: 悬赏{status_text}, 金额¥{article['rewardAmount']}, 剩余¥{article['rewardRemaining']}, 回答{article['rewardAnswerCount']}个")
+                
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}] 获取文章 {idx+1} 详细信息失败: {e}")
+                article['rewardExpired'] = True
+                article['canComment'] = False
+                article['rewardAmount'] = article.get('reward_amount', 0)
+                article['rewardRemaining'] = 0
+                article['rewardAnswerCount'] = 0
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 悬赏问答文章获取完成，共获取 {len(articles)} 篇文章")
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "articles": articles,
+                "count": len(articles)
+            },
+            "message": f"获取成功，共找到 {len(articles)} 篇悬赏文章"
+        })
+        
+    except Exception as e:
+        print(f"获取悬赏问答文章异常: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "message": f"获取失败: {str(e)}"
+        }), 500
+
+@app.route('/api/start-reward-comments', methods=['POST'])
+def start_reward_comments():
+    """启动悬赏评论任务"""
+    global reward_comments_instance
+    
+    try:
+        with reward_comments_lock:
+            if reward_comments_instance and reward_comments_instance.is_running:
+                return jsonify({
+                    "success": False,
+                    "message": "已有悬赏评论任务在运行"
+                }), 400
+            
+            data = request.json
+            article_ids = data.get("articleIds", [])
+            selected_model = data.get("selectedModel", "ark")
+            models_config = data.get("models", {})
+            articles = data.get("articles", [])
+            
+            if not article_ids or len(article_ids) == 0:
+                return jsonify({
+                    "success": False,
+                    "message": "请至少选择一篇文章"
+                }), 400
+            
+            # 清空日志和状态
+            reward_comments_logs.clear()
+            reward_comments_status.update({
+                'isRunning': True,
+                'processedArticles': 0,
+                'successComments': 0,
+                'failedAttempts': 0
+            })
+            
+            # 定义日志回调函数
+            def log_callback(log_entry):
+                reward_comments_logs.append(log_entry)
+                reward_comments_status['processedArticles'] = len(reward_comments_logs)
+            
+            # 创建任务实例并启动
+            reward_comments_instance = RewardCommenterTask()
+            reward_comments_instance.start(
+                article_ids=article_ids,
+                selected_model=selected_model,
+                models_config=models_config,
+                articles=articles,
+                log_callback=log_callback
+            )
+            
+            return jsonify({
+                "success": True,
+                "message": "悬赏评论任务已启动"
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"启动悬赏评论任务失败: {str(e)}"
+        }), 500
+
+@app.route('/api/stop-reward-comments', methods=['POST'])
+def stop_reward_comments():
+    """停止悬赏评论任务"""
+    global reward_comments_instance
+    
+    try:
+        with reward_comments_lock:
+            if reward_comments_instance:
+                reward_comments_instance.stop()
+                return jsonify({
+                    "success": True,
+                    "message": "悬赏评论任务已停止"
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "没有运行中的悬赏评论任务"
+                }), 400
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"停止悬赏评论任务失败: {str(e)}"
+        }), 500
+
+@app.route('/api/reward-comments-status', methods=['GET'])
+def get_reward_comments_status():
+    """获取悬赏评论任务状态"""
+    try:
+        return jsonify({
+            "success": True,
+            "data": reward_comments_status
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取状态失败: {str(e)}"
+        }), 500
+
+@app.route('/api/reward-comments-logs', methods=['GET'])
+def get_reward_comments_logs():
+    """获取悬赏评论任务日志"""
+    try:
+        return jsonify({
+            "success": True,
+            "data": reward_comments_logs
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"获取日志失败: {str(e)}"
+        }), 500
+
+@app.route('/api/comment-reward-articles', methods=['POST'])
+def comment_reward_articles():
+    """对悬赏问答文章发表评论（保留旧接口）"""
+    return jsonify({
+        "success": False,
+        "message": "请使用新的接口 /api/start-reward-comments"
+    }), 400
+
+@app.route('/api/model-operations', methods=['GET'])
+def get_model_operations():
+    """获取模型操作日志"""
+    try:
+        import os
+        import json
+        
+        logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+        log_file = os.path.join(logs_dir, 'model_operations.json')
+        
+        if os.path.exists(log_file):
+            with open(log_file, 'r', encoding='utf-8') as f:
+                logs = json.load(f)
+        else:
+            logs = []
+        
+        return jsonify({
+            "success": True,
+            "data": logs
+        })
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 获取模型操作日志异常: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "message": f"获取失败: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     # 在生产环境中，应该使用gunicorn或uwsgi等WSGI服务器

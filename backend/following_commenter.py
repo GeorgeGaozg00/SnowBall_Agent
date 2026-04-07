@@ -12,8 +12,9 @@ import os
 from article_utils import get_article_full_attributes
 from model_adapter import call_model
 
-CONFIG_FILE = 'config.json'
-FOLLOWING_LIST_FILE = 'following_list.json'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(BASE_DIR, 'config', 'defaultConfig.json')
+FOLLOWING_LIST_FILE = os.path.join(BASE_DIR, 'config', 'following_list.json')
 
 
 def load_config():
@@ -123,9 +124,16 @@ def generate_comment_with_ai(article_title, article_content, api_key, selected_m
             post_type='comment',
             base_url=base_url,
             secret_key=secret_key,
-            model_name=model_name
+            model_name=model_name,
+            operation_type='关注者评论',
+            default_prompt=prompt
         )
-        return content.strip()
+        # 检查返回的内容是否为空
+        content = content.strip()
+        if not content:
+            print("  模型返回空内容，使用默认评论")
+            return "分析到位，学习了"
+        return content
     except Exception as e:
         print(f"  生成评论失败: {str(e)}")
         return "分析到位，学习了"
@@ -254,7 +262,7 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
     
     def add_log(message, type='info', details=None):
         """添加日志"""
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = time.strftime('%H:%M:%S')
         log_entry = {
             "timestamp": timestamp,
             "message": message,
@@ -315,6 +323,10 @@ def process_following_comments(selected_users=None, posts_per_user=10, test_mode
         api_key = models.get('gemini', {}).get('apiKey')
         base_url = models.get('gemini', {}).get('baseUrl')
         model_name = models.get('gemini', {}).get('modelName')
+    elif selected_model == 'claude':
+        api_key = models.get('claude', {}).get('apiKey')
+        base_url = models.get('claude', {}).get('baseUrl')
+        model_name = models.get('claude', {}).get('modelName')
     else:
         api_key = None
     

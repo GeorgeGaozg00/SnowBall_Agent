@@ -1,0 +1,54 @@
+{
+  "selectedModel": "claude",
+  "models": {
+    "ark": {
+      "apiKey": "39e67fe4-bbd5-4c0f-bf63-8629f873038b",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    },
+    "openai": {
+      "apiKey": "",
+      "baseUrl": "https://api.openai.com/v1",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    },
+    "baidu": {
+      "apiKey": "",
+      "secretKey": "",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    },
+    "alibaba": {
+      "apiKey": "sk-b6096e3278eb4bf381c5b4ef9d1b3015",
+      "baseUrl": "",
+      "modelName": "qwen-turbo",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    },
+    "deepseek": {
+      "apiKey": "sk-04651b61a028402caf54dbc289efd613",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    },
+    "gemini": {
+      "apiKey": "AIzaSyD8zgoAui0PKBU4I_0EyULdO4MGB-q_L84",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1",
+      "modelName": "gemini-2.5-flash",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    },
+    "claude": {
+      "apiKey": "sk-q8JgpuRBVshu7R7QrClOFNp00nBrvyknrdzTWX0uqvlhd1Kp",
+      "baseUrl": "https://oneapi.hk/v1",
+      "modelName": "claude-sonnet-4-6",
+      "maxTokens": 2000,
+      "temperature": 0.7
+    }
+  },
+  "xueQiuCookie": "xq_a_token=d60873c46cdcf7dfa29911900810768e779318a4; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjU2Nzg1OTczMjYsImlzcyI6InVjIiwiZXhwIjoxNzc3NzcxODAwLCJjdG0iOjE3NzUxNzk4MDAwMjMsImNpZCI6ImQ5ZDBuNEFadXAifQ.O7yHgZo1kPBoHyiRabvJEJeJbpnqtzcszqg9BjPzRTRyvTmtGK-1q8r1W-B8i8mrktJdg8NIUeGZHpJLthgtriGsw6DP61kGTE566TkzSIU8vPESw0fgQArDOs-ospFMtykSrR9EWfkJ5CevE9sfeSEya2Z0dZjnF5TzFIBaxPBGlOjWNxfZRfG4IVDobK2jIRroyf6jUA1ehM91n87E0lNPCz4vM7ppSrJTML5PDO8V8oDb1VJHrU0dM1VBjoB0_rc44Fr5NtVpCD2Q3SXmlL2rLyA_-V9wqWFqGUUAyCa2r2324nBNdePJofb4XJCHfeMOFombC2Gs43ba-xGhOw; xq_r_token=1c75559aedff3a301c44a9d3881b136637f01197",
+  "dailyLimit": 60,
+  "delayMin": 30,
+  "delayMax": 120,
+  "testMode": false
+}
