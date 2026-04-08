@@ -220,26 +220,65 @@ def _call_ark(config, api_key, prompt, post_type):
         "max_tokens": max_tokens
     }
     
-    response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
-    result = response.json()
+    max_retries = 3
+    retry_delay = 5
     
-    if 'choices' not in result:
-        raise Exception(f"API调用失败: {result.get('error', {}).get('message', '未知错误')}")
-    
-    content = result['choices'][0]['message']['content']
-    
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    content = convert_text_to_html(content)
-    
-    return content, title
+    for attempt in range(max_retries):
+        print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 正在发送请求 (尝试 {attempt + 1}/{max_retries})")
+        
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
+            result = response.json()
+            
+            if 'choices' not in result:
+                error_msg = result.get('error', {}).get('message', '未知错误')
+                print(f"[{time.strftime('%H:%M:%S')}] _call_ark - API返回错误: {error_msg}")
+                
+                if 'rate limit' in error_msg.lower() or '429' in str(response.status_code) or 'resource exhausted' in error_msg.lower():
+                    if attempt < max_retries - 1:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 遇到限流或高负载错误，等待 {retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 已达到最大重试次数")
+                
+                raise Exception(f"API调用失败: {error_msg}")
+            
+            content = result['choices'][0]['message']['content']
+            
+            title = None
+            if post_type == 'article' and '标题：' in content:
+                parts = content.split('\n\n', 1)
+                if len(parts) > 1:
+                    title_line = parts[0]
+                    if '标题：' in title_line:
+                        title = title_line.replace('标题：', '').strip()
+                        content = parts[1].strip()
+            
+            content = convert_text_to_html(content)
+            
+            return content, title
+            
+        except requests.exceptions.Timeout:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 请求超时")
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 已达到最大重试次数")
+                raise Exception("API调用超时")
+        except Exception as e:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 请求或解析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_ark - 已达到最大重试次数")
+                raise
 
 def _call_openai(config, api_key, prompt, post_type, base_url=None):
     """调用OpenAI兼容API"""
@@ -275,32 +314,67 @@ def _call_openai(config, api_key, prompt, post_type, base_url=None):
         "max_tokens": max_tokens
     }
     
-    try:
-        response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
-        print(f"[{time.strftime('%H:%M:%S')}] _call_openai - response status code: {response.status_code}")
-        print(f"[{time.strftime('%H:%M:%S')}] _call_openai - response text: {response.text[:200]}")
-        result = response.json()
-    except Exception as e:
-        print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 请求或解析失败: {str(e)}")
-        raise
+    max_retries = 3
+    retry_delay = 5
     
-    if 'choices' not in result:
-        raise Exception(f"API调用失败: {result.get('error', {}).get('message', '未知错误')}")
-    
-    content = result['choices'][0]['message']['content']
-    
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    content = convert_text_to_html(content)
-    
-    return content, title
+    for attempt in range(max_retries):
+        print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 正在发送请求 (尝试 {attempt + 1}/{max_retries})")
+        
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
+            print(f"[{time.strftime('%H:%M:%S')}] _call_openai - response status code: {response.status_code}")
+            print(f"[{time.strftime('%H:%M:%S')}] _call_openai - response text: {response.text[:200]}")
+            result = response.json()
+            
+            if 'choices' not in result:
+                error_msg = result.get('error', {}).get('message', '未知错误')
+                print(f"[{time.strftime('%H:%M:%S')}] _call_openai - API返回错误: {error_msg}")
+                
+                if 'rate limit' in error_msg.lower() or '429' in str(response.status_code) or 'resource exhausted' in error_msg.lower():
+                    if attempt < max_retries - 1:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 遇到限流或高负载错误，等待 {retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 已达到最大重试次数")
+                
+                raise Exception(f"API调用失败: {error_msg}")
+            
+            content = result['choices'][0]['message']['content']
+            
+            title = None
+            if post_type == 'article' and '标题：' in content:
+                parts = content.split('\n\n', 1)
+                if len(parts) > 1:
+                    title_line = parts[0]
+                    if '标题：' in title_line:
+                        title = title_line.replace('标题：', '').strip()
+                        content = parts[1].strip()
+            
+            content = convert_text_to_html(content)
+            
+            return content, title
+            
+        except requests.exceptions.Timeout:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 请求超时")
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 已达到最大重试次数")
+                raise Exception("API调用超时")
+        except Exception as e:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 请求或解析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_openai - 已达到最大重试次数")
+                raise
 
 def _call_baidu(config, api_key, secret_key, prompt, post_type):
     """调用百度API"""
@@ -318,40 +392,80 @@ def _call_baidu(config, api_key, secret_key, prompt, post_type):
         "client_id": api_key,
         "client_secret": secret_key
     }
-    auth_response = requests.post(auth_url, data=auth_data, timeout=timeout, proxies={'http': None, 'https': None})
-    access_token = auth_response.json().get('access_token')
     
-    if not access_token:
-        raise Exception("获取百度API访问令牌失败")
+    max_retries = 3
+    retry_delay = 5
     
-    url = f"{url}?access_token={access_token}"
-    headers = {"Content-Type": "application/json"}
-    
-    data = {
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": temperature
-    }
-    
-    response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
-    result = response.json()
-    
-    if 'error_code' in result:
-        raise Exception(f"API调用失败: {result.get('error_msg', '未知错误')}")
-    
-    content = result['result']
-    
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    content = convert_text_to_html(content)
-    
-    return content, title
+    for attempt in range(max_retries):
+        print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 正在发送请求 (尝试 {attempt + 1}/{max_retries})")
+        
+        try:
+            auth_response = requests.post(auth_url, data=auth_data, timeout=timeout, proxies={'http': None, 'https': None})
+            access_token = auth_response.json().get('access_token')
+            
+            if not access_token:
+                raise Exception("获取百度API访问令牌失败")
+            
+            url_with_token = f"{url}?access_token={access_token}"
+            headers = {"Content-Type": "application/json"}
+            
+            data = {
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": temperature
+            }
+            
+            response = requests.post(url_with_token, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
+            result = response.json()
+            
+            if 'error_code' in result:
+                error_msg = result.get('error_msg', '未知错误')
+                print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - API返回错误: {error_msg}")
+                
+                if 'rate limit' in error_msg.lower() or '429' in str(response.status_code) or 'resource exhausted' in error_msg.lower():
+                    if attempt < max_retries - 1:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 遇到限流或高负载错误，等待 {retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 已达到最大重试次数")
+                
+                raise Exception(f"API调用失败: {error_msg}")
+            
+            content = result['result']
+            
+            title = None
+            if post_type == 'article' and '标题：' in content:
+                parts = content.split('\n\n', 1)
+                if len(parts) > 1:
+                    title_line = parts[0]
+                    if '标题：' in title_line:
+                        title = title_line.replace('标题：', '').strip()
+                        content = parts[1].strip()
+            
+            content = convert_text_to_html(content)
+            
+            return content, title
+            
+        except requests.exceptions.Timeout:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 请求超时")
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 已达到最大重试次数")
+                raise Exception("API调用超时")
+        except Exception as e:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 请求或解析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_baidu - 已达到最大重试次数")
+                raise
 
 def _call_alibaba(config, api_key, prompt, post_type, base_url=None):
     """调用阿里云API"""
@@ -375,26 +489,65 @@ def _call_alibaba(config, api_key, prompt, post_type, base_url=None):
         "max_tokens": max_tokens
     }
     
-    response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
-    result = response.json()
+    max_retries = 3
+    retry_delay = 5
     
-    if 'choices' not in result:
-        raise Exception(f"API调用失败: {result.get('error', {}).get('message', '未知错误')}")
-    
-    content = result['choices'][0]['message']['content']
-    
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    content = convert_text_to_html(content)
-    
-    return content, title
+    for attempt in range(max_retries):
+        print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 正在发送请求 (尝试 {attempt + 1}/{max_retries})")
+        
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=timeout, proxies={'http': None, 'https': None})
+            result = response.json()
+            
+            if 'choices' not in result:
+                error_msg = result.get('error', {}).get('message', '未知错误')
+                print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - API返回错误: {error_msg}")
+                
+                if 'rate limit' in error_msg.lower() or '429' in str(response.status_code) or 'resource exhausted' in error_msg.lower():
+                    if attempt < max_retries - 1:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 遇到限流或高负载错误，等待 {retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 已达到最大重试次数")
+                
+                raise Exception(f"API调用失败: {error_msg}")
+            
+            content = result['choices'][0]['message']['content']
+            
+            title = None
+            if post_type == 'article' and '标题：' in content:
+                parts = content.split('\n\n', 1)
+                if len(parts) > 1:
+                    title_line = parts[0]
+                    if '标题：' in title_line:
+                        title = title_line.replace('标题：', '').strip()
+                        content = parts[1].strip()
+            
+            content = convert_text_to_html(content)
+            
+            return content, title
+            
+        except requests.exceptions.Timeout:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 请求超时")
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 已达到最大重试次数")
+                raise Exception("API调用超时")
+        except Exception as e:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 请求或解析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_alibaba - 已达到最大重试次数")
+                raise
 
 def _call_gemini(config, api_key, prompt, post_type, base_url=None):
     """调用Gemini API"""
@@ -419,37 +572,68 @@ def _call_gemini(config, api_key, prompt, post_type, base_url=None):
         }
     }
     
-    print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 正在发送请求到: {url}")
+    max_retries = 3
+    retry_delay = 5
     
-    try:
-        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 发送请求（无代理）...")
-        response = requests.post(url, headers=headers, json=data, timeout=timeout)
-        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - response status code: {response.status_code}")
-        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - response text: {response.text[:200]}")
-        result = response.json()
-    except Exception as e:
-        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 请求或解析失败: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
-    
-    if 'error' in result:
-        raise Exception(f"API调用失败: {result.get('error', {}).get('message', '未知错误')}")
-    
-    content = result['candidates'][0]['content']['parts'][0]['text']
-    
-    title = None
-    if post_type == 'article' and '标题：' in content:
-        parts = content.split('\n\n', 1)
-        if len(parts) > 1:
-            title_line = parts[0]
-            if '标题：' in title_line:
-                title = title_line.replace('标题：', '').strip()
-                content = parts[1].strip()
-    
-    content = convert_text_to_html(content)
-    
-    return content, title
+    for attempt in range(max_retries):
+        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 正在发送请求到: {url} (尝试 {attempt + 1}/{max_retries})")
+        
+        try:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 发送请求（无代理）...")
+            response = requests.post(url, headers=headers, json=data, timeout=timeout)
+            print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - response status code: {response.status_code}")
+            print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - response text: {response.text[:200]}")
+            result = response.json()
+            
+            if 'error' in result:
+                error_msg = result.get('error', {}).get('message', '未知错误')
+                print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - API返回错误: {error_msg}")
+                
+                if 'high demand' in error_msg.lower() or 'resource exhausted' in error_msg.lower() or '429' in str(response.status_code):
+                    if attempt < max_retries - 1:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 遇到高负载错误，等待 {retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 已达到最大重试次数")
+                
+                raise Exception(f"API调用失败: {error_msg}")
+            
+            content = result['candidates'][0]['content']['parts'][0]['text']
+            
+            title = None
+            if post_type == 'article' and '标题：' in content:
+                parts = content.split('\n\n', 1)
+                if len(parts) > 1:
+                    title_line = parts[0]
+                    if '标题：' in title_line:
+                        title = title_line.replace('标题：', '').strip()
+                        content = parts[1].strip()
+            
+            content = convert_text_to_html(content)
+            
+            return content, title
+            
+        except requests.exceptions.Timeout:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 请求超时")
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 已达到最大重试次数")
+                raise Exception("API调用超时")
+        except Exception as e:
+            print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 请求或解析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            if attempt < max_retries - 1:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 等待 {retry_delay} 秒后重试...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] _call_gemini - 已达到最大重试次数")
+                raise
 
 def call_ark_api_with_logs(api_key, prompt, task_name='分析文章'):
     """调用火山引擎API（带详细日志）"""

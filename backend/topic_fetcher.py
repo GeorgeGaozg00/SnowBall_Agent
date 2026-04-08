@@ -320,7 +320,8 @@ class TopicArticleFetcher:
                 'comment_count': post.get('comment_count', 0),
                 'retweet_count': post.get('retweet_count', 0),
                 'view_count': post.get('view_count', 0),
-                'source': post.get('source', '')
+                'source': post.get('source', ''),
+                'fullArticleData': post
             }
         except Exception as e:
             print(f"解析文章信息异常: {str(e)}")

@@ -3,9 +3,16 @@ import time
 import random
 import threading
 import json
+import os
 from datetime import datetime
 from article_utils import get_article_full_attributes
 from model_adapter import call_model
+
+# 禁用代理
+os.environ['HTTP_PROXY'] = ''
+os.environ['HTTPS_PROXY'] = ''
+os.environ['http_proxy'] = ''
+os.environ['https_proxy'] = ''
 
 class XueQiuCommenter:
     def __init__(self, ark_api_key, xueqiu_cookie, log_callback=None, model_type='ark'):
@@ -121,16 +128,14 @@ class XueQiuCommenter:
         session.get("https://xueqiu.com/", headers=home_headers, timeout=10)
         time.sleep(0.5)
         
-        # 步骤2：访问热门页面
-        hot_page_headers = home_headers.copy()
-        hot_page_headers["Referer"] = "https://xueqiu.com/"
-        session.get("https://xueqiu.com/hot", headers=hot_page_headers, timeout=10)
+        # 步骤2：访问首页获取推荐（和推荐帖保持一致）
+        session.get("https://xueqiu.com/", headers=home_headers, timeout=10)
         time.sleep(0.5)
         
         # 步骤3：获取API数据
         api_headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://xueqiu.com/hot",
+            "Referer": "https://xueqiu.com/",
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
             "Accept-Encoding": "gzip, deflate, br",

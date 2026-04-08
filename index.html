@@ -7,6 +7,39 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
+        /* 自定义tooltip样式 */
+        .group {
+            position: relative;
+        }
+        .group[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-width: 300px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .group[data-tooltip]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #1f2937;
+            z-index: 1000;
+        }
+        
         .scrollbar-thin {
             scrollbar-width: thin;
         }
@@ -14,44 +47,46 @@
             width: 6px;
         }
         .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.1);
+            background: #f1f5f9;
+            border-radius: 3px;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb {
-            background-color: rgba(59, 130, 246, 0.5);
+            background: linear-gradient(180deg, #94a3b8, #64748b);
             border-radius: 3px;
         }
         /* 文章详情内容样式 */
         #detailContent h1 {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 700;
             margin-top: 1rem;
             margin-bottom: 0.75rem;
-            color: #1f2937;
+            color: #1e293b;
         }
         #detailContent h2 {
             font-size: 1.25rem;
-            font-weight: bold;
+            font-weight: 600;
             margin-top: 0.875rem;
             margin-bottom: 0.5rem;
-            color: #374151;
+            color: #334155;
         }
         #detailContent h3 {
             font-size: 1.125rem;
-            font-weight: bold;
+            font-weight: 600;
             margin-top: 0.75rem;
             margin-bottom: 0.5rem;
-            color: #4b5563;
+            color: #475569;
         }
         #detailContent h4, #detailContent h5, #detailContent h6 {
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 600;
             margin-top: 0.5rem;
             margin-bottom: 0.25rem;
-            color: #6b7280;
+            color: #64748b;
         }
         #detailContent p {
             margin-bottom: 0.75rem;
             line-height: 1.7;
+            color: #475569;
         }
         #detailContent ul, #detailContent ol {
             margin-left: 1.5rem;
@@ -66,20 +101,21 @@
         #detailContent li {
             margin-bottom: 0.25rem;
             line-height: 1.6;
+            color: #475569;
         }
         #detailContent b, #detailContent strong {
-            font-weight: bold;
-            color: #1f2937;
+            font-weight: 700;
+            color: #1e293b;
         }
         #detailContent i, #detailContent em {
             font-style: italic;
         }
         #detailContent a {
-            color: #2563eb;
+            color: #3b82f6;
             text-decoration: underline;
         }
         #detailContent a:hover {
-            color: #1d4ed8;
+            color: #2563eb;
         }
         /* 左侧菜单栏 */
         .sidebar {
@@ -88,19 +124,19 @@
             top: 60px;
             bottom: 0;
             width: 220px;
-            background-color: #ffffff;
+            background: #ffffff;
             z-index: 999;
             overflow-y: auto;
-            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #e5e7eb;
+            border-right: 1px solid #e2e8f0;
         }
         /* 主内容区域 */
         .main-content {
             margin-left: 220px;
             height: calc(100vh - 60px - 44px);
-            background-color: #f8fafc;
+            background: #f8fafc;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -136,19 +172,21 @@
             align-items: center;
             padding: 12px 20px;
             color: #64748b;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
             cursor: pointer;
             border-left: 3px solid transparent;
+            font-weight: 500;
+            font-size: 0.925rem;
         }
         .menu-item:hover {
             background-color: #f1f5f9;
-            color: #1e40af;
+            color: #334155;
         }
         .menu-item.active {
             background-color: #eff6ff;
             color: #1e40af;
             border-left-color: #3b82f6;
-            font-weight: 500;
+            font-weight: 600;
         }
         .menu-item i {
             margin-right: 12px;
@@ -163,14 +201,15 @@
         .submenu {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.3s ease;
         }
         .submenu.show {
             max-height: 500px;
         }
         .submenu .menu-item {
             padding-left: 44px;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
+            background-color: #fafbfc;
         }
         .submenu-toggle {
             display: flex;
@@ -178,7 +217,7 @@
             justify-content: space-between;
         }
         .submenu-toggle .arrow {
-            transition: transform 0.3s ease;
+            transition: transform 0.25s ease;
         }
         .submenu-toggle.open .arrow {
             transform: rotate(180deg);
@@ -190,23 +229,25 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background-color: #1e293b;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             height: 60px;
             display: flex;
             align-items: center;
             padding: 0 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         .banner .logo {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: #ffffff;
             display: flex;
             align-items: center;
+            letter-spacing: -0.02em;
         }
         .banner .logo i {
             margin-right: 0.6rem;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
+            color: #38bdf8;
         }
         .banner .status {
             display: flex;
@@ -219,19 +260,21 @@
             gap: 0.5rem;
             color: #cbd5e1;
             font-size: 0.875rem;
+            font-weight: 500;
         }
         .banner .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 500;
+            font-weight: 600;
+            letter-spacing: 0.02em;
         }
         .banner .status-badge.running {
-            background-color: #10b981;
+            background: #10b981;
             color: #ffffff;
         }
         .banner .status-badge.stopped {
-            background-color: rgba(255,255,255,0.15);
+            background: #475569;
             color: #e2e8f0;
         }
         /* 弹窗遮罩 */
@@ -242,21 +285,22 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(15, 23, 42, 0.6);
             z-index: 2000;
+            backdrop-filter: blur(4px);
         }
         .modal-overlay.show {
             display: block;
         }
         /* 弹窗内容 */
         .modal-content {
-            background: white;
+            background: #ffffff;
             border-radius: 12px;
             width: 90%;
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
             position: absolute;
             top: 50%;
             left: 50%;
@@ -268,72 +312,69 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid rgba(99, 102, 241, 0.2);
         }
         .modal-content.model-config-modal .modal-header {
             flex-shrink: 0;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-            padding: 1.5rem 2rem;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 1.25rem 1.75rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
         }
         .modal-content.model-config-modal .modal-header h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 1.25rem;
+            font-weight: 600;
         }
         .modal-content.model-config-modal .modal-body-scroll {
             flex-grow: 1;
             overflow-y: auto;
             padding: 0;
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            background: #f8fafc;
         }
         .modal-content.model-config-modal .modal-body-scroll .inner-body {
-            padding: 2rem;
+            padding: 1.75rem;
         }
         .modal-content.model-config-modal .modal-footer {
             flex-shrink: 0;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 1.5rem 2rem;
-            border-top: 1px solid rgba(99, 102, 241, 0.15);
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+            background: #f1f5f9;
+            padding: 1.25rem 1.75rem;
+            border-top: 1px solid #e2e8f0;
         }
         .model-card {
-            background: white;
-            border: 2px solid transparent;
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .model-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.15), 0 10px 10px -5px rgba(99, 102, 241, 0.1);
-            border-color: rgba(99, 102, 241, 0.3);
-        }
-        .model-card.selected {
-            border-color: #6366f1;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 20px 25px -5px rgba(99, 102, 241, 0.2), 0 10px 10px -5px rgba(99, 102, 241, 0.15);
-        }
-        .model-card input[type="radio"] {
-            accent-color: #6366f1;
-            width: 20px;
-            height: 20px;
-        }
-        .model-input {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            background: #ffffff;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        }
+        .model-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+            transform: translateY(-2px);
+        }
+        .model-card.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        .model-card input[type="radio"] {
+            accent-color: #3b82f6;
+            width: 18px;
+            height: 18px;
+        }
+        .model-input {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             padding: 0.75rem 1rem;
             font-size: 0.9rem;
-            transition: all 0.3s ease;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            color: #1e293b;
         }
         .model-input:focus {
             outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 4px 6px -1px rgba(99, 102, 241, 0.1);
-            background: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
         .model-input-label {
             font-weight: 600;
@@ -342,77 +383,72 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-size: 0.9rem;
         }
         .model-input-label i {
-            color: #6366f1;
+            color: #3b82f6;
         }
         .btn-save {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             border: none;
-            border-radius: 12px;
-            padding: 0.875rem 2rem;
-            font-weight: 700;
-            font-size: 1rem;
+            border-radius: 8px;
+            padding: 0.75rem 1.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
             color: white;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
         }
         .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px 0 rgba(99, 102, 241, 0.5);
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
         .btn-save:active {
             transform: translateY(0);
         }
         .btn-cancel {
-            background: white;
+            background: #ffffff;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 0.875rem 2rem;
-            font-weight: 600;
-            font-size: 1rem;
+            border-radius: 8px;
+            padding: 0.75rem 1.75rem;
+            font-weight: 500;
+            font-size: 0.95rem;
             color: #64748b;
-            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         .btn-cancel:hover {
             background: #f8fafc;
             border-color: #cbd5e1;
             color: #475569;
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
         }
         .section-title {
-            font-size: 1.125rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
             color: #1e293b;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
             padding-bottom: 0.75rem;
-            border-bottom: 2px solid;
-            border-image: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899) 1;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.625rem;
         }
         .section-title i {
-            font-size: 1.25rem;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 1.125rem;
+            color: #3b82f6;
         }
         .model-name {
-            font-weight: 700;
+            font-weight: 600;
             color: #1e293b;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
         .modal-header {
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             color: white;
             border-radius: 12px 12px 0 0;
             cursor: move;
@@ -426,55 +462,80 @@
         }
         .modal-header h3 i { margin-right: 0.5rem; }
         .close-modal-btn {
-            background: none; border: none; color: #fff;
-            font-size: 1.25rem; cursor: pointer;
-            transition: color 0.2s;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .close-modal-btn:hover { color: rgba(255,255,255,0.8); }
+        .close-modal-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
         /* 弹窗表单 */
         .form-input {
             width: 100%;
             padding: 0.625rem 0.875rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            transition: border-color 0.15s, box-shadow 0.15s;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 400;
+            transition: all 0.2s;
             outline: none;
+            background: #ffffff;
+            color: #1e293b;
         }
         .form-input:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
-        .form-input::placeholder { color: #9ca3af; }
+        .form-input::placeholder { color: #94a3b8; }
         /* 弹窗按钮 */
         .modal-footer {
             padding: 1rem 1.5rem;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid #e2e8f0;
             display: flex;
             justify-content: flex-end;
             gap: 0.75rem;
             border-radius: 0 0 12px 12px;
-            background-color: #f9fafb;
+            background: #f8fafc;
         }
         .btn {
-            padding: 0.5rem 1.25rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
             border: none;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
         }
         .btn-primary {
-            background-color: #2563eb;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
         }
-        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-primary:hover { 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        }
         .btn-secondary {
-            background-color: #e5e7eb;
-            color: #374151;
+            background: #ffffff;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-secondary:hover { 
+            background: #f8fafc;
+            color: #475569;
+            border-color: #cbd5e1;
         }
         /* 底部Footer */
         .footer {
@@ -485,7 +546,6 @@
             z-index: 1001;
             padding-left: 220px;
         }
-        .btn-secondary:hover { background-color: #d1d5db; }
     </style>
 
 </head>
@@ -665,14 +725,26 @@
                             <i class="fa fa-terminal mr-2 text-blue-600"></i>
                             运行日志
                         </h3>
-                        <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-200">
-                            <i class="fa fa-trash mr-1"></i>
-                            清空日志
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200">
+                                <button id="logStyleLight" class="px-3 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" onclick="switchLogStyle('light')">
+                                    <i class="fa fa-sun-o mr-1"></i>明亮
+                                </button>
+                                <button id="logStyleDark" class="px-3 py-1 text-xs rounded-md text-gray-500 hover:bg-gray-700 hover:text-white transition-colors" onclick="switchLogStyle('dark')">
+                                    <i class="fa fa-moon-o mr-1"></i>深色
+                                </button>
+                            </div>
+                            <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-200">
+                                <i class="fa fa-trash mr-1"></i>
+                                清空日志
+                            </button>
+                        </div>
                     </div>
                     <div class="p-6" style="height: calc(100% - 65px);">
-                        <div class="bg-gray-50 rounded-lg p-4 overflow-y-auto scrollbar-thin" id="runLog" style="height: 100%;">
-                            <div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>
+                        <div id="runLogContainer" class="rounded-lg overflow-y-auto scrollbar-thin" style="height: 100%;">
+                            <div id="runLog" class="p-4" style="height: 100%;">
+                                <div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -720,9 +792,15 @@
                 <div class="inner-body">
                     <!-- 大模型选择 -->
                     <div class="mb-8">
-                        <div class="section-title">
-                            <i class="fa fa-brain"></i>
-                            大模型选择
+                        <div class="section-title flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fa fa-brain"></i>
+                                大模型选择
+                            </div>
+                            <button id="testModelsBtn" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-2">
+                                <i class="fa fa-check-circle"></i>
+                                测试模型
+                            </button>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -734,6 +812,7 @@
                                         <i class="fa fa-microchip text-indigo-600"></i>
                                         火山引擎（Doubao）
                                     </label>
+                                    <span id="model-status-ark" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
@@ -770,6 +849,7 @@
                                         <i class="fa fa-brain text-green-600"></i>
                                         OpenAI（GPT）
                                     </label>
+                                    <span id="model-status-openai" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
@@ -813,6 +893,7 @@
                                         <i class="fa fa-search text-red-600"></i>
                                         百度文心一言
                                     </label>
+                                    <span id="model-status-baidu" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
@@ -856,6 +937,7 @@
                                         <i class="fa fa-cloud text-orange-600"></i>
                                         阿里通义千问
                                     </label>
+                                    <span id="model-status-alibaba" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
@@ -899,6 +981,7 @@
                                         <i class="fa fa-magic text-purple-600"></i>
                                         DeepSeek
                                     </label>
+                                    <span id="model-status-deepseek" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
@@ -942,6 +1025,7 @@
                                         <i class="fa fa-star text-yellow-600"></i>
                                         Google Gemini
                                     </label>
+                                    <span id="model-status-gemini" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
@@ -1000,6 +1084,7 @@
                                         <i class="fa fa-robot text-pink-600"></i>
                                         Claude (OneAPI)
                                     </label>
+                                    <span id="model-status-claude" class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">待测试</span>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
@@ -1046,6 +1131,16 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- 测试日志显示区域 -->
+            <div id="testModelsLogContainer" class="px-6 py-4 border-t border-gray-100 bg-gray-50 hidden">
+                <div class="flex items-center mb-2">
+                    <i class="fa fa-terminal text-indigo-600 mr-2"></i>
+                    <span class="text-sm font-medium text-gray-700">测试日志</span>
+                </div>
+                <div id="testModelsLog" class="bg-gray-900 text-green-400 p-3 rounded-lg text-xs font-mono h-32 overflow-y-auto">
                 </div>
             </div>
             
@@ -1285,10 +1380,18 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100 flex justify-center">
-                <button id="generateTodayNoteBtn" class="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center font-semibold shadow-lg">
-                    <i class="fa fa-magic mr-2"></i>
-                    生成今天的投资笔记
-                </button>
+                <div class="flex flex-col items-center w-full">
+                    <div class="mb-4 flex items-center w-full">
+                        <input id="useColumnArticles" type="checkbox" class="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded" checked>
+                        <label for="useColumnArticles" class="ml-3 block text-sm text-gray-700">
+                            结合最近4篇专栏文章（默认选择）
+                        </label>
+                    </div>
+                    <button id="generateTodayNoteBtn" class="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center font-semibold shadow-lg">
+                        <i class="fa fa-magic mr-2"></i>
+                        生成今天的投资笔记
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1357,12 +1460,6 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
-                <button class="close-modal-btn px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors">
-                    关闭
-                </button>
-            </div>
         </div>
     </div>
 
@@ -1407,7 +1504,7 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
-                <button class="close-modal-btn px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300">
+                <button class="close-modal-btn px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 whitespace-nowrap">
                     关闭
                 </button>
             </div>
@@ -1485,7 +1582,7 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button class="close-modal-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button class="cancel-note-btn px-6 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center">
                     取消
                 </button>
                 <button id="confirmPublishNoteBtn" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 flex items-center">
@@ -2775,9 +2872,147 @@
         let fetchedArticles = [];
         let analyzeColumnFlag = false;
         
+        // 日志风格相关变量
+        let currentLogStyle = 'dark'; // 'light' 或 'dark'
+        let logHistory = []; // 存储日志历史用于重新渲染
+        
+        // 切换日志风格
+        function switchLogStyle(style) {
+            currentLogStyle = style;
+            updateLogStyleButtons();
+            applyLogStyle();
+            rerenderAllLogs();
+        }
+        
+        // 更新日志风格按钮状态
+        function updateLogStyleButtons() {
+            const lightBtn = document.getElementById('logStyleLight');
+            const darkBtn = document.getElementById('logStyleDark');
+            
+            if (lightBtn && darkBtn) {
+                if (currentLogStyle === 'light') {
+                    lightBtn.className = 'px-3 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors';
+                    darkBtn.className = 'px-3 py-1 text-xs rounded-md text-gray-500 hover:bg-gray-700 hover:text-white transition-colors';
+                } else {
+                    lightBtn.className = 'px-3 py-1 text-xs rounded-md text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors';
+                    darkBtn.className = 'px-3 py-1 text-xs rounded-md bg-gray-700 text-white hover:bg-gray-800 transition-colors';
+                }
+            }
+        }
+        
+        // 应用日志容器样式
+        function applyLogStyle() {
+            const logContainer = document.getElementById('runLogContainer');
+            const logElement = document.getElementById('runLog');
+            
+            if (logContainer && logElement) {
+                if (currentLogStyle === 'dark') {
+                    logContainer.className = 'rounded-lg overflow-y-auto scrollbar-thin bg-gray-900';
+                    logElement.className = 'p-3 text-xs font-mono';
+                } else {
+                    logContainer.className = 'rounded-lg overflow-y-auto scrollbar-thin bg-gray-50';
+                    logElement.className = 'p-4';
+                }
+            }
+        }
+        
+        // 重新渲染所有日志
+        function rerenderAllLogs() {
+            const logElement = document.getElementById('runLog');
+            if (!logElement) return;
+            
+            if (logHistory.length === 0) {
+                if (currentLogStyle === 'dark') {
+                    logElement.innerHTML = '<div class="text-gray-500">系统准备就绪，等待开始...</div>';
+                } else {
+                    logElement.innerHTML = '<div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>';
+                }
+                return;
+            }
+            
+            logElement.innerHTML = '';
+            
+            if (currentLogStyle === 'dark') {
+                // 深色风格：按时间顺序，最新的在底部
+                for (let i = 0; i < logHistory.length; i++) {
+                    const log = logHistory[i];
+                    const logEntry = createLogEntry(log.message, log.type, log.timestamp);
+                    logElement.appendChild(logEntry);
+                }
+                // 滚动到底部
+                logElement.scrollTop = logElement.scrollHeight;
+            } else {
+                // 明亮风格：反向遍历，最新的在最上面
+                for (let i = logHistory.length - 1; i >= 0; i--) {
+                    const log = logHistory[i];
+                    const logEntry = createLogEntry(log.message, log.type, log.timestamp);
+                    logElement.appendChild(logEntry);
+                }
+                // 滚动到顶部
+                logElement.scrollTop = 0;
+            }
+        }
+        
+        // 创建单个日志条目
+        function createLogEntry(message, type = 'info', timestamp = null) {
+            let timeStr;
+            if (timestamp) {
+                timeStr = timestamp;
+            } else {
+                const now = new Date();
+                timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            }
+            
+            const logEntry = document.createElement('div');
+            
+            if (currentLogStyle === 'dark') {
+                // 深色风格
+                const prefix = type === 'success' ? '[✓]' : type === 'error' ? '[✗]' : type === 'warning' ? '[!]' : '[*]';
+                const colorClass = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-yellow-400' : 'text-cyan-400';
+                logEntry.className = colorClass;
+                logEntry.textContent = `${timeStr} ${prefix} ${message}`;
+            } else {
+                // 明亮风格 - 使用和深色风格一致的字体大小和间距
+                logEntry.className = 'mb-1 p-1 text-xs font-mono';
+                
+                let prefixIcon = 'fa-info-circle';
+                let textColor = 'text-gray-700';
+                let iconColor = 'text-gray-400';
+                
+                if (type === 'success') {
+                    prefixIcon = 'fa-check-circle';
+                    textColor = 'text-green-700';
+                    iconColor = 'text-green-500';
+                } else if (type === 'error') {
+                    prefixIcon = 'fa-times-circle';
+                    textColor = 'text-red-700';
+                    iconColor = 'text-red-500';
+                } else if (type === 'warning') {
+                    prefixIcon = 'fa-exclamation-triangle';
+                    textColor = 'text-yellow-700';
+                    iconColor = 'text-yellow-500';
+                } else if (message.includes('📊 文章属性:')) {
+                    prefixIcon = 'fa-bar-chart';
+                    textColor = 'text-blue-700';
+                    iconColor = 'text-blue-500';
+                }
+                
+                logEntry.innerHTML = `
+                    <i class="fa ${prefixIcon} mr-2 ${iconColor}"></i>
+                    <span class="text-gray-400">[${timeStr}]</span>
+                    <span class="ml-2 ${textColor}">${message}</span>
+                `;
+            }
+            
+            return logEntry;
+        }
+        
         // 初始化
         async function init() {
             setupEventListeners();
+            // 初始化日志风格
+            applyLogStyle();
+            updateLogStyleButtons();
             await loadConfigFromServer();
             await loadSystemPromptList();
             // 加载默认配置到Footer
@@ -2786,6 +3021,8 @@
             resetFollowingButton();
             // 初始化模型卡片点击事件
             initModelCardClicks();
+            // 更新模型选择状态
+            updateModelSelectionState();
         }
         
         // 加载默认配置到Footer
@@ -2888,11 +3125,29 @@
             selectedModelRadios.forEach(radio => {
                 radio.addEventListener('change', () => {
                     if (radio.checked) {
-                        config.selectedModel = radio.value;
-                        updateModelCardSelection(radio.value);
+                        const modelType = radio.value;
+                        const modelStatus = config.modelStatus?.[modelType];
+                        
+                        // 检查模型状态是否正常
+                        if (modelStatus !== undefined && !modelStatus.success) {
+                            addLog('该模型状态异常，无法选择', 'error');
+                            radio.checked = false;
+                            return;
+                        }
+                        
+                        config.selectedModel = modelType;
+                        updateModelCardSelection(modelType);
                     }
                 });
             });
+            
+            // 测试模型按钮事件
+            const testModelsBtn = document.getElementById('testModelsBtn');
+            if (testModelsBtn) {
+                testModelsBtn.addEventListener('click', () => {
+                    testAllModels();
+                });
+            }
             
             // 系统配置二级菜单切换
             const menuSystemConfigToggle = document.getElementById('menuSystemConfigToggle');
@@ -3770,6 +4025,11 @@
                     if (serverConfig.delayMax) config.delayMax = serverConfig.delayMax;
                     if (serverConfig.testMode !== undefined) config.testMode = serverConfig.testMode;
                     
+                    // 加载模型测试状态
+                    if (serverConfig.modelStatus) {
+                        config.modelStatus = serverConfig.modelStatus;
+                    }
+                    
                     console.log('loadConfigFromServer - 合并后的 config:', JSON.stringify(config, null, 2));
                     addLog('已从服务器加载配置', 'success');
                 } else {
@@ -3867,6 +4127,9 @@
             
             updateModelCardSelection(config.selectedModel);
             
+            // 更新模型状态标签
+            updateModelStatusTags();
+            
             document.getElementById('arkApiKey').value = config.models?.ark?.apiKey || '';
             document.getElementById('arkMaxTokens').value = config.models?.ark?.maxTokens || 2000;
             document.getElementById('arkTemperature').value = config.models?.ark?.temperature || 0.7;
@@ -3912,6 +4175,238 @@
             testModeCheckbox.checked = config.testMode || false;
         }
         
+        // 更新模型状态标签
+        function updateModelStatusTags() {
+            const modelTypes = ['ark', 'openai', 'baidu', 'alibaba', 'deepseek', 'gemini', 'claude'];
+            
+            modelTypes.forEach(modelType => {
+                const statusElement = document.getElementById(`model-status-${modelType}`);
+                if (!statusElement) return;
+                
+                const modelStatus = config.modelStatus?.[modelType];
+                
+                if (modelStatus?.success) {
+                    statusElement.textContent = '正常';
+                    statusElement.className = 'ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 relative group';
+                    statusElement.setAttribute('data-tooltip', '模型连接正常');
+                } else if (modelStatus?.success === false) {
+                    statusElement.textContent = '错误';
+                    statusElement.className = 'ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 relative group cursor-help';
+                    statusElement.setAttribute('data-tooltip', modelStatus.error || '未知错误');
+                } else {
+                    statusElement.textContent = '待测试';
+                    statusElement.className = 'ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 relative group';
+                    statusElement.setAttribute('data-tooltip', '点击\"测试模型\"按钮测试连接');
+                }
+            });
+        }
+        
+        // 测试所有模型
+        async function testAllModels() {
+            const testBtn = document.getElementById('testModelsBtn');
+            const logContainer = document.getElementById('testModelsLogContainer');
+            const logElement = document.getElementById('testModelsLog');
+            
+            if (!testBtn) return;
+            
+            // 显示日志容器
+            if (logContainer) {
+                logContainer.classList.remove('hidden');
+            }
+            
+            // 清空日志
+            if (logElement) {
+                logElement.innerHTML = '';
+            }
+            
+            // 添加日志函数
+            function addTestLog(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const prefix = type === 'success' ? '[✓]' : type === 'error' ? '[✗]' : '[*]';
+                const colorClass = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-cyan-400';
+                
+                if (logElement) {
+                    const logLine = document.createElement('div');
+                    logLine.className = colorClass;
+                    logLine.textContent = `${timestamp} ${prefix} ${message}`;
+                    logElement.appendChild(logLine);
+                    logElement.scrollTop = logElement.scrollHeight;
+                }
+            }
+            
+            // 禁用按钮，显示加载状态
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 测试中...';
+            addLog('开始测试所有模型...', 'info');
+            addTestLog('开始测试所有模型...');
+            
+            try {
+                // 首先保存当前配置
+                addTestLog('正在保存当前配置...');
+                await saveCurrentConfigToServer();
+                addTestLog('配置保存成功');
+                
+                // 调用测试API
+                addTestLog('正在发送测试请求到服务器...');
+                const response = await fetch(`${API_BASE_URL}/test-models`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addTestLog('服务器测试完成', 'success');
+                    addLog('模型测试完成', 'success');
+                    
+                    // 显示每个模型的测试结果
+                    const modelNames = {
+                        'ark': '火山引擎（Doubao）',
+                        'openai': 'OpenAI（GPT）',
+                        'baidu': '百度文心一言',
+                        'alibaba': '阿里通义千问',
+                        'deepseek': 'DeepSeek',
+                        'gemini': 'Google Gemini',
+                        'claude': 'Claude (OneAPI)'
+                    };
+                    
+                    for (const [modelType, testResult] of Object.entries(result.data)) {
+                        const modelName = modelNames[modelType] || modelType;
+                        if (testResult.success) {
+                            addTestLog(`${modelName}: 测试成功`, 'success');
+                        } else {
+                            addTestLog(`${modelName}: ${testResult.error || '未知错误'}`, 'error');
+                        }
+                    }
+                    
+                    // 更新config中的modelStatus
+                    config.modelStatus = result.data;
+                    
+                    // 更新UI显示
+                    updateModelStatusTags();
+                    
+                    // 更新模型可选择状态
+                    updateModelSelectionState();
+                    
+                    // 重新加载配置以确保同步
+                    await loadConfigFromServer();
+                    
+                    addTestLog('所有模型测试完成！', 'success');
+                } else {
+                    addTestLog(`模型测试失败: ${result.message}`, 'error');
+                    addLog(`模型测试失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('测试模型失败:', error);
+                addTestLog(`测试模型失败: ${error.message}`, 'error');
+                addLog(`测试模型失败: ${error.message}`, 'error');
+            } finally {
+                // 恢复按钮状态
+                testBtn.disabled = false;
+                testBtn.innerHTML = '<i class="fa fa-check-circle"></i> 测试模型';
+            }
+        }
+        
+        // 保存当前配置到服务器（用于测试前保存）
+        async function saveCurrentConfigToServer() {
+            const selectedModel = document.querySelector('input[name="selectedModel"]:checked');
+            if (selectedModel) {
+                config.selectedModel = selectedModel.value;
+            }
+            
+            config.models = {
+                ark: {
+                    apiKey: document.getElementById('arkApiKey').value,
+                    maxTokens: parseInt(document.getElementById('arkMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('arkTemperature').value) || 0.7
+                },
+                openai: {
+                    apiKey: document.getElementById('openaiApiKey').value,
+                    baseUrl: document.getElementById('openaiBaseUrl').value,
+                    maxTokens: parseInt(document.getElementById('openaiMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('openaiTemperature').value) || 0.7
+                },
+                baidu: {
+                    apiKey: document.getElementById('baiduApiKey').value,
+                    secretKey: document.getElementById('baiduSecretKey').value,
+                    maxTokens: parseInt(document.getElementById('baiduMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('baiduTemperature').value) || 0.7
+                },
+                alibaba: {
+                    apiKey: document.getElementById('alibabaApiKey').value,
+                    baseUrl: document.getElementById('alibabaBaseUrl').value,
+                    maxTokens: parseInt(document.getElementById('alibabaMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('alibabaTemperature').value) || 0.7
+                },
+                deepseek: {
+                    apiKey: document.getElementById('deepseekApiKey').value,
+                    baseUrl: document.getElementById('deepseekBaseUrl').value,
+                    maxTokens: parseInt(document.getElementById('deepseekMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('deepseekTemperature').value) || 0.7
+                },
+                gemini: {
+                    apiKey: document.getElementById('geminiApiKey').value,
+                    modelName: document.getElementById('geminiModelName').value,
+                    baseUrl: document.getElementById('geminiBaseUrl').value,
+                    maxTokens: parseInt(document.getElementById('geminiMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('geminiTemperature').value) || 0.7
+                },
+                claude: {
+                    apiKey: document.getElementById('claudeApiKey').value,
+                    modelName: document.getElementById('claudeModelName').value,
+                    baseUrl: document.getElementById('claudeBaseUrl').value,
+                    maxTokens: parseInt(document.getElementById('claudeMaxTokens').value) || 2000,
+                    temperature: parseFloat(document.getElementById('claudeTemperature').value) || 0.7
+                }
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                return result.success;
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                return false;
+            }
+        }
+        
+        // 更新模型选择状态 - 只有状态正常的模型可以被选择
+        function updateModelSelectionState() {
+            const modelTypes = ['ark', 'openai', 'baidu', 'alibaba', 'deepseek', 'gemini', 'claude'];
+            
+            modelTypes.forEach(modelType => {
+                const radio = document.getElementById(`model-${modelType}`);
+                const card = document.querySelector(`.model-card[data-model="${modelType}"]`);
+                
+                if (!radio || !card) return;
+                
+                const modelStatus = config.modelStatus?.[modelType];
+                const isStatusOk = modelStatus?.success;
+                
+                // 如果模型状态不正常且当前被选中，需要取消选中
+                if (!isStatusOk && radio.checked) {
+                    radio.checked = false;
+                }
+                
+                // 禁用/启用radio按钮
+                radio.disabled = !isStatusOk && modelStatus !== undefined;
+                
+                // 更新卡片样式
+                if (!isStatusOk && modelStatus !== undefined) {
+                    card.classList.add('opacity-50');
+                    card.title = '该模型状态异常，无法选择';
+                } else {
+                    card.classList.remove('opacity-50');
+                    card.title = '';
+                }
+            });
+        }
+        
         // 更新模型卡片选中状态
         function updateModelCardSelection(selectedModel) {
             const modelCards = document.querySelectorAll('.model-card[data-model]');
@@ -3932,6 +4427,14 @@
                     const model = card.dataset.model;
                     const radio = document.getElementById(`model-${model}`);
                     if (radio) {
+                        const modelStatus = config.modelStatus?.[model];
+                        
+                        // 检查模型状态是否正常
+                        if (modelStatus !== undefined && !modelStatus.success) {
+                            addLog('该模型状态异常，无法选择', 'error');
+                            return;
+                        }
+                        
                         radio.checked = true;
                         config.selectedModel = model;
                         updateModelCardSelection(model);
@@ -4690,59 +5193,38 @@
                 timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
             }
             
-            const logEntry = document.createElement('div');
-            logEntry.className = 'mb-2 p-2 rounded border-l-4 text-sm';
+            // 保存到日志历史
+            logHistory.push({ message, type, timestamp: timeStr });
             
-            let typeColor = 'border-gray-400 bg-gray-50';
-            let typeIcon = 'fa-info-circle';
-            if (type === 'success') {
-                typeColor = 'border-green-500 bg-green-50';
-                typeIcon = 'fa-check-circle';
-            } else if (type === 'error') {
-                typeColor = 'border-red-500 bg-red-50';
-                typeIcon = 'fa-times-circle';
-            } else if (type === 'warning') {
-                typeColor = 'border-yellow-500 bg-yellow-50';
-                typeIcon = 'fa-exclamation-triangle';
-            } else if (message.includes('📊 文章属性:')) {
-                // 文章属性日志使用鲜艳的颜色
-                typeColor = 'border-blue-500 bg-blue-50';
-                typeIcon = 'fa-bar-chart';
-            }
-            
-            logEntry.classList.add(...typeColor.split(' '));
-            // 确定图标颜色
-            let iconColor = 'text-gray-400';
-            if (type === 'success') {
-                iconColor = 'text-green-500';
-            } else if (type === 'error') {
-                iconColor = 'text-red-500';
-            } else if (type === 'warning') {
-                iconColor = 'text-yellow-500';
-            } else if (message.includes('📊 文章属性:')) {
-                iconColor = 'text-blue-500';
-            }
-            
-            logEntry.innerHTML = `
-                <i class="fa ${typeIcon} mr-2 ${iconColor}"></i>
-                <span class="text-gray-400 font-mono">[${timeStr}]</span>
-                <span class="ml-2">${message}</span>
-            `;
+            const logEntry = createLogEntry(message, type, timeStr);
             
             // 清除默认提示
-            if (runLogElement.children.length === 1 && runLogElement.children[0].textContent === '系统准备就绪，等待开始...') {
-                runLogElement.innerHTML = '';
+            if (runLogElement.children.length === 1) {
+                const firstChild = runLogElement.children[0];
+                if (firstChild.textContent.includes('系统准备就绪')) {
+                    runLogElement.innerHTML = '';
+                }
             }
             
-            // 将新日志添加到开头
-            runLogElement.insertBefore(logEntry, runLogElement.firstChild);
-            // 保持滚动在顶部
-            runLogElement.scrollTop = 0;
+            if (currentLogStyle === 'dark') {
+                // 深色风格：添加到末尾，滚动到底部
+                runLogElement.appendChild(logEntry);
+                runLogElement.scrollTop = runLogElement.scrollHeight;
+            } else {
+                // 明亮风格：添加到开头，保持滚动在顶部
+                runLogElement.insertBefore(logEntry, runLogElement.firstChild);
+                runLogElement.scrollTop = 0;
+            }
         }
         
         // 清空日志
         function clearLog() {
-            runLogElement.innerHTML = '<div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>';
+            logHistory = [];
+            if (currentLogStyle === 'dark') {
+                runLogElement.innerHTML = '<div class="text-gray-500">系统准备就绪，等待开始...</div>';
+            } else {
+                runLogElement.innerHTML = '<div class="text-gray-500 text-sm">系统准备就绪，等待开始...</div>';
+            }
             displayedLogs.clear();
         }
         
@@ -7259,19 +7741,27 @@
             generateTodayNoteBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>生成中...';
             
             try {
+                const useColumnArticles = document.getElementById('useColumnArticles').checked;
+                
                 addNoteListLog('开始生成今日投资笔记...');
+                addNoteListLog(`是否结合专栏文章: ${useColumnArticles ? '是' : '否'}`);
                 addNoteListLog('正在调用大模型API...');
                 
                 const response = await fetch(`${API_BASE_URL}/investment-notes/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({
+                        useColumnArticles: useColumnArticles
+                    })
                 });
                 const result = await response.json();
                 
                 if (result.success) {
                     addNoteListLog('大模型API调用成功！', 'success');
                     addNoteListLog(`获取到 ${result.data.recentNotesCount || 0} 篇历史笔记作为参考`);
+                    if (result.data.columnArticlesCount > 0) {
+                        addNoteListLog(`获取到 ${result.data.columnArticlesCount} 篇专栏文章作为参考`);
+                    }
                     
                     document.getElementById('todayNoteTitle').value = result.data.title || '';
                     const contentDiv = document.getElementById('todayNoteContent');
@@ -7299,6 +7789,12 @@
                 generateTodayNoteBtn.disabled = false;
                 generateTodayNoteBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>生成今天的投资笔记';
             }
+        });
+        
+        document.querySelector('.cancel-note-btn').addEventListener('click', function() {
+            addNoteListLog('取消编辑，返回历史笔记列表');
+            todayNoteEditModal.classList.remove('show');
+            investmentNoteListModal.classList.add('show');
         });
         
         confirmPublishNoteBtn.addEventListener('click', function() {
@@ -8039,12 +8535,14 @@
                 return;
             }
             
-            rewardArticleListContainer.innerHTML = rewardCommentsListData.map(article => {
+            rewardArticleListContainer.innerHTML = rewardCommentsListData.map((article, index) => {
                 const rewardExpired = article.rewardExpired !== false;
                 const canComment = article.canComment !== false && !rewardExpired;
                 const rewardAmount = article.rewardAmount || article.reward_amount || 0;
                 const rewardRemaining = article.rewardRemaining || rewardAmount;
                 const rewardAnswerCount = article.rewardAnswerCount || article.rewardCount || 0;
+                const userId = article.user?.id || '';
+                const articleId = article.id || '';
                 
                 return `
                 <div class="border-b border-gray-200 p-4 hover:bg-gray-50 
@@ -8059,6 +8557,12 @@
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1 flex-wrap">
                                 <span class="font-medium text-gray-800">${article.title || '无标题'}</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-mono">
+                                    UID:${userId}
+                                </span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-mono">
+                                    ID:${articleId}
+                                </span>
                                 ${!rewardExpired ? `
                                     <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                                         <i class="fa fa-gift mr-1"></i>进行中

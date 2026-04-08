@@ -69,7 +69,18 @@ class RewardArticleFetcher:
                         f.write(response.text)
                     
                     # 直接从整个响应文本中提取所有 id:数字 模式
-                    print(f"[{time.strftime('%H:%M:%S')}] 正在从响应中提取文章ID...")
+                    print(f"[{time.strftime('%H:%M:%S')}] 正在从响应中提取文章ID和用户ID...")
+                    
+                    # 提取 target 字段（包含用户ID和文章ID）
+                    target_pattern = r'target:\s*"\\u002F(\d+)\\u002F(\d+)"'
+                    target_matches = re.findall(target_pattern, response.text)
+                    
+                    print(f"[{time.strftime('%H:%M:%S')}] 提取到 {len(target_matches)} 个 target 字段")
+                    
+                    # 创建文章ID到用户ID的映射
+                    article_id_to_user_id = {}
+                    for user_id, article_id in target_matches:
+                        article_id_to_user_id[article_id] = user_id
                     
                     # 直接在整个响应中查找所有 id:数字 的模式
                     id_matches = re.findall(r'id:\s*(\d+)', response.text)
@@ -98,6 +109,12 @@ class RewardArticleFetcher:
                         try:
                             # 获取文章ID
                             article_id = id_matches[idx] if idx < len(id_matches) else None
+                            
+                            # 获取用户ID（从target字段映射中）
+                            user_id = None
+                            if article_id and article_id in article_id_to_user_id:
+                                user_id = article_id_to_user_id[article_id]
+                                print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 从target字段获取到用户ID={user_id}")
                             
                             # 获取悬赏金额
                             tag_elem = item.find('span', class_='offer__tag')
@@ -132,7 +149,7 @@ class RewardArticleFetcher:
                                 'text': text,
                                 'textPreview': text[:180],
                                 'user': {
-                                    'id': None,
+                                    'id': user_id,
                                     'screen_name': '悬赏问答',
                                     'profile_image': ''
                                 },
@@ -151,7 +168,8 @@ class RewardArticleFetcher:
                             
                             articles.append(article_info)
                             status = "可评论" if can_comment else "不可评论"
-                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: ID={article_id}, 悬赏 ¥{reward_amount}, {status}")
+                            user_id_display = user_id if user_id else "未知"
+                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 文章ID={article_id}, 作者UID={user_id_display}, 悬赏 ¥{reward_amount}, {status}")
                             
                         except Exception as e:
                             print(f"解析文章 {idx} 异常: {e}")
@@ -288,7 +306,8 @@ class RewardArticleFetcher:
                 'comment_count': post.get('comment_count', 0) or post.get('reply_count', 0),
                 'retweet_count': post.get('retweet_count', 0),
                 'view_count': post.get('view_count', 0),
-                'source': post.get('source', '')
+                'source': post.get('source', ''),
+                'fullArticleData': post
             }
         except Exception as e:
             print(f"解析悬赏文章信息异常: {str(e)}")
@@ -325,7 +344,8 @@ class RewardArticleFetcher:
                 'comment_count': post.get('comment_count', 0),
                 'retweet_count': post.get('retweet_count', 0),
                 'view_count': post.get('view_count', 0),
-                'source': post.get('source', '')
+                'source': post.get('source', ''),
+                'fullArticleData': post
             }
         except Exception as e:
             print(f"解析文章信息异常: {str(e)}")

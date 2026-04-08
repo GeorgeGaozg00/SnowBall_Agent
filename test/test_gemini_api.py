@@ -6,7 +6,7 @@ import os
 def test_gemini_api():
     try:
         # 读取系统配置文件
-        config_file = os.path.join(os.path.dirname(__file__), '..', 'backend', 'config.json')
+        config_file = os.path.join(os.path.dirname(__file__), '..', 'backend', 'config', 'config.json')
         if os.path.exists(config_file):
             with open(config_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)

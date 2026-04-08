@@ -1492,6 +1492,183 @@ def save_config():
             "message": f"保存配置失败: {str(e)}"
         }), 500
 
+def test_model(model_type, model_config):
+    """测试单个模型"""
+    try:
+        api_key = model_config.get('apiKey', '')
+        if not api_key:
+            return {
+                'success': False,
+                'error': 'API Key 为空'
+            }
+        
+        base_url = model_config.get('baseUrl', '')
+        model_name = model_config.get('modelName', '')
+        
+        test_prompt = "你好，请回复'测试成功'"
+        
+        if model_type == 'ark':
+            url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": "doubao-seed-2-0-pro-260215",
+                "messages": [{"role": "user", "content": test_prompt}],
+                "temperature": 0.7,
+                "max_tokens": 100
+            }
+            response = requests.post(url, headers=headers, json=data, timeout=30, proxies={'http': None, 'https': None})
+            result = response.json()
+            if 'choices' in result:
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', {}).get('message', '未知错误')}
+        
+        elif model_type in ['openai', 'deepseek', 'claude']:
+            # 设置默认base_url
+            default_base_urls = {
+                'openai': 'https://api.openai.com/v1',
+                'deepseek': 'https://api.deepseek.com/v1',
+                'claude': 'https://oneapi.hk/v1'
+            }
+            default_base_url = default_base_urls.get(model_type, '')
+            
+            url = base_url or default_base_url
+            if not url.endswith('/chat/completions'):
+                url = url.rstrip('/') + '/chat/completions'
+            
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            # 设置默认模型名称
+            default_model_names = {
+                'openai': 'gpt-3.5-turbo',
+                'deepseek': 'deepseek-chat',
+                'claude': 'claude-sonnet-4-6'
+            }
+            data = {
+                "model": model_name or default_model_names.get(model_type, 'gpt-3.5-turbo'),
+                "messages": [{"role": "user", "content": test_prompt}],
+                "temperature": 0.7,
+                "max_tokens": 100
+            }
+            
+            response = requests.post(url, headers=headers, json=data, timeout=30, proxies={'http': None, 'https': None})
+            result = response.json()
+            if 'choices' in result:
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', {}).get('message', '未知错误')}
+        
+        elif model_type == 'baidu':
+            secret_key = model_config.get('secretKey', '')
+            if not secret_key:
+                return {'success': False, 'error': 'Secret Key 为空'}
+            auth_url = "https://aip.baidubce.com/oauth/2.0/token"
+            auth_data = {
+                "grant_type": "client_credentials",
+                "client_id": api_key,
+                "client_secret": secret_key
+            }
+            auth_response = requests.post(auth_url, data=auth_data, timeout=30, proxies={'http': None, 'https': None})
+            access_token = auth_response.json().get('access_token')
+            if not access_token:
+                return {'success': False, 'error': '获取百度API访问令牌失败'}
+            return {'success': True}
+        
+        elif model_type == 'alibaba':
+            url = base_url or "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+            if not url.endswith('/chat/completions'):
+                url = url.rstrip('/') + '/chat/completions'
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": model_name or "qwen-turbo",
+                "messages": [{"role": "user", "content": test_prompt}],
+                "temperature": 0.7,
+                "max_tokens": 100
+            }
+            response = requests.post(url, headers=headers, json=data, timeout=30, proxies={'http': None, 'https': None})
+            result = response.json()
+            if 'choices' in result:
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', {}).get('message', '未知错误')}
+        
+        elif model_type == 'gemini':
+            base_url = base_url or "https://generativelanguage.googleapis.com/v1beta"
+            model_name = model_name or "gemini-2.5-flash"
+            url = f"{base_url}/models/{model_name}:generateContent?key={api_key}"
+            headers = {"Content-Type": "application/json"}
+            data = {
+                "contents": [{"parts": [{"text": test_prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 100
+                }
+            }
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            result = response.json()
+            if 'candidates' in result:
+                return {'success': True}
+            else:
+                return {'success': False, 'error': result.get('error', {}).get('message', '未知错误')}
+        
+        else:
+            return {'success': False, 'error': '未知的模型类型'}
+    
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+@app.route('/api/test-models', methods=['POST'])
+def test_models():
+    """测试所有模型"""
+    try:
+        config_file = os.path.join(os.path.dirname(__file__), 'config', 'defaultConfig.json')
+        if not os.path.exists(config_file):
+            return jsonify({
+                "success": False,
+                "message": "配置文件不存在"
+            }), 400
+        
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        models_config = config.get('models', {})
+        test_results = {}
+        
+        for model_type, model_config in models_config.items():
+            print(f"[{time.strftime('%H:%M:%S')}] 正在测试模型: {model_type}")
+            result = test_model(model_type, model_config)
+            test_results[model_type] = result
+            print(f"[{time.strftime('%H:%M:%S')}] 模型 {model_type} 测试结果: {'成功' if result['success'] else '失败'} - {result.get('error', '')}")
+        
+        config['modelStatus'] = test_results
+        
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "success": True,
+            "message": "模型测试完成",
+            "data": test_results
+        })
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 测试模型失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "message": f"测试模型失败: {str(e)}"
+        }), 500
+
 @app.route('/api/start-following-comments', methods=['POST'])
 def start_following_comments():
     """启动关注者评论"""
@@ -3354,8 +3531,101 @@ def save_investment_notes(data):
         print(f"保存投资笔记失败: {e}")
         return False
 
+
+def get_article_from_user_timeline(user_id, article_id, cookie, max_pages=5):
+    """
+    通过用户时间线API获取指定文章
+    
+    Args:
+        user_id: 用户ID
+        article_id: 文章ID
+        cookie: 雪球Cookie
+        max_pages: 最大搜索页数
+    
+    Returns:
+        文章数据对象，如果找不到返回None
+    """
+    try:
+        import requests
+        import time
+        
+        if not user_id or not article_id:
+            print(f"[{time.strftime('%H:%M:%S')}] 用户ID或文章ID为空，无法从用户时间线获取文章")
+            return None
+        
+        print(f"[{time.strftime('%H:%M:%S')}] 正在通过用户时间线查找文章: 用户ID={user_id}, 文章ID={article_id}")
+        
+        session = requests.Session()
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Referer": "https://xueqiu.com/",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+        
+        if cookie:
+            headers["Cookie"] = cookie
+        
+        # 先访问首页建立会话
+        session.get("https://xueqiu.com/", headers=headers, timeout=10)
+        time.sleep(0.3)
+        
+        page = 1
+        page_size = 20
+        
+        while page <= max_pages:
+            api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={user_id}&page={page}&count={page_size}"
+            
+            print(f"[{time.strftime('%H:%M:%S')}] 请求用户时间线第{page}页...")
+            
+            try:
+                response = session.get(api_url, headers=headers, timeout=10)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    statuses = data.get("statuses", [])
+                    
+                    if not statuses:
+                        print(f"[{time.strftime('%H:%M:%S')}] 第{page}页没有文章，停止搜索")
+                        break
+                    
+                    print(f"[{time.strftime('%H:%M:%S')}] 第{page}页获取到 {len(statuses)} 篇文章")
+                    
+                    # 在当前页查找目标文章
+                    for status in statuses:
+                        status_id = str(status.get("id", ""))
+                        if status_id == str(article_id):
+                            print(f"[{time.strftime('%H:%M:%S')}] ✅ 在用户时间线第{page}页找到文章ID {article_id}")
+                            return status
+                    
+                    if len(statuses) < page_size:
+                        print(f"[{time.strftime('%H:%M:%S')}] 已到最后一页，停止搜索")
+                        break
+                else:
+                    print(f"[{time.strftime('%H:%M:%S')}] API请求失败，状态码: {response.status_code}")
+                    break
+                    
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}] 请求第{page}页异常: {e}")
+                break
+            
+            page += 1
+            time.sleep(0.3)
+        
+        print(f"[{time.strftime('%H:%M:%S')}] ⚠️  在用户时间线中未找到文章ID {article_id}")
+        return None
+        
+    except Exception as e:
+        print(f"[{time.strftime('%H:%M:%S')}] 从用户时间线获取文章异常: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def get_article_stats(article_id, cookie):
-    """获取文章的详细属性和统计数据"""
+    """获取文章的详细属性和统计数据，同时返回完整的文章数据对象"""
     try:
         import requests
         import time
@@ -3425,7 +3695,8 @@ def get_article_stats(article_id, cookie):
             "rewardCount": 0,
             "rewardExpired": False,
             "rewardRemaining": 0,
-            "rewardState": ""
+            "rewardState": "",
+            "fullArticleData": None
         }
         
         if response.status_code == 200:
@@ -3458,6 +3729,9 @@ def get_article_stats(article_id, cookie):
                             stats['rewardRemaining'] = stats['rewardAmount']
                             stats['rewardCount'] = status.get("reward_count", 0)
                             stats['rewardExpired'] = False
+                        
+                        # 保存完整的文章数据对象
+                        stats['fullArticleData'] = data
                 else:
                     print(f"[{time.strftime('%H:%M:%S')}] 响应不是JSON，可能是HTML")
             except Exception as e:
@@ -3701,6 +3975,8 @@ def generate_today_note():
     try:
         print(f"[{time.strftime('%H:%M:%S')}] ========== 开始生成今日投资笔记 ==========")
         data = request.json
+        use_column_articles = data.get('useColumnArticles', True)
+        print(f"[{time.strftime('%H:%M:%S')}] 是否结合专栏文章: {use_column_articles}")
         
         users_data = load_users()
         default_user_id = users_data.get("defaultUserId")
@@ -3772,6 +4048,85 @@ def generate_today_note():
         
         print(f"[{time.strftime('%H:%M:%S')}] 找到 {len(recent_notes)} 篇近5天的笔记")
         
+        column_articles = []
+        if use_column_articles:
+            print(f"[{time.strftime('%H:%M:%S')}] 正在获取最近4篇专栏文章...")
+            try:
+                import requests
+                
+                cookie = default_user.get("cookie")
+                xueqiu_user_id = default_user.get("uid")
+                
+                session = requests.Session()
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Referer": "https://xueqiu.com/",
+                    "Accept": "application/json, text/javascript, */*; q=0.01",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Cookie": cookie
+                }
+                
+                session.get("https://xueqiu.com/", headers=headers)
+                
+                page = 1
+                page_size = 20
+                max_pages = 50
+                target_count = 4
+                
+                while page <= max_pages:
+                    api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={xueqiu_user_id}&page={page}&type=edit"
+                    print(f"[{time.strftime('%H:%M:%S')}] 请求专栏文章第{page}页...")
+                    response = session.get(api_url, headers=headers)
+                    
+                    if response.status_code != 200:
+                        print(f"[{time.strftime('%H:%M:%S')}] API请求失败，状态码: {response.status_code}")
+                        break
+                    
+                    data = response.json()
+                    articles = data.get("statuses", [])
+                    
+                    if not articles:
+                        print(f"[{time.strftime('%H:%M:%S')}] 第{page}页没有更多文章了")
+                        break
+                    
+                    for art in articles:
+                        if art.get("is_column", False):
+                            created_at = art.get("created_at")
+                            created_time = ""
+                            if created_at:
+                                created_time = datetime.fromtimestamp(created_at / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                            
+                            content = art.get("text", "") or art.get("description", "")
+                            
+                            column_articles.append({
+                                'id': str(art.get("id", "")),
+                                'title': art.get("title") or "无标题",
+                                'content': content,
+                                'createdAt': created_time
+                            })
+                            print(f"[{time.strftime('%H:%M:%S')}]   ✅ 找到专栏文章: {column_articles[-1]['title'][:30]}")
+                    
+                    print(f"[{time.strftime('%H:%M:%S')}] 第{page}页获取 {len(articles)} 篇文章，累计 {len(column_articles)} 篇专栏")
+                    
+                    if len(column_articles) >= target_count:
+                        print(f"[{time.strftime('%H:%M:%S')}] 已找到足够的专栏文章，停止搜索")
+                        break
+                        
+                    if len(articles) < page_size:
+                        print(f"[{time.strftime('%H:%M:%S')}] 第{page}页文章数量不足，已到最后一页")
+                        break
+                        
+                    page += 1
+                    time.sleep(0.3)
+                
+                column_articles = column_articles[:target_count]
+                print(f"[{time.strftime('%H:%M:%S')}] 最终获取 {len(column_articles)} 篇专栏文章")
+                
+            except Exception as e:
+                print(f"[{time.strftime('%H:%M:%S')}] 获取专栏文章失败: {e}")
+                import traceback
+                traceback.print_exc()
+        
         config = load_config()
         models = config.get('models', {})
         selected_model = config.get('selectedModel', 'ark')
@@ -3782,17 +4137,26 @@ def generate_today_note():
         system_prompt_content = default_prompt.get('content', '') if default_prompt else ''
         print(f"[{time.strftime('%H:%M:%S')}] 系统提示词长度: {len(system_prompt_content)}")
         
-        if len(recent_notes) == 0:
-            print(f"[{time.strftime('%H:%M:%S')}] 没有最近笔记，使用默认提示词")
+        if len(recent_notes) == 0 and len(column_articles) == 0:
+            print(f"[{time.strftime('%H:%M:%S')}] 没有最近笔记和专栏文章，使用默认提示词")
             user_prompt = "请写一篇今日投资笔记，主题围绕当前市场行情和投资思考。"
         else:
-            print(f"[{time.strftime('%H:%M:%S')}] 使用最近的 {len(recent_notes)} 篇笔记作为参考")
-            user_prompt = f"""请根据以下近5天的历史投资笔记，生成一篇新的今日投资笔记。
+            print(f"[{time.strftime('%H:%M:%S')}] 使用最近的 {len(recent_notes)} 篇笔记和 {len(column_articles)} 篇专栏文章作为参考")
             
-历史笔记：
-{json.dumps(recent_notes, ensure_ascii=False, indent=2)}
-
-请保持与历史笔记一致的风格和语气，生成一篇有深度、有见解的今日投资笔记。"""
+            prompt_parts = []
+            prompt_parts.append("请根据以下参考素材，生成一篇新的今日投资笔记。")
+            
+            if recent_notes:
+                prompt_parts.append(f"\n近5天的历史投资笔记：")
+                prompt_parts.append(json.dumps(recent_notes, ensure_ascii=False, indent=2))
+            
+            if column_articles:
+                prompt_parts.append(f"\n最近的专栏文章：")
+                prompt_parts.append(json.dumps(column_articles, ensure_ascii=False, indent=2))
+            
+            prompt_parts.append("\n请保持与历史笔记一致的风格和语气，生成一篇有深度、有见解的今日投资笔记。")
+            
+            user_prompt = "\n".join(prompt_parts)
         
         full_prompt = f"{system_prompt_content}\n\n{user_prompt}" if system_prompt_content else user_prompt
         print(f"[{time.strftime('%H:%M:%S')}] 完整提示词长度: {len(full_prompt)}")
@@ -3848,13 +4212,15 @@ def generate_today_note():
         print(f"[{time.strftime('%H:%M:%S')}] ========== 投资笔记生成成功 ==========")
         print(f"[{time.strftime('%H:%M:%S')}] 清理后内容长度: {len(cleaned_content)}")
         print(f"[{time.strftime('%H:%M:%S')}] 使用历史笔记数量: {len(recent_notes)}")
+        print(f"[{time.strftime('%H:%M:%S')}] 使用专栏文章数量: {len(column_articles)}")
         
         return jsonify({
             "success": True,
             "data": {
                 "content": cleaned_content,
                 "title": f"{datetime.now().strftime('%Y年%m月%d日')}投资笔记",
-                "recentNotesCount": len(recent_notes)
+                "recentNotesCount": len(recent_notes),
+                "columnArticlesCount": len(column_articles)
             }
         })
     except Exception as e:
@@ -4191,7 +4557,31 @@ def process_topic_comments(article_ids, selected_model, models_config, articles,
                     # 获取文章完整属性并输出日志
                     try:
                         from article_utils import get_article_full_attributes
-                        article_info = get_article_full_attributes(article)
+                        
+                        article_data_for_attrs = None
+                        
+                        # 优先使用已保存的完整文章数据对象
+                        if 'fullArticleData' in article and article['fullArticleData']:
+                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 使用已保存的fullArticleData")
+                            article_data_for_attrs = article['fullArticleData']
+                        else:
+                            # 如果没有保存的完整数据，尝试通过用户时间线获取
+                            user_id = article.get('user', {}).get('id')
+                            if user_id:
+                                print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 尝试通过用户时间线获取文章数据")
+                                article_from_timeline = get_article_from_user_timeline(user_id, article_id, cookie)
+                                if article_from_timeline:
+                                    article_data_for_attrs = article_from_timeline
+                                    # 保存获取到的完整数据
+                                    article['fullArticleData'] = article_from_timeline
+                                    print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 从用户时间线获取成功，已保存fullArticleData")
+                        
+                        # 如果以上方法都失败，使用文章对象本身
+                        if not article_data_for_attrs:
+                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 使用文章对象本身获取属性")
+                            article_data_for_attrs = article
+                        
+                        article_info = get_article_full_attributes(article_data_for_attrs)
                         
                         article_attrs = article_info.get("属性", {})
                         reward_info = article_info.get("打赏/悬赏信息", {})
@@ -4451,7 +4841,31 @@ def process_reward_comments(article_ids, selected_model, models_config, articles
                     # 获取文章完整属性并输出日志
                     try:
                         from article_utils import get_article_full_attributes
-                        article_info = get_article_full_attributes(article)
+                        
+                        article_data_for_attrs = None
+                        
+                        # 优先使用已保存的完整文章数据对象
+                        if 'fullArticleData' in article and article['fullArticleData']:
+                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 使用已保存的fullArticleData")
+                            article_data_for_attrs = article['fullArticleData']
+                        else:
+                            # 如果没有保存的完整数据，尝试通过用户时间线获取
+                            user_id = article.get('user', {}).get('id')
+                            if user_id:
+                                print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 尝试通过用户时间线获取文章数据")
+                                article_from_timeline = get_article_from_user_timeline(user_id, article_id, cookie)
+                                if article_from_timeline:
+                                    article_data_for_attrs = article_from_timeline
+                                    # 保存获取到的完整数据
+                                    article['fullArticleData'] = article_from_timeline
+                                    print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 从用户时间线获取成功，已保存fullArticleData")
+                        
+                        # 如果以上方法都失败，使用文章对象本身
+                        if not article_data_for_attrs:
+                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 使用文章对象本身获取属性")
+                            article_data_for_attrs = article
+                        
+                        article_info = get_article_full_attributes(article_data_for_attrs)
                         
                         article_attrs = article_info.get("属性", {})
                         reward_info = article_info.get("打赏/悬赏信息", {})
@@ -4898,6 +5312,11 @@ def fetch_reward_articles():
         for idx, article in enumerate(articles):
             try:
                 article_id = article.get('id')
+                user_id = article.get('user', {}).get('id')
+                
+                # 显示文章ID和作者UID
+                print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 文章ID={article_id}, 作者UID={user_id}")
+                
                 # 检查文章ID是否是有效数字
                 if isinstance(article_id, str) and article_id.startswith('reward_html_'):
                     print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: ID={article_id} 是HTML解析的假ID，跳过获取详细信息")
@@ -4908,28 +5327,123 @@ def fetch_reward_articles():
                     article['rewardAnswerCount'] = 0
                     continue
                 
-                print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 获取 ID={article_id} 的详细信息...")
-                stats = get_article_stats(article_id, cookie)
+                # 优先使用已保存的完整文章数据
+                full_article_data = article.get('fullArticleData')
                 
-                # 更新文章信息 - 使用API返回的真实数据
-                article['rewardExpired'] = stats.get('rewardExpired', False)
-                article['canComment'] = not stats.get('rewardExpired', True)
-                article['rewardAmount'] = stats.get('rewardAmount', article.get('reward_amount', 0))
-                article['rewardCount'] = stats.get('rewardCount', article.get('reward_count', 0))
-                article['viewCount'] = stats.get('viewCount', 0)
-                article['likeCount'] = stats.get('likeCount', 0)
-                article['replyCount'] = stats.get('replyCount', 0)
-                
-                # 使用API返回的真实剩余金额
-                article['rewardRemaining'] = stats.get('rewardRemaining', article.get('rewardAmount', 0))
-                article['rewardAnswerCount'] = article.get('rewardCount', 0)
-                article['rewardState'] = stats.get('rewardState', '')
+                if full_article_data:
+                    print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 使用已保存的完整文章数据 ID={article_id}")
+                    
+                    # 从完整文章数据中提取用户ID（如果之前没有）
+                    if not user_id:
+                        user_id = full_article_data.get('user_id') or full_article_data.get('user', {}).get('id')
+                        if user_id:
+                            article['user']['id'] = user_id
+                            print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 从完整数据中提取作者UID={user_id}")
+                    
+                    # 从完整文章数据中提取统计信息
+                    article['viewCount'] = full_article_data.get('view_count', 0)
+                    article['likeCount'] = full_article_data.get('like_count', 0)
+                    article['replyCount'] = full_article_data.get('reply_count', 0)
+                    article['retweetCount'] = full_article_data.get('retweet_count', 0)
+                    article['favCount'] = full_article_data.get('fav_count', 0)
+                    
+                    # 提取悬赏信息
+                    offer = full_article_data.get("offer")
+                    if offer and isinstance(offer, dict):
+                        article['rewardExpired'] = offer.get("state", "") != "NORMAL"
+                        article['rewardAmount'] = round(offer.get("amount", 0) / 100, 2)
+                        article['rewardRemaining'] = round(offer.get("balance", 0) / 100, 2)
+                        article['rewardCount'] = offer.get("count", 0)
+                        article['rewardState'] = offer.get("state", "")
+                    elif full_article_data.get("reward", False) or full_article_data.get("can_reward", False):
+                        article['rewardExpired'] = False
+                        article['rewardAmount'] = round(full_article_data.get("reward_amount", 0) / 100, 2)
+                        article['rewardRemaining'] = article['rewardAmount']
+                        article['rewardCount'] = full_article_data.get("reward_count", 0)
+                        article['rewardState'] = ""
+                    else:
+                        article['rewardExpired'] = article.get('has_reward', False) == False
+                        article['rewardAmount'] = article.get('reward_amount', 0)
+                        article['rewardRemaining'] = 0
+                        article['rewardCount'] = article.get('reward_count', 0)
+                        article['rewardState'] = ""
+                    
+                    article['canComment'] = not article['rewardExpired']
+                    article['rewardAnswerCount'] = article['rewardCount']
+                else:
+                    # 优先尝试通过用户时间线获取文章数据
+                    full_article_data = None
+                    if user_id:
+                        print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 尝试通过用户时间线获取文章ID={article_id}")
+                        full_article_data = get_article_from_user_timeline(user_id, article_id, cookie)
+                    
+                    if full_article_data:
+                        print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 从用户时间线获取成功 ID={article_id}")
+                        
+                        # 保存完整文章数据
+                        article['fullArticleData'] = full_article_data
+                        
+                        # 从完整文章数据中提取统计信息
+                        article['viewCount'] = full_article_data.get('view_count', 0)
+                        article['likeCount'] = full_article_data.get('like_count', 0)
+                        article['replyCount'] = full_article_data.get('reply_count', 0)
+                        article['retweetCount'] = full_article_data.get('retweet_count', 0)
+                        article['favCount'] = full_article_data.get('fav_count', 0)
+                        
+                        # 提取悬赏信息
+                        offer = full_article_data.get("offer")
+                        if offer and isinstance(offer, dict):
+                            article['rewardExpired'] = offer.get("state", "") != "NORMAL"
+                            article['rewardAmount'] = round(offer.get("amount", 0) / 100, 2)
+                            article['rewardRemaining'] = round(offer.get("balance", 0) / 100, 2)
+                            article['rewardCount'] = offer.get("count", 0)
+                            article['rewardState'] = offer.get("state", "")
+                        elif full_article_data.get("reward", False) or full_article_data.get("can_reward", False):
+                            article['rewardExpired'] = False
+                            article['rewardAmount'] = round(full_article_data.get("reward_amount", 0) / 100, 2)
+                            article['rewardRemaining'] = article['rewardAmount']
+                            article['rewardCount'] = full_article_data.get("reward_count", 0)
+                            article['rewardState'] = ""
+                        else:
+                            article['rewardExpired'] = article.get('has_reward', False) == False
+                            article['rewardAmount'] = article.get('reward_amount', 0)
+                            article['rewardRemaining'] = 0
+                            article['rewardCount'] = article.get('reward_count', 0)
+                            article['rewardState'] = ""
+                        
+                        article['canComment'] = not article['rewardExpired']
+                        article['rewardAnswerCount'] = article['rewardCount']
+                    else:
+                        # 如果用户时间线获取失败，再尝试使用get_article_stats
+                        print(f"[{time.strftime('%H:%M:%S')}] 文章 {idx+1}: 获取 ID={article_id} 的详细信息...")
+                        stats = get_article_stats(article_id, cookie)
+                        
+                        # 更新文章信息 - 使用API返回的真实数据
+                        article['rewardExpired'] = stats.get('rewardExpired', False)
+                        article['canComment'] = not stats.get('rewardExpired', True)
+                        article['rewardAmount'] = stats.get('rewardAmount', article.get('reward_amount', 0))
+                        article['rewardCount'] = stats.get('rewardCount', article.get('reward_count', 0))
+                        article['viewCount'] = stats.get('viewCount', 0)
+                        article['likeCount'] = stats.get('likeCount', 0)
+                        article['replyCount'] = stats.get('replyCount', 0)
+                        
+                        # 使用API返回的真实剩余金额
+                        article['rewardRemaining'] = stats.get('rewardRemaining', article.get('rewardAmount', 0))
+                        article['rewardAnswerCount'] = article.get('rewardCount', 0)
+                        article['rewardState'] = stats.get('rewardState', '')
+                        
+                        # 保存完整的文章数据对象，用于后续获取文章属性
+                        stats_full_data = stats.get('fullArticleData')
+                        if stats_full_data:
+                            article['fullArticleData'] = stats_full_data
                 
                 status_text = "进行中" if not article['rewardExpired'] else "已结束"
                 print(f"[{time.strftime('%H:%M:%S')}]   文章 {idx+1}: 悬赏{status_text}, 金额¥{article['rewardAmount']}, 剩余¥{article['rewardRemaining']}, 回答{article['rewardAnswerCount']}个")
                 
             except Exception as e:
                 print(f"[{time.strftime('%H:%M:%S')}] 获取文章 {idx+1} 详细信息失败: {e}")
+                import traceback
+                traceback.print_exc()
                 article['rewardExpired'] = True
                 article['canComment'] = False
                 article['rewardAmount'] = article.get('reward_amount', 0)
@@ -5082,7 +5596,7 @@ def get_model_operations():
         import os
         import json
         
-        logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+        logs_dir = os.path.join(os.path.dirname(__file__), '..', 'logs')
         log_file = os.path.join(logs_dir, 'model_operations.json')
         
         if os.path.exists(log_file):

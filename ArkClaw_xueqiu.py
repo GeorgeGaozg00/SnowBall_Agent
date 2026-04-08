@@ -416,7 +416,7 @@ def main():
         return
     
     # 测试模式：只处理1篇文章，不实际发布评论
-    TEST_MODE = False  # 设置为True进行测试，False进行实际运行
+    TEST_MODE = True  # 设置为True进行测试，False进行实际运行
     test_count = 1 if TEST_MODE else DAILY_LIMIT
     
     count = 0
