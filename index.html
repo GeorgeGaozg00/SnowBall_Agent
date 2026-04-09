@@ -6,6 +6,7 @@
     <title>雪球自动评论系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         /* 自定义tooltip样式 */
         .group {
@@ -117,26 +118,26 @@
         #detailContent a:hover {
             color: #2563eb;
         }
-        /* 左侧菜单栏 */
+        /* 左侧菜单栏 - 清爽风格 */
         .sidebar {
             position: fixed;
             left: 0;
             top: 60px;
             bottom: 0;
             width: 220px;
-            background: #ffffff;
+            background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
             z-index: 999;
             overflow-y: auto;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.08);
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #e2e8f0;
+            border-right: none;
         }
         /* 主内容区域 */
         .main-content {
             margin-left: 220px;
             height: calc(100vh - 60px - 44px);
-            background: #f8fafc;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -166,7 +167,7 @@
             min-height: 0;
             overflow-y: auto;
         }
-        /* 菜单项 */
+        /* 菜单项 - 清爽风格 */
         .menu-item {
             display: flex;
             align-items: center;
@@ -179,13 +180,13 @@
             font-size: 0.925rem;
         }
         .menu-item:hover {
-            background-color: #f1f5f9;
-            color: #334155;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.04) 100%);
+            color: #667eea;
         }
         .menu-item.active {
-            background-color: #eff6ff;
-            color: #1e40af;
-            border-left-color: #3b82f6;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.08) 100%);
+            color: #667eea;
+            border-left-color: #667eea;
             font-weight: 600;
         }
         .menu-item i {
@@ -195,7 +196,7 @@
             color: #94a3b8;
         }
         .menu-item.active i {
-            color: #3b82f6;
+            color: #667eea;
         }
         /* 二级菜单 */
         .submenu {
@@ -222,19 +223,19 @@
         .submenu-toggle.open .arrow {
             transform: rotate(180deg);
         }
-        /* 顶部Banner */
+        /* 顶部Banner - 清爽风格 */
         .banner {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 60px;
             display: flex;
             align-items: center;
             padding: 0 2rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
         }
         .banner .logo {
             font-size: 1.4rem;
@@ -247,7 +248,7 @@
         .banner .logo i {
             margin-right: 0.6rem;
             font-size: 1.6rem;
-            color: #38bdf8;
+            color: #ffffff;
         }
         .banner .status {
             display: flex;
@@ -258,7 +259,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            color: #cbd5e1;
+            color: rgba(255, 255, 255, 0.95);
             font-size: 0.875rem;
             font-weight: 500;
         }
@@ -270,12 +271,12 @@
             letter-spacing: 0.02em;
         }
         .banner .status-badge.running {
-            background: #10b981;
-            color: #ffffff;
+            background: #ffffff;
+            color: #667eea;
         }
         .banner .status-badge.stopped {
-            background: #475569;
-            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
         }
         /* 弹窗遮罩 */
         .modal-overlay {
@@ -315,9 +316,9 @@
         }
         .modal-content.model-config-modal .modal-header {
             flex-shrink: 0;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 1.25rem 1.75rem;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
         }
         .modal-content.model-config-modal .modal-header h3 {
             font-size: 1.25rem;
@@ -389,20 +390,20 @@
             color: #3b82f6;
         }
         .btn-save {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            border-radius: 8px;
-            padding: 0.75rem 1.75rem;
+            border-radius: 10px;
+            padding: 0.6rem 1.4rem;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             transition: all 0.2s ease;
         }
         .btn-save:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
         }
         .btn-save:active {
             transform: translateY(0);
@@ -411,9 +412,9 @@
             background: #ffffff;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
-            padding: 0.75rem 1.75rem;
+            padding: 0.6rem 1.4rem;
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             color: #64748b;
             transition: all 0.2s ease;
         }
@@ -448,14 +449,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 12px 12px 0 0;
             cursor: move;
             user-select: none;
         }
         .modal-header h3 {
-            font-size: 1.125rem;
+            font-size: 1rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -507,15 +508,16 @@
             background: #f8fafc;
         }
         .btn {
-            padding: 0.625rem 1.25rem;
+            padding: 0.5rem 1rem;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.825rem;
             font-weight: 500;
             cursor: pointer;
             border: none;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
+            white-space: nowrap;
         }
         .btn-primary {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -550,14 +552,18 @@
 
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- 顶部Banner -->
+    <!-- 顶部Banner - 清爽风格 -->
     <div class="banner">
         <div class="flex justify-between items-center w-full">
             <div class="logo">
                 <i class="fa fa-comment-o"></i>
                 <span>雪球智能评论系统</span>
+                <span class="ml-2 px-3 py-1 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs rounded-full font-medium">新版本</span>
             </div>
             <div class="status">
+                <button onclick="switchToOldVersion()" class="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-sm font-medium transition-all duration-300 mr-4 backdrop-blur-sm border border-white/30">
+                    <i class="fa fa-history mr-1"></i>切换旧版本
+                </button>
                 <div class="status-item">
                     <span>系统状态:</span>
                     <span id="runStatus" class="status-badge stopped">未运行</span>
@@ -620,45 +626,45 @@
                 </div>
             </nav>
             
-            <!-- 操作按钮区域 -->
-            <div class="px-4 py-4 border-t border-gray-200">
-                <button id="startHotBtn" class="w-full mb-3 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+            <!-- 操作按钮区域 - 清爽风格 -->
+            <div class="px-4 py-4 border-t border-gray-100">
+                <button id="startHotBtn" class="w-full mb-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-fire mr-2"></i>
                     <span>启动热门帖回复</span>
                 </button>
-                <button id="startRecommendBtn" class="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="startRecommendBtn" class="w-full mb-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-star mr-2"></i>
                     <span>启动推荐帖回复</span>
                 </button>
-                <button id="startFollowingBtn" class="w-full mb-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="startFollowingBtn" class="w-full mb-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-users mr-2"></i>
                     <span>启动关注者评论</span>
                 </button>
-                <button id="startTopicCommentsBtn" class="w-full mb-3 bg-pink-600 hover:bg-pink-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="startTopicCommentsBtn" class="w-full mb-3 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-tags mr-2"></i>
                     <span>启动关注话题评论</span>
                 </button>
-                <button id="startRewardCommentsBtn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="startRewardCommentsBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-gift mr-2"></i>
                     <span>启动悬赏评论</span>
                 </button>
             </div>
             
-            <!-- 发布功能区域 -->
-            <div class="px-4 py-4 border-t border-gray-200">
-                <button id="publishPostBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+            <!-- 发布功能区域 - 清爽风格 -->
+            <div class="px-4 py-4 border-t border-gray-100">
+                <button id="publishPostBtn" class="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-edit mr-2"></i>
                     <span>发布雪球帖</span>
                 </button>
-                <button id="writeInvestmentNoteBtn" class="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="writeInvestmentNoteBtn" class="w-full mt-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-sticky-note mr-2"></i>
                     <span>撰写投资笔记</span>
                 </button>
-                <button id="analyzeArticlesBtn" class="w-full mt-3 bg-teal-600 hover:bg-teal-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="analyzeArticlesBtn" class="w-full mt-3 bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-600 hover:to-sky-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-bar-chart mr-2"></i>
                     <span>分析用户文章</span>
                 </button>
-                <button id="getHotSpotsBtn" class="w-full mt-3 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md">
+                <button id="getHotSpotsBtn" class="w-full mt-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-3 py-3 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
                     <i class="fa fa-fire mr-2"></i>
                     <span>获取今日雪球热点</span>
                 </button>
@@ -681,60 +687,60 @@
         <main class="main-content flex-1">
             <!-- 内容区域 -->
             <div class="p-6">
-                <!-- 统计卡片 -->
+                <!-- 统计卡片 - 清爽风格 -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div class="bg-white rounded-xl shadow-md p-3 border-l-4 border-blue-600 hover:shadow-lg transition-all duration-300">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-bold text-gray-800 mb-1" id="processedLabel">已处理用户数</p>
-                                <p class="text-2xl font-bold text-blue-600" id="processedArticles">0</p>
+                                <p class="text-sm font-bold text-gray-700 mb-1" id="processedLabel">已处理用户数</p>
+                                <p class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent" id="processedArticles">0</p>
                             </div>
-                            <div class="bg-blue-100 p-2 rounded-full">
-                                <i class="fa fa-users text-blue-600 text-lg" id="processedIcon"></i>
+                            <div class="bg-gradient-to-br from-purple-100 to-indigo-100 p-3 rounded-2xl">
+                                <i class="fa fa-users text-purple-600 text-xl" id="processedIcon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-md p-3 border-l-4 border-green-600 hover:shadow-lg transition-all duration-300">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-bold text-gray-800 mb-1" id="successLabel">成功发布评论</p>
-                                <p class="text-2xl font-bold text-green-600" id="successComments">0</p>
+                                <p class="text-sm font-bold text-gray-700 mb-1" id="successLabel">成功发布评论</p>
+                                <p class="text-3xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent" id="successComments">0</p>
                             </div>
-                            <div class="bg-green-100 p-2 rounded-full">
-                                <i class="fa fa-check-circle text-green-600 text-lg" id="successIcon"></i>
+                            <div class="bg-gradient-to-br from-green-100 to-emerald-100 p-3 rounded-2xl">
+                                <i class="fa fa-check-circle text-green-600 text-xl" id="successIcon"></i>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-md p-3 border-l-4 border-yellow-600 hover:shadow-lg transition-all duration-300">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-bold text-gray-800 mb-1">失败次数</p>
-                                <p class="text-2xl font-bold text-yellow-600" id="failedAttempts">0</p>
+                                <p class="text-sm font-bold text-gray-700 mb-1">失败次数</p>
+                                <p class="text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent" id="failedAttempts">0</p>
                             </div>
-                            <div class="bg-yellow-100 p-2 rounded-full">
-                                <i class="fa fa-exclamation-triangle text-yellow-600 text-lg"></i>
+                            <div class="bg-gradient-to-br from-orange-100 to-pink-100 p-3 rounded-2xl">
+                                <i class="fa fa-exclamation-triangle text-orange-600 text-xl"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 运行日志 -->
-                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300" style="height: calc(100vh - 200px);">
-                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                            <i class="fa fa-terminal mr-2 text-blue-600"></i>
+                <!-- 运行日志 - 清爽风格 -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden" style="height: calc(100vh - 200px);">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-700 flex items-center">
+                            <i class="fa fa-terminal mr-2 text-purple-600"></i>
                             运行日志
                         </h3>
                         <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200">
-                                <button id="logStyleLight" class="px-3 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" onclick="switchLogStyle('light')">
+                            <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-200 shadow-sm">
+                                <button id="logStyleLight" class="px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white transition-all" onclick="switchLogStyle('light')">
                                     <i class="fa fa-sun-o mr-1"></i>明亮
                                 </button>
-                                <button id="logStyleDark" class="px-3 py-1 text-xs rounded-md text-gray-500 hover:bg-gray-700 hover:text-white transition-colors" onclick="switchLogStyle('dark')">
+                                <button id="logStyleDark" class="px-4 py-2 text-sm rounded-lg text-gray-500 hover:bg-gray-100 transition-all" onclick="switchLogStyle('dark')">
                                     <i class="fa fa-moon-o mr-1"></i>深色
                                 </button>
                             </div>
-                            <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-200">
+                            <button id="clearLogBtn" class="text-sm text-gray-500 hover:text-gray-700 transition-colors px-4 py-2 rounded-xl hover:bg-gray-100 flex items-center">
                                 <i class="fa fa-trash mr-1"></i>
                                 清空日志
                             </button>
@@ -1183,7 +1189,7 @@
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-lg font-medium text-gray-800">用户列表</h4>
-                        <button id="addUserBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                        <button id="addUserBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);">
                             <i class="fa fa-plus mr-2"></i>添加用户
                         </button>
                     </div>
@@ -1209,7 +1215,7 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button class="cancel-config-btn btn btn-secondary">
                     关闭
                 </button>
             </div>
@@ -1275,10 +1281,10 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button class="cancel-config-btn btn btn-secondary">
                     取消
                 </button>
-                <button id="saveUserBtn" class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button id="saveUserBtn" class="save-config-btn btn btn-primary">
                     <i class="fa fa-save mr-2"></i>
                     保存配置
                 </button>
@@ -1333,10 +1339,10 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button class="cancel-config-btn btn btn-secondary">
                     取消
                 </button>
-                <button class="save-config-btn px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button class="save-config-btn btn btn-primary">
                     <i class="fa fa-save mr-2"></i>
                     保存配置
                 </button>
@@ -1481,6 +1487,37 @@
                     <div class="text-center text-gray-500 py-4">
                         <i class="fa fa-spinner fa-spin mr-2"></i>
                         正在加载统计数据...
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200 mb-6">
+                    <h5 class="font-medium text-gray-800 mb-3 flex items-center">
+                        <i class="fa fa-robot mr-2 text-blue-600"></i>
+                        AI 数据分析
+                    </h5>
+                    <div class="mb-3">
+                        <label class="block text-sm text-gray-700 mb-2">分析需求</label>
+                        <textarea id="aiAnalysisPrompt" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" rows="3" placeholder="请输入您的数据分析需求，例如：分析各模型的使用频率和响应时间分布，生成趋势图和饼图">分析各模型的使用频率、响应时间分布，生成模型使用频率饼图和响应时间趋势图</textarea>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="aiAnalysisBtn" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2">
+                            <i class="fa fa-chart-pie"></i>
+                            开始分析
+                        </button>
+                        <button id="exportCsvBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all flex items-center gap-2">
+                            <i class="fa fa-download"></i>
+                            导出CSV
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="aiAnalysisResult" class="hidden mb-6">
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <h5 class="font-medium text-gray-800 mb-3 flex items-center">
+                            <i class="fa fa-chart-line mr-2 text-green-600"></i>
+                            分析结果
+                        </h5>
+                        <div id="aiAnalysisContent"></div>
                     </div>
                 </div>
                 
@@ -1709,10 +1746,10 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button id="cancelUpdateBtn" class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button id="cancelUpdateBtn" class="cancel-config-btn btn btn-secondary">
                     取消
                 </button>
-                <button id="confirmUpdateBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <button id="confirmUpdateBtn" class="btn btn-primary">
                     <i class="fa fa-refresh mr-2"></i>
                     是，更新
                 </button>
@@ -1883,10 +1920,10 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 flex-shrink-0">
-                <button id="cancelFollowingBtn" class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button id="cancelFollowingBtn" class="cancel-config-btn btn btn-secondary">
                     取消
                 </button>
-                <button id="startFollowingCommentsBtn" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+                <button id="startFollowingCommentsBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);">
                     <i class="fa fa-play mr-2"></i>
                     启动评论
                 </button>
@@ -2068,10 +2105,10 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 flex-shrink-0">
-                <button id="cancelPublishBtn" class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button id="cancelPublishBtn" class="cancel-config-btn btn btn-secondary">
                     取消
                 </button>
-                <button id="submitPublishBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                <button id="submitPublishBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);">
                     <i class="fa fa-paper-plane mr-2"></i>
                     发布
                 </button>
@@ -2116,10 +2153,10 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button id="cancelAnalyzeBtn" class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button id="cancelAnalyzeBtn" class="cancel-config-btn btn btn-secondary">
                     关闭
                 </button>
-                <button id="doAnalyzeBtn" class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button id="doAnalyzeBtn" class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);" disabled>
                     <i class="fa fa-magic mr-2"></i>
                     分析文章
                 </button>
@@ -2217,25 +2254,11 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-4">
-                        <button onclick="selectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
-                            <i class="fa fa-check-square-o mr-2"></i>全选
-                        </button>
-                        <button onclick="deselectAllHotSpots()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
-                            <i class="fa fa-square-o mr-2"></i>取消全选
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="refreshHotSpots()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
-                            <i class="fa fa-refresh mr-2"></i>
-                            刷新
-                        </button>
-                        <button id="batchGenerateBtn" onclick="batchGenerateArticles()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors flex items-center whitespace-nowrap">
-                            <i class="fa fa-magic mr-2"></i>
-                            批量生成长文
-                        </button>
-                    </div>
+                <div class="flex justify-end items-center mb-3">
+                    <button onclick="refreshHotSpots()" class="btn btn-primary" style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);">
+                        <i class="fa fa-refresh mr-2"></i>
+                        刷新
+                    </button>
                 </div>
                 <div id="hotSpotsSaveInfo" class="text-sm text-gray-500"></div>
             </div>
@@ -2303,7 +2326,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">话题描述（可选）</label>
                             <textarea id="newTopicDescription" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" rows="2" placeholder="话题的简要说明"></textarea>
                         </div>
-                        <button id="addTopicBtn" class="w-full py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center justify-center">
+                        <button id="addTopicBtn" class="btn btn-primary w-full" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);">
                             <i class="fa fa-plus mr-2"></i>
                             添加话题
                         </button>
@@ -2313,7 +2336,7 @@
             
             <!-- 弹窗底部按钮 -->
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
-                <button id="closeTopicConfigBtn" class="close-modal-btn px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                <button id="closeTopicConfigBtn" class="close-modal-btn btn btn-secondary">
                     关闭
                 </button>
             </div>
@@ -2343,10 +2366,10 @@
                     <textarea id="editTopicDescription" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" rows="3"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3">
-                    <button id="cancelEditTopicBtn" class="cancel-config-btn px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button id="cancelEditTopicBtn" class="cancel-config-btn btn btn-secondary">
                         取消
                     </button>
-                    <button id="saveEditTopicBtn" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                    <button id="saveEditTopicBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);">
                         <i class="fa fa-save mr-2"></i>
                         保存
                     </button>
@@ -2457,10 +2480,10 @@
                     <span id="selectedTopicArticleCount">已选择 0 篇文章</span>
                 </div>
                 <div class="flex space-x-3">
-                    <button id="cancelTopicCommentsBtn" class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button id="cancelTopicCommentsBtn" class="cancel-config-btn btn btn-secondary">
                         取消
                     </button>
-                    <button id="startTopicCommentsFinalBtn" class="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors flex items-center">
+                    <button id="startTopicCommentsFinalBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #db2777 0%, #be185d 100%);">
                         <i class="fa fa-play mr-2"></i>
                         开始评论
                     </button>
@@ -2536,10 +2559,10 @@
                     <span id="selectedRewardArticleCount">已选择 0 篇文章</span>
                 </div>
                 <div class="flex space-x-3">
-                    <button id="cancelRewardCommentsBtn" class="cancel-config-btn px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button id="cancelRewardCommentsBtn" class="cancel-config-btn btn btn-secondary">
                         取消
                     </button>
-                    <button id="startRewardCommentsFinalBtn" class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center">
+                    <button id="startRewardCommentsFinalBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">
                         <i class="fa fa-play mr-2"></i>
                         开始评论
                     </button>
@@ -2614,10 +2637,10 @@
             </div>
             
             <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button onclick="cancelHotSpotArticle()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <button onclick="cancelHotSpotArticle()" class="btn btn-secondary">
                     取消
                 </button>
-                <button id="sendHotSpotArticleBtn" onclick="sendHotSpotArticle()" class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center">
+                <button id="sendHotSpotArticleBtn" onclick="sendHotSpotArticle()" class="btn btn-primary" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
                     <i class="fa fa-paper-plane mr-2"></i>
                     发送
                 </button>
@@ -2626,6 +2649,16 @@
     </div>
 
     <script>
+        // 切换到旧版本
+        function switchToOldVersion() {
+            window.location.href = 'index_old.html';
+        }
+        
+        // 切换到新版本
+        function switchToNewVersion() {
+            window.location.href = 'index.html';
+        }
+        
         // API基础URL
         const API_BASE_URL = 'http://localhost:5001/api';
         
@@ -2911,7 +2944,7 @@
                     logElement.className = 'p-3 text-xs font-mono';
                 } else {
                     logContainer.className = 'rounded-lg overflow-y-auto scrollbar-thin bg-gray-50';
-                    logElement.className = 'p-4';
+                    logElement.className = 'p-3 text-xs font-mono';
                 }
             }
         }
@@ -2973,7 +3006,7 @@
                 logEntry.textContent = `${timeStr} ${prefix} ${message}`;
             } else {
                 // 明亮风格 - 使用和深色风格一致的字体大小和间距
-                logEntry.className = 'mb-1 p-1 text-xs font-mono';
+                logEntry.className = 'text-xs font-mono';
                 
                 let prefixIcon = 'fa-info-circle';
                 let textColor = 'text-gray-700';
@@ -5614,6 +5647,88 @@
         
         // ========== 发布雪球帖功能 ==========
         
+        // 从热点生成长文
+        async function generateArticleFromHotSpot(index) {
+            // 关闭热点弹窗
+            closeHotSpotsModal();
+            
+            // 确保配置已加载
+            await loadConfigFromServer();
+            
+            // 检查配置
+            let apiKey = '';
+            const selectedModel = config.selectedModel || 'ark';
+            
+            // 兼容新旧配置格式
+            if (selectedModel === 'ark') {
+                apiKey = config.models?.ark?.apiKey || config.arkApiKey || '';
+            } else if (selectedModel === 'openai') {
+                apiKey = config.models?.openai?.apiKey || config.openaiApiKey || '';
+            } else if (selectedModel === 'baidu') {
+                apiKey = config.models?.baidu?.apiKey || config.baiduApiKey || '';
+            } else if (selectedModel === 'alibaba') {
+                apiKey = config.models?.alibaba?.apiKey || config.alibabaApiKey || '';
+            } else if (selectedModel === 'deepseek') {
+                apiKey = config.models?.deepseek?.apiKey || config.deepseekApiKey || '';
+            } else if (selectedModel === 'gemini') {
+                apiKey = config.models?.gemini?.apiKey || config.geminiApiKey || '';
+            } else if (selectedModel === 'claude') {
+                apiKey = config.models?.claude?.apiKey || '';
+            }
+            
+            if (!apiKey || !config.xueQiuCookie) {
+                addLog('错误: 请先完成系统配置', 'error');
+                openModelConfigModal();
+                return;
+            }
+            
+            // 重置表单
+            aiPromptInput.value = '';
+            articleTitleInput.value = '';
+            contentPreviewDiv.innerHTML = '<p class="text-gray-400 text-sm">AI生成的内容将显示在这里...</p>';
+            regenerateContentBtn.classList.add('hidden');
+            
+            // 禁用发布按钮，直到内容生成成功
+            submitPublishBtn.disabled = true;
+            submitPublishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitPublishBtn.classList.remove('hover:bg-indigo-700');
+            
+            // 选择写长文模式
+            document.querySelector('input[name="postType"][value="article"]').checked = true;
+            handlePostTypeChange();
+            
+            // 获取热点数据
+            const spot = currentHotSpots[index];
+            
+            // 构建提示词：包含系统提示词 + 热点标题 + 热点内容
+            let promptText = '';
+            if (spot) {
+                promptText = `请根据以下热点素材写一篇雪球风格的长文：\n\n`;
+                promptText += `【热点标题】${spot.title || '热点'}\n\n`;
+                if (spot.content) {
+                    promptText += `【热点内容】${spot.content}\n\n`;
+                }
+                if (spot.stock) {
+                    promptText += `【相关股票】${spot.stock} ${spot.change || ''}\n\n`;
+                }
+                promptText += `请基于以上素材，撰写一篇有深度、有见解的雪球风格文章。`;
+            }
+            
+            // 将热点信息填入AI提示词
+            aiPromptInput.value = promptText;
+            
+            // 加载并显示当前默认提示词
+            await loadAndDisplayCurrentSystemPrompt();
+            
+            // 打开发布弹窗
+            publishPostModal.classList.add('show');
+            
+            // 自动触发生成内容
+            setTimeout(() => {
+                generateContent();
+            }, 500);
+        }
+        
         // 打开发布雪球帖弹窗
         async function openPublishPostModal() {
             // 确保配置已加载
@@ -5968,6 +6083,9 @@
         }
         
         function renderHotSpots(hotSpots, savedFile) {
+            // 保存热点数据到全局变量
+            currentHotSpots = hotSpots || [];
+            
             document.getElementById('hotSpotsLoading').style.display = 'none';
             document.getElementById('hotSpotsList').style.display = 'block';
             
@@ -5987,9 +6105,6 @@
                     
                     spotDiv.innerHTML = `
                         <div class="flex items-start gap-3">
-                            <div class="flex-shrink-0 pt-1">
-                                <input type="checkbox" class="hotSpotCheckbox w-5 h-5 text-orange-600 bg-white border-gray-300 rounded focus:ring-orange-500 cursor-pointer" data-index="${index}">
-                            </div>
                             <div class="flex-1">
                                 <div class="flex items-start justify-between">
                                     <div class="flex-1">
@@ -6001,10 +6116,15 @@
                                         ${spot.url ? `<div class="text-sm text-gray-500 mb-1"><i class="fa fa-link mr-1"></i><a href="${spot.url}" target="_blank" class="text-blue-600 hover:underline">查看原文</a></div>` : ''}
                                         ${contentHtml}
                                     </div>
-                                    ${spot.heat ? `<div class="text-right">
-                                        <div class="text-lg font-bold text-orange-600">${spot.heat}</div>
-                                        <div class="text-xs text-gray-500">热度</div>
-                                    </div>` : ''}
+                                    <div class="flex items-center gap-3 flex-shrink-0">
+                                        ${spot.heat ? `<div class="text-right">
+                                            <div class="text-lg font-bold text-orange-600">${spot.heat}</div>
+                                            <div class="text-xs text-gray-500">热度</div>
+                                        </div>` : ''}
+                                        <button onclick="generateArticleFromHotSpot(${index})" class="p-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5" title="基于此热点生成长文">
+                                            <i class="fa fa-magic"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -6027,6 +6147,9 @@
                     { title: '猪肉概念反弹，巨星农牧领涨', stock: '华统股份', change: '+1.91%', heat: '144.3万', url: '#' }
                 ];
                 
+                // 保存示例数据到全局变量
+                currentHotSpots = sampleData;
+                
                 sampleData.forEach((spot, index) => {
                     const spotDiv = document.createElement('div');
                     spotDiv.className = 'bg-white p-4 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors';
@@ -6041,9 +6164,14 @@
                                 <div class="text-sm text-blue-600 mb-1">${spot.stock} ${spot.change}</div>
                                 <div class="text-sm text-gray-500 mb-1"><i class="fa fa-link mr-1"></i><a href="${spot.url}" target="_blank" class="text-blue-600 hover:underline">查看原文</a></div>
                             </div>
-                            <div class="text-right">
-                                <div class="text-lg font-bold text-orange-600">${spot.heat}</div>
-                                <div class="text-xs text-gray-500">热度</div>
+                            <div class="flex items-center gap-3 flex-shrink-0">
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-orange-600">${spot.heat}</div>
+                                    <div class="text-xs text-gray-500">热度</div>
+                                </div>
+                                <button onclick="generateArticleFromHotSpot(${index})" class="p-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5" title="基于此热点生成长文">
+                                    <i class="fa fa-magic"></i>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -7637,10 +7765,28 @@
                 return;
             }
             
-            investmentNoteList.innerHTML = notes.map(note => {
-                const contentPreview = note.content && note.content.length > 150 
-                    ? note.content.substring(0, 150) + '...' 
-                    : (note.content || '');
+            window.currentNotesData = notes;
+            
+            const escapeHtml = (text) => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            };
+            
+            const stripHtml = (html) => {
+                const div = document.createElement('div');
+                div.innerHTML = html;
+                return div.textContent || div.innerText || '';
+            };
+            
+            investmentNoteList.innerHTML = notes.map((note, index) => {
+                const plainContent = stripHtml(note.content || '');
+                const contentPreview = plainContent && plainContent.length > 150 
+                    ? plainContent.substring(0, 150) + '...' 
+                    : (plainContent || '');
+                
+                const safeTitle = escapeHtml(note.title || '无标题');
+                const safeContent = escapeHtml(contentPreview);
                 
                 return `
                     <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 flex items-center justify-between">
@@ -7649,10 +7795,10 @@
                                 <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">ID: ${note.id || '--'}</span>
                                 <span class="text-xs text-gray-500">${note.createdAt || ''}</span>
                             </div>
-                            <h4 class="font-semibold text-gray-800 mb-2">${note.title || '无标题'}</h4>
-                            <p class="text-sm text-gray-600">${contentPreview}</p>
+                            <h4 class="font-semibold text-gray-800 mb-2">${safeTitle}</h4>
+                            <p class="text-sm text-gray-600">${safeContent}</p>
                         </div>
-                        <button class="note-detail-btn ml-4 p-3 bg-emerald-100 text-emerald-600 rounded-full hover:bg-emerald-200 transition-all duration-300" data-note='${JSON.stringify(note).replace(/'/g, "\\'")}'>
+                        <button class="note-detail-btn ml-4 p-3 bg-emerald-100 text-emerald-600 rounded-full hover:bg-emerald-200 transition-all duration-300" data-index="${index}">
                             <i class="fa fa-eye text-xl"></i>
                         </button>
                     </div>
@@ -7661,7 +7807,8 @@
             
             document.querySelectorAll('.note-detail-btn').forEach(btn => {
                 btn.addEventListener('click', async function() {
-                    const noteData = JSON.parse(this.dataset.note);
+                    const index = parseInt(this.dataset.index);
+                    const noteData = window.currentNotesData[index];
                     await showNoteDetail(noteData);
                 });
             });
@@ -8104,6 +8251,335 @@
         const refreshOperationsBtn = document.getElementById('refreshOperationsBtn');
         if (refreshOperationsBtn) {
             refreshOperationsBtn.addEventListener('click', loadModelOperations);
+        }
+        
+        // 导出CSV按钮事件
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener('click', exportModelOperationsToCsv);
+        }
+        
+        // AI数据分析按钮事件
+        const aiAnalysisBtn = document.getElementById('aiAnalysisBtn');
+        if (aiAnalysisBtn) {
+            aiAnalysisBtn.addEventListener('click', performAiAnalysis);
+        }
+        
+        // 将模型操作数据转换为CSV格式
+        function convertToCsv(data) {
+            if (!data || data.length === 0) {
+                return '';
+            }
+            
+            const headers = ['时间戳', '模型类型', '操作类型', '耗时(秒)', '提示词长度', '返回长度', '温度值', '最大Token数'];
+            const rows = data.map(op => [
+                op.timestamp || '',
+                op.model_type || '',
+                op.operation_type || '',
+                op.duration_seconds?.toFixed(2) || '0',
+                op.prompt_length || '0',
+                op.response_length || '0',
+                op.temperature !== undefined ? op.temperature : '',
+                op.max_tokens !== undefined ? op.max_tokens : ''
+            ]);
+            
+            const csvContent = [headers, ...rows]
+                .map(row => row.map(cell => `"${cell}"`).join(','))
+                .join('\n');
+            
+            return csvContent;
+        }
+        
+        // 将模型操作数据转换为Markdown格式
+        function convertToMarkdown(data) {
+            if (!data || data.length === 0) {
+                return '暂无数据';
+            }
+            
+            let md = '# 模型操作日志统计\n\n';
+            md += `## 基本信息\n\n`;
+            md += `- 总操作次数: ${data.length}\n`;
+            md += `- 统计时间范围: ${new Date(data[0].timestamp).toLocaleString('zh-CN')} 至 ${new Date(data[data.length - 1].timestamp).toLocaleString('zh-CN')}\n\n`;
+            
+            md += `## 详细数据\n\n`;
+            md += `| 时间 | 模型 | 操作类型 | 耗时(秒) | 提示词长度 | 返回长度 |\n`;
+            md += `|------|------|----------|----------|------------|----------|\n`;
+            
+            data.forEach(op => {
+                const time = new Date(op.timestamp).toLocaleString('zh-CN');
+                md += `| ${time} | ${op.model_type || ''} | ${op.operation_type || ''} | ${op.duration_seconds?.toFixed(2) || '0'} | ${op.prompt_length || '0'} | ${op.response_length || '0'} |\n`;
+            });
+            
+            return md;
+        }
+        
+        // 导出CSV文件
+        function exportModelOperationsToCsv() {
+            if (modelOperationsData.length === 0) {
+                alert('暂无数据可导出');
+                return;
+            }
+            
+            const csvContent = convertToCsv(modelOperationsData);
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `model_operations_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            addLog('CSV文件导出成功', 'success');
+        }
+        
+        // 执行AI数据分析
+        async function performAiAnalysis() {
+            const prompt = document.getElementById('aiAnalysisPrompt')?.value;
+            if (!prompt) {
+                alert('请输入分析需求');
+                return;
+            }
+            
+            if (modelOperationsData.length === 0) {
+                alert('暂无数据可分析');
+                return;
+            }
+            
+            await loadConfigFromServer();
+            
+            let apiKey = '';
+            const selectedModel = config.selectedModel || 'ark';
+            
+            if (selectedModel === 'ark') {
+                apiKey = config.models?.ark?.apiKey || config.arkApiKey || '';
+            } else if (selectedModel === 'openai') {
+                apiKey = config.models?.openai?.apiKey || config.openaiApiKey || '';
+            } else if (selectedModel === 'baidu') {
+                apiKey = config.models?.baidu?.apiKey || config.baiduApiKey || '';
+            } else if (selectedModel === 'alibaba') {
+                apiKey = config.models?.alibaba?.apiKey || config.alibabaApiKey || '';
+            } else if (selectedModel === 'deepseek') {
+                apiKey = config.models?.deepseek?.apiKey || config.deepseekApiKey || '';
+            } else if (selectedModel === 'gemini') {
+                apiKey = config.models?.gemini?.apiKey || config.geminiApiKey || '';
+            } else if (selectedModel === 'claude') {
+                apiKey = config.models?.claude?.apiKey || '';
+            }
+            
+            if (!apiKey) {
+                addLog('错误: 请先完成模型配置', 'error');
+                openModelConfigModal();
+                return;
+            }
+            
+            const resultContainer = document.getElementById('aiAnalysisResult');
+            const contentContainer = document.getElementById('aiAnalysisContent');
+            const analysisBtn = document.getElementById('aiAnalysisBtn');
+            
+            resultContainer.classList.remove('hidden');
+            contentContainer.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fa fa-spinner fa-spin text-2xl text-blue-600 mb-3"></i>
+                    <div class="text-gray-600">AI正在分析数据，请稍候...</div>
+                </div>
+            `;
+            
+            analysisBtn.disabled = true;
+            analysisBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 分析中...';
+            
+            try {
+                const stats = calculateDataStats();
+                const csvData = convertToCsv(modelOperationsData);
+                
+                const userPrompt = `${prompt}
+
+以下是模型操作日志数据摘要：
+- 总操作次数: ${stats.totalOperations}
+- 总耗时: ${stats.totalDuration.toFixed(1)}秒
+- 平均响应时间: ${stats.avgDuration.toFixed(2)}秒
+- 总提示词长度: ${stats.totalPromptLength}字
+- 总返回长度: ${stats.totalResponseLength}字
+
+各模型使用统计:
+${Object.entries(stats.modelStats).map(([model, data]) => `- ${model}: ${data.count}次, 平均${data.avgDuration.toFixed(2)}秒`).join('\n')}
+
+操作类型分布:
+${Object.entries(stats.operationStats).map(([type, data]) => `- ${type}: ${data.count}次`).join('\n')}
+
+请作为专业的数据分析师，基于以上数据进行深度分析。
+要求：
+1. 分析核心趋势和发现
+2. 指出潜在问题或异常
+3. 给出具体的优化建议
+4. 字数约300-500字
+5. 分点清晰列出
+
+请直接返回分析内容，不要任何其他说明。`;
+
+                addLog('开始AI数据分析...', 'info');
+                
+                const analysisResponse = await fetch(`${API_BASE_URL}/generate-content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        detailedPrompt: userPrompt,
+                        postType: 'article',
+                        selectedModel: config.selectedModel,
+                        models: config.models
+                    })
+                });
+                
+                const analysisResult = await analysisResponse.json();
+                
+                if (analysisResult.success && analysisResult.content) {
+                    const fullHtml = generateAnalysisReportHtml(stats, analysisResult.content);
+                    contentContainer.innerHTML = fullHtml;
+                    
+                    setTimeout(() => {
+                        if (window.mermaid) {
+                            mermaid.initialize({ startOnLoad: false });
+                            mermaid.init(undefined, contentContainer.querySelectorAll('.mermaid'));
+                        }
+                    }, 100);
+                    
+                    addLog('AI数据分析完成', 'success');
+                } else {
+                    throw new Error(analysisResult.message || '未获取到分析结果');
+                }
+                
+            } catch (error) {
+                contentContainer.innerHTML = `
+                    <div class="text-center py-4 text-red-600">
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        分析失败: ${error.message}
+                    </div>
+                `;
+                addLog(`AI数据分析失败: ${error.message}`, 'error');
+            } finally {
+                analysisBtn.disabled = false;
+                analysisBtn.innerHTML = '<i class="fa fa-chart-pie"></i> 开始分析';
+            }
+        }
+        
+        // 计算数据统计
+        function calculateDataStats() {
+            const data = modelOperationsData;
+            const totalOperations = data.length;
+            const totalDuration = data.reduce((sum, op) => sum + (op.duration_seconds || 0), 0);
+            const totalPromptLength = data.reduce((sum, op) => sum + (op.prompt_length || 0), 0);
+            const totalResponseLength = data.reduce((sum, op) => sum + (op.response_length || 0), 0);
+            const avgDuration = totalOperations > 0 ? totalDuration / totalOperations : 0;
+            
+            const modelStats = {};
+            data.forEach(op => {
+                const model = op.model_type || 'unknown';
+                if (!modelStats[model]) {
+                    modelStats[model] = { count: 0, totalDuration: 0 };
+                }
+                modelStats[model].count++;
+                modelStats[model].totalDuration += op.duration_seconds || 0;
+            });
+            
+            Object.keys(modelStats).forEach(model => {
+                modelStats[model].avgDuration = modelStats[model].count > 0 
+                    ? modelStats[model].totalDuration / modelStats[model].count 
+                    : 0;
+            });
+            
+            const operationStats = {};
+            data.forEach(op => {
+                const type = op.operation_type || 'unknown';
+                if (!operationStats[type]) {
+                    operationStats[type] = { count: 0 };
+                }
+                operationStats[type].count++;
+            });
+            
+            return {
+                totalOperations,
+                totalDuration,
+                totalPromptLength,
+                totalResponseLength,
+                avgDuration,
+                modelStats,
+                operationStats
+            };
+        }
+        
+        // 生成分析报告HTML
+        function generateAnalysisReportHtml(stats, aiInsights) {
+            const now = new Date().toLocaleString('zh-CN');
+            
+            const modelPieData = Object.entries(stats.modelStats)
+                .map(([model, data]) => `    "${model}": ${data.count}`)
+                .join('\n');
+            
+            const modelBarLabels = Object.keys(stats.modelStats).map(m => `"${m}"`).join(', ');
+            const modelBarValues = Object.values(stats.modelStats).map(d => d.avgDuration.toFixed(2)).join(', ');
+            const maxDuration = Math.max(...Object.values(stats.modelStats).map(d => d.avgDuration)) * 1.5 || 10;
+            
+            return `
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 24px;">
+                        <h1 style="margin: 0; font-size: 28px; font-weight: 700;">📊 模型操作数据分析报告</h1>
+                        <p style="margin: 8px 0 0; opacity: 0.9;">生成时间: ${now}</p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #667eea;">${stats.totalOperations}</div>
+                            <div style="color: #64748b; margin-top: 4px;">总操作次数</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #764ba2;">${stats.totalDuration.toFixed(1)}</div>
+                            <div style="color: #64748b; margin-top: 4px;">总耗时(秒)</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #3b82f6;">${stats.avgDuration.toFixed(2)}</div>
+                            <div style="color: #64748b; margin-top: 4px;">平均响应(秒)</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #ec4899;">${(stats.totalResponseLength / 1000).toFixed(1)}K</div>
+                            <div style="color: #64748b; margin-top: 4px;">总返回长度</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h3 style="color: #1f2937; margin: 0 0 16px; font-size: 18px;">📈 模型使用分布</h3>
+                            <div class="mermaid">
+pie showdata
+    title 模型使用分布
+${modelPieData}
+                            </div>
+                        </div>
+                        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h3 style="color: #1f2937; margin: 0 0 16px; font-size: 18px;">⏱️ 平均响应时间</h3>
+                            <div class="mermaid">
+xychart-beta
+    title 各模型平均响应时间(秒)
+    x-axis [${modelBarLabels}]
+    y-axis 0 --> ${maxDuration}
+    bar [${modelBarValues}]
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0ea5e9; padding: 24px; border-radius: 8px; margin-bottom: 24px;">
+                        <h3 style="color: #0369a1; margin: 0 0 16px; font-size: 18px;">🤖 AI 深度洞察</h3>
+                        <div style="color: #1e3a5f; line-height: 1.8; white-space: pre-wrap;">${aiInsights}</div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px;">
+                        💡 本报告由AI自动生成，仅供参考
+                    </div>
+                </div>
+            `;
         }
         
         // 话题评论相关函数

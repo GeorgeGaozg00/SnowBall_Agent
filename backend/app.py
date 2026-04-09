@@ -2018,7 +2018,15 @@ def publish_post():
         else:
             post_id = publish_discussion_to_xueqiu(content, xueqiu_cookie)
         
-        print(f"[{time.strftime('%H:%M:%S')}] 发布成功，帖子ID: {post_id}")
+        content_length = len(content)
+        print(f"[{time.strftime('%H:%M:%S')}] 发布成功！")
+        print(f"[{time.strftime('%H:%M:%S')}] ├─ 帖子ID: {post_id}")
+        print(f"[{time.strftime('%H:%M:%S')}] ├─ 发布类型: {post_type == 'article' and '长文' or '讨论'}")
+        if title:
+            print(f"[{time.strftime('%H:%M:%S')}] ├─ 文章标题: {title}")
+        if is_column:
+            print(f"[{time.strftime('%H:%M:%S')}] ├─ 是否专栏: 是")
+        print(f"[{time.strftime('%H:%M:%S')}] └─ 内容长度: {content_length} 字")
         
         return jsonify({
             "success": True,
@@ -2357,7 +2365,7 @@ def publish_article_to_xueqiu(title, content, is_column, cookie):
     print(f"获取session_token成功：{session_token[:16]}...")
     
     # 3. 发布长文
-    print("发布长文...")
+    print(f"正在发布长文: {title}")
     
     if is_column:
         # 专栏文章发布
@@ -2954,19 +2962,24 @@ def get_user_articles():
         page_size = 20
         
         while len(all_articles) < count:
-            api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={uid}&page={page}&type=edit"
+            api_url = f"https://xueqiu.com/statuses/user_timeline.json?user_id={uid}&page={page}"
             if page == 1:
                 print(f"[{time.strftime('%H:%M:%S')}] 正在请求用户文章列表API (第{page}页)...")
+                print(f"[{time.strftime('%H:%M:%S')}] API URL: {api_url}")
             response = session.get(api_url, headers=headers)
             
             if response.status_code != 200:
                 print(f"[{time.strftime('%H:%M:%S')}] API请求失败，状态码: {response.status_code}")
+                print(f"[{time.strftime('%H:%M:%S')}] 响应内容: {response.text[:500]}")
                 break
             
             data = response.json()
+            if page == 1:
+                print(f"[{time.strftime('%H:%M:%S')}] API响应数据: {str(data)[:500]}")
             articles = data.get("statuses", [])
             
             if not articles:
+                print(f"[{time.strftime('%H:%M:%S')}] 第{page}页没有获取到文章")
                 break
                 
             all_articles.extend(articles)

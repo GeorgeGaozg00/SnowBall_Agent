@@ -1,6 +1,34 @@
 {
   "followingList": [
     {
+      "description": "专注银行股，希望通过和广大银粉们的交流来更深入地了解这个行业",
+      "profile_image": "http://xavatar.imedao.com/community/20172/1489870923469-1532690951082.jpg",
+      "screen_name": "老凯李",
+      "uid": 3921480024,
+      "isImportant": false
+    },
+    {
+      "description": "长期投资者",
+      "profile_image": "http://xavatar.imedao.com/community/20175/1496751067197-1496751101060.jpg",
+      "screen_name": "何纯在南国",
+      "uid": 2657407918,
+      "isImportant": false
+    },
+    {
+      "description": "一事无成 百无聊赖",
+      "profile_image": "http://xavatar.imedao.com/community/20211/1613314371023-1613314371133.jpg",
+      "screen_name": "爱投资的小人书",
+      "uid": 7103876041,
+      "isImportant": false
+    },
+    {
+      "description": "普通投资者投资股市就是为了获得投资股票未来股息的现金流折现，持股收息，等待过激。。。",
+      "profile_image": "http://xavatar.imedao.com/community/20199/1571155606811-1571155607273.jpg",
+      "screen_name": "金哥777",
+      "uid": 1674052027,
+      "isImportant": false
+    },
+    {
       "description": "分享是为了告诉别人我是谁、我在关注什么。希望能和高水平、有认知的人成为朋友，一起探讨，共同进步。情绪化、无意义的发言易被拉黑。",
       "profile_image": "http://xavatar.imedao.com/community/20179/1507691359208-1507691422133.jpg",
       "screen_name": "庶人哑士",
@@ -19,7 +47,7 @@
       "profile_image": "http://xavatar.imedao.com/community/20197/1566909797203-1566909802650.jpg",
       "screen_name": "ETF之王",
       "uid": 1497519205,
-      "isImportant": true
+      "isImportant": false
     },
     {
       "description": "投教才是理财圈的长期主义，投资的本质是认知的变现，而认知的积累，需要时间与耐心。",
@@ -40,7 +68,7 @@
       "profile_image": "http://xavatar.imedao.com/community/20244/1717139510170-1717139510385.png",
       "screen_name": "30年国债ETF",
       "uid": 3534917487,
-      "isImportant": true
+      "isImportant": false
     },
     {
       "description": "国联安基金管理有限公司成立于2003年4月3日。太平洋资产管理有限责任公司持股51%，德国安联集团持股49%。国联安基金将始终秉承着诚信、专业、创新、卓越的经营理念，致力于为社会提供最佳的投资产品。",
@@ -481,7 +509,7 @@
       "profile_image": "http://xavatar.imedao.com/community/20229/1665999848975-1665999849174.png",
       "screen_name": "今日话题",
       "uid": 8152922548,
-      "isImportant": true
+      "isImportant": false
     },
     {
       "description": "",
@@ -491,7 +519,7 @@
       "isImportant": false
     },
     {
-      "description": "碎碎念:科创一路向北",
+      "description": "",
       "profile_image": "http://xavatar.imedao.com/community/20231/1675223652916-1675223655934.png",
       "screen_name": "一路向北upupup",
       "uid": 1192466154,
@@ -572,8 +600,8 @@
       "profile_image": "http://xavatar.imedao.com/community/20262/1773657252167-1773657252490.jpg",
       "screen_name": "奋斗的金条小莲花",
       "uid": 1101378683,
-      "isImportant": true
+      "isImportant": false
     }
   ],
-  "updatedAt": "2026-04-07 09:30:21"
+  "updatedAt": "2026-04-09 17:14:52"
 }
